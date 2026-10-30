@@ -1,0 +1,34 @@
+name: Calidad
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pruebas-y-analisis:
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar herramientas
+        run: pip install -r requirements-dev.txt
+      - name: Estilo y errores (ruff)
+        run: ruff check .
+      - name: Seguridad (bandit)
+        run: bandit -q -r dominio
+      - name: Complejidad ciclomática (radon, falla si algún bloque supera 10)
+        run: |
+          radon cc -s -a dominio
+          test -z "$(radon cc -n C dominio)"
+      - name: Pruebas y cobertura
+        run: pytest --cov=dominio --cov-branch --cov-report=xml --cov-fail-under=95
+      - name: Análisis en SonarCloud
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@v5
