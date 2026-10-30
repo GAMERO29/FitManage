@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitManage · Prototipo funcional del MVP</title>
+<style>
+:root{
+  --primario: rgba(35,0,90,.68); --primario-solido:#69528F; --primario-oscuro:#23005A; --activo-nav: rgba(35,0,90,.55);
+  --lavanda:#E2DAEF; --lavanda-claro:#EEE9F5;
+  --fondo:#F3F5F8; --superficie:#FFFFFF; --linea:#D5DCE5; --linea-suave:#E6EBF1; --borde-campo:#8A97A8;
+  --texto:#1B2430; --texto-2:#4A5868; --texto-3:#33404F;
+  --ok:#14532D; --ok-fondo:#DCEFE3; --ok-borde:#2E7D4F;
+  --mal:#8B1A1A; --mal-fondo:#FBE4E4; --mal-borde:#B42318;
+  --neutro:#33404F; --neutro-fondo:#E9EDF2; --neutro-borde:#5B6B7E;
+  --aviso:#7A4B00; --aviso-fondo:#FFF1D6; --aviso-borde:#B07A1A;
+  --mono:'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;color:var(--texto);background:var(--fondo);font-size:16px;line-height:1.45}
+a{color:var(--primario-solido)} a:hover{color:var(--primario-oscuro)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #F2A900;outline-offset:2px}
+.mono{font-family:var(--mono)}
+.app{min-height:100vh;display:flex;flex-wrap:wrap}
+.nav{flex:1 1 220px;max-width:100%;background:var(--primario);color:#fff;padding:24px 16px;display:flex;flex-direction:column;gap:20px}
+.marca{padding:0 12px}.marca b{display:block;font-size:22px}.marca span{font-size:13px;color:var(--lavanda)}
+.grupo{display:flex;flex-direction:column;gap:4px}
+.grupo h3{margin:0;padding:0 12px;font-size:12px;font-weight:600;letter-spacing:.6px;color:var(--lavanda)}
+.nav a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-radius:8px;color:#fff;text-decoration:none;font-size:15px}
+.nav a[aria-current="page"]{background:var(--activo-nav);font-weight:600}
+.nav a:hover{background:rgba(255,255,255,.12);color:#fff}
+.usuario{margin-top:auto;padding:12px;border-top:1px solid rgba(255,255,255,.3);display:flex;flex-direction:column;gap:4px}
+.usuario small{color:var(--lavanda)}
+.usuario button{all:unset;cursor:pointer;color:#fff;text-decoration:underline;min-height:44px;display:flex;align-items:center;font-size:14px}
+main{flex:999 1 560px;min-width:0;padding:32px;display:flex;flex-direction:column;gap:22px}
+h1{margin:0;font-size:28px;color:var(--primario-solido)} h2{margin:0;font-size:18px}
+.sub{color:var(--texto-2);font-size:15px}
+.fila{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.tarjeta{background:var(--superficie);border:1px solid var(--linea);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.cabecera{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.pastilla{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:14px;font-weight:600}
+.p-ok{background:var(--ok-fondo);color:var(--ok)} .p-mal{background:var(--mal-fondo);color:var(--mal)} .p-neutro{background:var(--neutro-fondo);color:var(--neutro)} .p-aviso{background:var(--aviso-fondo);color:var(--aviso)}
+label.et{font-size:15px;font-weight:600}
+.campo{display:flex;flex-direction:column;gap:6px}
+input[type=text],input[type=email],input[type=password],input[type=tel],input[type=number],input[type=date],select,textarea{min-height:48px;padding:0 14px;border:1px solid var(--borde-campo);border-radius:8px;background:#fff;font-size:16px}
+textarea{padding:10px 12px;min-height:90px;resize:vertical}
+.error-campo{border-color:var(--mal-borde)!important}
+.msg-error{font-size:14px;color:var(--mal)}
+.btn{min-height:48px;padding:0 24px;border:0;border-radius:10px;background:var(--primario);color:#fff;font-size:17px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn:hover{background:var(--primario-oscuro);color:#fff}
+.btn[disabled]{background:#AEB9C7;color:var(--texto);cursor:not-allowed}
+.btn-sec{min-height:44px;padding:0 16px;border:1px solid var(--borde-campo);border-radius:8px;background:#fff;color:var(--texto);cursor:pointer;font-size:15px;text-decoration:none;display:inline-flex;align-items:center}
+.btn-sec[disabled]{opacity:.5;cursor:not-allowed}
+.btn-peligro{background:var(--mal)} .btn-peligro:hover{background:#6B1212}
+.btn-borde-peligro{border-color:var(--mal-borde);color:var(--mal);font-weight:600}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.grid2,.grid3,.grid4,.grid5{grid-template-columns:repeat(2,minmax(0,1fr))} main{padding:20px}}
+@media (max-width:440px){.grid2,.grid3{grid-template-columns:1fr}}
+.tabla-caja{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+th{text-align:left;color:var(--texto-3);border-bottom:2px solid var(--linea);padding:10px 8px}
+td{border-bottom:1px solid var(--linea-suave);padding:12px 8px;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.resultado{border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px;border:2px solid}
+.r-ok{background:var(--ok-fondo);border-color:var(--ok-borde);color:var(--ok)}
+.r-mal{background:var(--mal-fondo);border-color:var(--mal-borde);color:var(--mal)}
+.r-neutro{background:var(--neutro-fondo);border-color:var(--neutro-borde);color:var(--neutro)}
+.r-vacio{background:#fff;border:1px dashed #AEB9C7;color:var(--texto-2);text-align:center;padding:40px 24px}
+.estado-grande{font-size:40px;font-weight:700;line-height:1.1}
+.dato span{display:block;font-size:14px;opacity:.85} .dato strong{color:var(--texto)}
+.aviso{border-radius:10px;padding:14px 16px;font-size:15px;border:1px solid}
+.a-ok{background:var(--ok-fondo);color:var(--ok);border-color:var(--ok-borde)}
+.a-mal{background:var(--mal-fondo);color:var(--mal);border-color:var(--mal-borde)}
+.a-aviso{background:var(--aviso-fondo);color:var(--aviso);border-color:var(--aviso-borde)}
+.a-neutro{background:var(--neutro-fondo);color:var(--neutro);border-color:var(--neutro-borde)}
+.opcion{min-height:88px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:12px 14px;border-radius:10px;border:1px solid var(--linea);background:#fff;cursor:pointer;text-align:left}
+.opcion[aria-pressed="true"]{border:2px solid var(--primario-solido);background:var(--lavanda-claro);color:var(--primario-oscuro)}
+.chip{min-height:48px;padding:0 20px;border-radius:999px;border:1px solid var(--borde-campo);background:#fff;cursor:pointer;font-size:16px}
+.chip[aria-pressed="true"]{border:2px solid var(--primario-solido);background:var(--primario);color:#fff}
+.ejemplo{min-height:36px;padding:0 12px;border:1px solid var(--linea);border-radius:999px;background:#fff;color:var(--primario-solido);font-family:var(--mono);font-size:13px;cursor:pointer}
+.telefono{width:390px;max-width:100%;height:844px;border:10px solid #1B2430;border-radius:44px;overflow:hidden;background:var(--fondo);display:flex;flex-direction:column;margin:0 auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  'use strict';
+  const HOY = new Date(2026, 9, 7);
+  const ESTADO_INICIAL = () => ({
+    rol: null,
+    consulta: { doc: '', buscado: null },
+    pago: { escenario: 'renovacion', plan: 'Mensual', medio: 'Nequi', ref: '', error: null, ok: false },
+    socio: { numero: '25789456', autoriza: true, intento: false, ok: false },
+    hist: { confirmando: false, motivo: '', falta: false, anulado: false },
+    login: { rol: 'recep' }
+  });
+  let S = ESTADO_INICIAL();
+  const SOCIOS = {
+    '1090123456': { nombre: 'Ana Pérez', tipo: 'CC', estado: 'ACTIVO', vence: '05/11/2026', plan: 'Mensual' },
+    '1093445566': { nombre: 'Jorge Rincón', tipo: 'CC', estado: 'VENCIDO', vence: '29/09/2026', plan: 'Mensual', mora: 8 },
+    '25789456': { nombre: 'María Fernanda Gil', tipo: 'PPT', estado: 'SIN_MEMBRESIA' }
+  };
+  const PLANES = [['Diario', 1], ['Quincenal', 15], ['Mensual', 30], ['Trimestral', 90]];
+  const MEDIOS = ['Efectivo', 'Nequi', 'Daviplata', 'Transferencia'];
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (d) => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  const sumarDias = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const ruta = () => (location.hash || '#login').slice(1);
+  const ir = (r) => { if (ruta() === r) render(); else location.hash = r; };
+  const RUTAS_ADMIN = ['historial', 'reportes', 'planes', 'personal'];
+  const TITULOS = { login: 'Iniciar sesión', recepcion: 'Recepción', pago: 'Registrar pago', socio: 'Registrar socio', vencimientos: 'Vencimientos', historial: 'Historial del socio', reportes: 'Reportes', planes: 'Planes', personal: 'Personal', movil: 'Vista móvil' };
+  function banda() { return ''; }
+  function enlace(r, texto) { return `<a href="#${r}"${ruta() === r ? ' aria-current="page"' : ''}>${texto}</a>`; }
+  function marco(contenido) {
+    const admin = S.rol === 'admin';
+    return banda() + `<div class="app">
+      <nav class="nav" aria-label="Menú principal">
+        <div class="marca"><b>FitManage</b><span>[Nombre del gimnasio]</span></div>
+        <div class="grupo">${enlace('recepcion', 'Recepción')}${enlace('socio', 'Registrar socio')}${enlace('pago', 'Registrar pago')}${admin ? '' : enlace('vencimientos', 'Vencimientos')}${enlace('movil', 'Vista móvil')}</div>
+        ${admin ? `<div class="grupo"><h3>Administración</h3>${enlace('historial', 'Socios e historial')}${enlace('reportes', 'Reportes')}${enlace('planes', 'Planes')}${enlace('personal', 'Personal')}</div>` : ''}
+        <div class="usuario"><strong>${admin ? 'Carlos' : 'Laura'}</strong><small>${admin ? 'Administrador' : 'Recepcionista'}</small><button type="button" data-accion="salir">Cerrar sesión</button></div>
+      </nav>
+      <main id="contenido" tabindex="-1">${contenido}</main></div>`;
+  }
+  function pLogin() {
+    const r = S.login.rol;
+    return banda() + `<div class="app">
+      <section style="flex:1 1 380px;background:#23005AAD;color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between;gap:32px">
+        <div><div style="font-size:32px;font-weight:700">FitManage</div><div style="color:var(--lavanda)">[Nombre del gimnasio] · Cúcuta</div></div>
+        <div style="max-width:420px;display:flex;flex-direction:column;gap:12px"><div style="font-size:30px;font-weight:600;line-height:1.25">Membresías, pagos y acceso en un solo lugar.</div><div style="color:var(--lavanda)">Uso exclusivo del personal del gimnasio. Cada persona ingresa con su propia cuenta.</div></div>
+        <div style="font-size:13px;color:var(--lavanda)">Ingeniería de Software II · Universidad de Pamplona</div>
+      </section>
+      <section style="flex:1 1 420px;padding:56px 24px;display:flex;align-items:center;justify-content:center">
+        <form data-envio="login" class="tarjeta" style="width:100%;max-width:420px;padding:32px;gap:18px">
+          <h1 style="color:var(--primario)">Iniciar sesión</h1>
+          <fieldset style="border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px">
+            <legend class="et" style="margin-bottom:6px">Ingresar como (demostración)</legend>
+            <label style="display:flex;gap:10px;align-items:center;min-height:40px"><input type="radio" name="rol" value="recep" data-cambio="rol" ${r === 'recep' ? 'checked' : ''} style="width:20px;height:20px">Recepcionista (Laura)</label>
+            <label style="display:flex;gap:10px;align-items:center;min-height:40px"><input type="radio" name="rol" value="admin" data-cambio="rol" ${r === 'admin' ? 'checked' : ''} style="width:20px;height:20px">Administrador (Carlos)</label>
+          </fieldset>
+          <div class="campo"><label class="et" for="correo">Correo</label><input id="correo" type="email" autocomplete="username" value="${r === 'admin' ? 'carlos' : 'laura'}@gimnasio.com"></div>
+          <div class="campo"><label class="et" for="clave">Contraseña</label><input id="clave" type="password" autocomplete="current-password" value="demo2026"></div>
+          <div class="aviso a-aviso" style="font-size:14px">Después de 5 intentos fallidos la cuenta se bloquea durante 15 minutos.</div>
+          <button class="btn" type="submit">Ingresar</button>
+          <div class="sub" style="font-size:14px;color:var(--primario-solido)">¿Olvidó su contraseña? Pídale al administrador que la restablezca.</div>
+        </form>
+      </section></div>`;
+  }
+  function vencimientosTabla(conWhatsapp) {
+    const filas = [
+      ['Camilo Duarte', 'CC 1090200001', '3000000001', 'Mensual', 'Hoy'],
+      ['Valentina Ruiz', 'CE 4567890', '3000000002', 'Quincenal', '08/10/2026'],
+      ['Andrés Pabón', 'CC 1090200003', '30000003', 'Trimestral', '10/10/2026']
+    ];
+    return `<div class="tabla-caja"><table><thead><tr><th scope="col">Socio</th><th scope="col">Documento</th><th scope="col">Teléfono</th><th scope="col">Plan</th><th scope="col">Vence</th>${conWhatsapp ? '<th scope="col">Recordatorio</th>' : ''}</tr></thead><tbody>
+      ${filas.map((f) => {
+        const valido = f[2].length === 10;
+        const msg = encodeURIComponent(`Hola ${f[0].split(' ')[0]}, te recordamos que tu membresía en [Nombre del gimnasio] vence el ${f[4] === 'Hoy' ? fmt(HOY) : f[4]}.`);
+        return `<tr><td><b>${f[0]}</b></td><td class="mono">${f[1]}</td><td class="mono">${f[2]}</td><td>${f[3]}</td><td style="font-weight:600;color:var(--aviso)">${f[4]}</td>${conWhatsapp ? `<td>${valido ? `<a class="btn-sec" target="_blank" rel="noopener" href="https://wa.me/57${f[2]}?text=${msg}">Abrir WhatsApp</a>` : '<span style="color:var(--mal);font-weight:600">Teléfono inválido</span>'}</td>` : ''}</tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+  function pRecepcion() {
+    const c = S.consulta;
+    const s = c.buscado ? SOCIOS[c.buscado] : null;
+    let res;
+    if (!c.buscado) {
+      res = `<div class="resultado r-vacio">Digite el documento y presione Enter. El resultado aparece aquí en verde, rojo o gris.</div>`;
+    } else if (!s) {
+      res = `<div class="tarjeta" style="border-width:2px"><div style="font-size:26px;font-weight:700">Socio no registrado</div><div class="sub">No hay ningún socio con el documento <b class="mono">${esc(c.buscado)}</b>.</div><div><a class="btn" href="#socio">Registrar socio</a></div></div>`;
+    } else if (s.estado === 'ACTIVO') {
+      res = `<div class="resultado r-ok" role="status"><div style="display:flex;align-items:center;gap:16px">${icono('ok')}<div><div class="estado-grande">ACTIVO</div><div>Puede ingresar</div></div></div>
+        <div class="grid3"><div class="dato"><span>Socio</span><strong>${s.nombre}</strong></div><div class="dato"><span>Documento</span><strong>${s.tipo} ${esc(c.buscado)}</strong></div><div class="dato"><span>Vence</span><strong>${s.vence} · ${s.plan}</strong></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px"><a class="btn-sec" href="#pago" data-accion="escenario" data-valor="renovacion">Renovar (anticipada)</a></div></div>`;
+    } else if (s.estado === 'VENCIDO') {
+      res = `<div class="resultado r-mal" role="status"><div style="display:flex;align-items:center;gap:16px">${icono('mal')}<div><div class="estado-grande">VENCIDO</div><div>${s.mora} días de mora</div></div></div>
+        <div class="grid3"><div class="dato"><span>Socio</span><strong>${s.nombre}</strong></div><div class="dato"><span>Documento</span><strong>${s.tipo} ${esc(c.buscado)}</strong></div><div class="dato"><span>Venció</span><strong>${s.vence} · ${s.plan}</strong></div></div>
+        <div><a class="btn btn-peligro" href="#pago" data-accion="escenario" data-valor="vencido">Registrar pago</a></div></div>`;
+    } else {
+      res = `<div class="resultado r-neutro" role="status"><div style="display:flex;align-items:center;gap:16px">${icono('neutro')}<div><div class="estado-grande">SIN MEMBRESÍA</div><div>Socio registrado sin pagos vigentes</div></div></div>
+        <div><b>${s.nombre}</b> · ${s.tipo} ${esc(c.buscado)}</div><div><a class="btn" href="#pago" data-accion="escenario" data-valor="vencido">Registrar pago</a></div></div>`;
+    }
+    return marco(`<div class="cabecera"><div><h1>Recepción</h1><div class="sub">Martes 7 de octubre de 2026 · hora de Colombia</div></div><span class="pastilla p-ok">En línea · caché sincronizada 18:45</span></div>
+      <div class="fila">
+        <section style="flex:999 1 480px;min-width:0;display:flex;flex-direction:column;gap:20px">
+          <form data-envio="consultar" class="tarjeta" style="padding:24px">
+            <label class="et" for="doc">Número de documento del socio</label>
+            <div style="display:flex;flex-wrap:wrap;gap:12px">
+              <input id="doc" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 1090123456" value="${esc(c.doc)}" data-campo="consulta.doc" style="flex:1 1 260px;min-height:56px;border:2px solid var(--primario-solido);font-size:24px;font-family:var(--mono)">
+              <button class="btn" type="submit" style="min-height:56px">Consultar</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--texto-2)"><span>Datos de ejemplo:</span>
+              ${['1090123456', '1093445566', '25789456', '1111111111'].map((d) => `<button type="button" class="ejemplo" data-accion="ejemplo" data-valor="${d}">${d}</button>`).join('')}
+            </div>
+          </form>
+          ${res}
+        </section>
+        <aside class="tarjeta" style="flex:1 1 280px;min-width:0" aria-labelledby="t-venc">
+          <h2 id="t-venc" style="color:var(--primario-solido);font-size:17px">Vencen de hoy a 3 días</h2>
+          <div style="display:flex;justify-content:space-between;gap:8px"><div><b>Camilo Duarte</b><div class="sub" style="font-size:13px">Mensual</div></div><b style="color:var(--aviso)">Hoy</b></div>
+          <div style="display:flex;justify-content:space-between;gap:8px"><div><b>Valentina Ruiz</b><div class="sub" style="font-size:13px">Quincenal</div></div><b style="color:var(--aviso)">08/10</b></div>
+          <div style="display:flex;justify-content:space-between;gap:8px"><div><b>Andrés Pabón</b><div class="sub" style="font-size:13px">Trimestral</div></div><b style="color:var(--aviso)">10/10</b></div>
+          <a href="#${S.rol === 'admin' ? 'reportes' : 'vencimientos'}" style="font-weight:600">Ver todos los vencimientos</a>
+        </aside>
+      </div>`);
+  }
+  function pPago() {
+    const P = S.pago, renov = P.escenario === 'renovacion';
+    const dias = PLANES.find((p) => p[0] === P.plan)[1];
+    const inicio = renov ? new Date(2026, 10, 6) : HOY;
+    const vence = sumarDias(inicio, dias - 1);
+    const pide = P.medio !== 'Efectivo';
+    const err = P.error;
+    return marco(`<div><a href="#recepcion">← Volver a recepción</a><h1>Registrar pago</h1></div>
+      <div class="tarjeta" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div><div style="font-size:20px;font-weight:700">${renov ? 'Ana Pérez' : 'Jorge Rincón'}</div><div class="mono sub">${renov ? 'CC 1090123456' : 'CC 1093445566'}</div></div>
+        <span class="pastilla ${renov ? 'p-ok' : 'p-mal'}">${renov ? 'ACTIVO hasta 05/11/2026' : 'VENCIDO desde 29/09/2026'}</span>
+        <label class="sub" style="display:flex;align-items:center;gap:8px;font-size:14px">Escenario de prueba:
+          <select data-cambio="escenario" style="min-height:40px;font-size:14px"><option value="renovacion" ${renov ? 'selected' : ''}>Renovación anticipada</option><option value="vencido" ${renov ? '' : 'selected'}>Socio vencido</option></select></label>
+      </div>
+      <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="t-plan"><h2 id="t-plan">1. Plan</h2>
+        <div class="grid4">${PLANES.map((p) => `<button type="button" class="opcion" aria-pressed="${P.plan === p[0]}" data-accion="plan" data-valor="${p[0]}" ${P.ok ? 'disabled' : ''}><b style="font-size:17px">${p[0]}</b><span style="font-size:14px">${p[1]} ${p[1] === 1 ? 'día' : 'días'}</span><span style="font-weight:600">$ [precio]</span></button>`).join('')}</div></section>
+      <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="t-medio"><h2 id="t-medio">2. Medio de pago</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">${MEDIOS.map((m) => `<button type="button" class="chip" aria-pressed="${P.medio === m}" data-accion="medio" data-valor="${m}" ${P.ok ? 'disabled' : ''}>${m}</button>`).join('')}</div>
+        ${pide ? `<div class="campo" style="max-width:420px"><label class="et" for="ref">Referencia del comprobante</label><input id="ref" type="text" autocomplete="off" placeholder="Número que muestra el celular del socio" value="${esc(P.ref)}" data-campo="pago.ref" class="${err ? 'error-campo' : ''}" style="font-family:var(--mono);font-size:17px" ${P.ok ? 'disabled' : ''}><div class="sub" style="font-size:13px">Pruebe con M123456 para ver el rechazo por comprobante duplicado.</div></div>` : ''}
+      </section>
+      <section class="tarjeta" aria-labelledby="t-f"><h2 id="t-f">3. Fechas calculadas por el sistema</h2>
+        <div class="grid3"><div class="dato"><span class="sub">Inicia</span><strong class="mono" style="font-size:22px">${fmt(inicio)}</strong></div><div class="dato"><span class="sub">Vence</span><strong class="mono" style="font-size:22px">${fmt(vence)}</strong></div><div class="dato"><span class="sub">Valor</span><strong style="font-size:22px">$ [precio]</strong></div></div>
+        <div class="sub" style="font-size:14px">${renov ? 'Renovación anticipada (RN-04): Ana está activa hasta el 05/11/2026, así que el nuevo periodo inicia el día siguiente y no pierde días.' : 'Jorge está vencido, así que el nuevo periodo inicia hoy.'} Vencimiento = inicio + duración − 1 día (RN-03), en hora de Colombia.</div>
+      </section>
+      ${err === 'dup' ? `<div class="aviso a-mal" role="alert"><b>Comprobante duplicado.</b> La referencia M123456 ya pertenece a un pago vigente registrado el 16/09/2026 a nombre de Carlos Mora.</div>` : ''}
+      ${err === 'vacia' ? `<div class="aviso a-mal" role="alert"><b>Falta la referencia.</b> Para pagos por ${P.medio} digite el número del comprobante.</div>` : ''}
+      ${P.ok ? `<div class="aviso a-ok" role="status" style="font-size:17px;font-weight:600">Pago registrado — Activo hasta ${fmt(vence)}</div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><button type="button" class="btn" data-accion="confirmar-pago" ${P.ok ? 'disabled' : ''} style="min-height:52px">Confirmar pago</button><a class="btn-sec" href="#recepcion">${P.ok ? 'Volver' : 'Cancelar'}</a><span class="sub" style="font-size:13px">El botón se desactiva tras el primer clic para evitar pagos duplicados.</span></div>`);
+  }
+  function pSocio() {
+    const X = S.socio;
+    const dup = X.intento && X.numero.trim() === '1090123456';
+    const falta = X.intento && !X.autoriza;
+    return marco(`<div><a href="#recepcion">← Volver a recepción</a><h1>Registrar socio</h1><div class="sub">Los campos marcados con * son obligatorios.</div></div>
+      <form data-envio="socio" class="tarjeta" style="padding:24px;gap:18px;max-width:860px">
+        <div class="grid2">
+          <div class="campo"><label class="et" for="tipo">Tipo de documento *</label><select id="tipo"><option>CC – Cédula de ciudadanía</option><option>CE – Cédula de extranjería</option><option selected>PPT – Permiso por protección temporal</option><option>Pasaporte</option></select></div>
+          <div class="campo"><label class="et" for="num">Número de documento *</label><input id="num" type="text" inputmode="numeric" value="${esc(X.numero)}" data-campo="socio.numero" class="${dup ? 'error-campo' : ''}" style="font-family:var(--mono)">${dup ? '<div class="msg-error" role="alert">Ya existe un socio con este documento (Ana Pérez). <a href="#recepcion">Consultar su estado</a></div>' : ''}</div>
+          <div class="campo"><label class="et" for="nom">Nombres *</label><input id="nom" type="text" value="María Fernanda"></div>
+          <div class="campo"><label class="et" for="ape">Apellidos *</label><input id="ape" type="text" value="Gil"></div>
+          <div class="campo"><label class="et" for="tel">Teléfono (10 dígitos) *</label><input id="tel" type="tel" inputmode="numeric" value="3000000004" style="font-family:var(--mono)"></div>
+        </div>
+        <div style="background:var(--fondo);border:1px solid ${falta ? 'var(--mal-borde)' : 'var(--linea)'};border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px">
+          <div class="sub" style="font-size:14px">[Texto oficial de autorización de tratamiento de datos personales – pendiente de definir con el gimnasio, Ley 1581 de 2012]</div>
+          <label style="display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600"><input type="checkbox" data-cambio="autoriza" ${X.autoriza ? 'checked' : ''} style="width:22px;height:22px">El socio autoriza el tratamiento de sus datos *</label>
+          ${falta ? '<div class="msg-error" role="alert">Se requiere la autorización del socio (Ley 1581 de 2012).</div>' : ''}
+        </div>
+        ${X.ok ? `<div class="aviso a-neutro" role="status" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><span><b>Socio registrado.</b> Estado: Sin membresía.</span><a class="btn" href="#pago" data-accion="escenario" data-valor="vencido">Registrar su primer pago</a></div>` : ''}
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px"><button class="btn" type="submit">Guardar socio</button><span class="sub" style="font-size:13px">Pruebe el número 1090123456 o desmarque la autorización para ver las validaciones.</span></div>
+      </form>`);
+  }
+  function pVencimientos() {
+    return marco(`<div><h1>Próximos vencimientos</h1><div class="sub">De hoy (07/10) a hoy + 3 días (10/10), ambos inclusive.</div></div>
+      <section class="tarjeta">${vencimientosTabla(true)}<div class="sub" style="font-size:13px">El recordatorio abre WhatsApp con el mensaje prellenado; el envío lo hace la recepcionista (RF-06). La recepcionista no ve los ingresos.</div></section>`);
+  }
+  function pHistorial() {
+    const H = S.hist, an = H.anulado;
+    const fila = (plan, per, medio, ref, reg, vig, nota) => `<tr style="color:${vig ? 'var(--texto)' : 'var(--texto-2)'}"><td><b>${plan}</b></td><td class="mono">${per}</td><td>${medio}</td><td class="mono">${ref}</td><td>${reg}</td><td><span class="pastilla ${vig ? 'p-ok' : 'p-neutro'}" style="${vig ? '' : 'text-decoration:line-through'}">${vig ? 'Vigente' : 'Anulado'}</span>${nota ? `<div style="font-size:12px;color:var(--texto-2)">${nota}</div>` : ''}</td></tr>`;
+    return marco(`<div class="cabecera" style="align-items:flex-start"><div><h1>Ana Pérez</h1><div class="sub">CC 1090123456 · 300 000 0005 · socia desde 08/06/2026 · autorización de datos 08/06/2026 09:14</div></div>
+        <span class="pastilla ${an ? 'p-mal' : 'p-ok'}" style="font-size:16px;padding:10px 16px">${an ? 'VENCIDO · 1 día de mora' : 'ACTIVO hasta 05/11/2026'}</span></div>
+      <section class="tarjeta" aria-labelledby="t-h"><div class="cabecera"><h2 id="t-h">Historial de pagos</h2><button type="button" class="btn-sec btn-borde-peligro" data-accion="abrir-anulacion" ${an ? 'disabled' : ''}>Anular último pago</button></div>
+        <div class="tabla-caja"><table><thead><tr><th scope="col">Plan</th><th scope="col">Periodo</th><th scope="col">Medio</th><th scope="col">Referencia</th><th scope="col">Registró</th><th scope="col">Estado</th></tr></thead><tbody>
+          ${fila('Mensual', '07/10/2026 – 05/11/2026', 'Efectivo', '—', 'Laura · 07/10 18:02', !an, an ? 'Carlos · ' + esc(H.motivo) : '')}
+          ${fila('Mensual', '07/09/2026 – 06/10/2026', 'Nequi', 'M555012', 'Laura · 07/09 17:40', true, '')}
+          ${fila('Trimestral', '08/06/2026 – 05/09/2026', 'Efectivo', '—', 'Carlos · 08/06 09:20', true, '')}
+        </tbody></table></div></section>
+      ${H.confirmando ? `<section class="tarjeta" style="border:2px solid var(--mal-borde);max-width:640px" aria-labelledby="t-an">
+        <h2 id="t-an" style="color:var(--mal)">¿Anular el pago Mensual 07/10/2026 – 05/11/2026?</h2>
+        <div class="sub" style="font-size:14px">El pago no se borra: queda anulado con motivo, usuario y fecha, deja de contar en los ingresos y la membresía se recalcula. Solo se puede anular el último pago vigente (RN-07).</div>
+        <label class="et" for="motivo">Motivo *</label><textarea id="motivo" data-campo="hist.motivo" class="${H.falta ? 'error-campo' : ''}">${esc(H.motivo)}</textarea>
+        ${H.falta ? '<div class="msg-error" role="alert">Indique el motivo de la anulación.</div>' : ''}
+        <div style="display:flex;flex-wrap:wrap;gap:12px"><button type="button" class="btn btn-peligro" data-accion="confirmar-anulacion">Confirmar anulación</button><button type="button" class="btn-sec" data-accion="cancelar-anulacion">Cancelar</button></div></section>` : ''}
+      ${an ? `<div class="aviso a-aviso" role="status">Pago anulado y registrado en la auditoría. La socia quedó <b>vencida desde 06/10/2026</b>; ya se puede registrar el plan correcto. <a href="#pago" data-accion="escenario" data-valor="vencido">Registrar pago</a></div>` : ''}`);
+  }
+  function pReportes() {
+    const k = (t, d) => `<div class="tarjeta" style="padding:16px;gap:4px"><span class="sub" style="font-size:14px">${t}</span><b style="font-size:22px">$ [total]</b><span class="sub" style="font-size:13px">${d}</span></div>`;
+    return marco(`<div class="cabecera" style="align-items:flex-end"><div><h1>Reporte de ingresos</h1><div class="sub">Solo administrador. Excluye pagos anulados.</div></div>
+        <form style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px" data-envio="nada"><div class="campo"><label class="et" for="desde">Desde</label><input id="desde" type="date" value="2026-10-01"></div><div class="campo"><label class="et" for="hasta">Hasta</label><input id="hasta" type="date" value="2026-10-07"></div><button class="btn" type="submit" style="min-height:48px">Generar</button></form></div>
+      <section class="grid5" aria-label="Totales por medio de pago">${k('Efectivo', '[n] pagos')}${k('Nequi', '[n] pagos')}${k('Daviplata', '[n] pagos')}${k('Transferencia', '[n] pagos')}
+        <div class="tarjeta" style="padding:16px;gap:4px;background:var(--primario);color:#fff;border:0"><span style="font-size:14px;color:var(--lavanda)">Total del periodo</span><b style="font-size:24px">$ [total]</b><span style="font-size:13px;color:var(--lavanda)">[n] anulados (no suman)</span></div></section>
+      <section class="tarjeta" aria-labelledby="t-v"><div class="cabecera"><h2 id="t-v">Próximos vencimientos</h2><span class="sub" style="font-size:14px">De hoy (07/10) a hoy + 3 días (10/10)</span></div>${vencimientosTabla(true)}</section>`);
+  }
+  function pPlanes() { return marco(`<h1>Planes</h1>`); }
+  function pPersonal() { return marco(`<h1>Cuentas del personal</h1>`); }
+  function pMovil() { return marco(`<h1>Vista móvil sin conexión</h1>`); }
+  function pDenegado() {
+    return marco(`<div class="tarjeta" style="border:2px solid var(--mal-borde);max-width:640px">
+      <span class="pastilla p-mal" style="align-self:flex-start">Error 403 · Acceso denegado</span>
+      <h1 style="color:var(--mal)">No tiene permisos para ver esta sección</h1>
+      <p class="sub" style="margin:0">La sección «${TITULOS[ruta()] || ruta()}» es solo para el administrador. El servidor rechaza el acceso aunque se escriba la dirección directamente, y el intento queda registrado en la auditoría (RNF-05).</p>
+      <div><a class="btn" href="#recepcion">Volver a recepción</a></div></div>`);
+  }
+  function icono(tipo, t) {
+    t = t || 48;
+    const c = { ok: '#14532D', mal: '#8B1A1A', neutro: '#33404F' }[tipo];
+    const d = { ok: '<path d="M7 12.5 10.5 16 17 9"/>', mal: '<path d="M8 8l8 8M16 8l-8 8"/>', neutro: '<path d="M8 12h8"/>' }[tipo];
+    return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/>${d}</svg>`;
+  }
+  const PANTALLAS = { login: pLogin, recepcion: pRecepcion, pago: pPago, socio: pSocio, vencimientos: pVencimientos, historial: pHistorial, reportes: pReportes, planes: pPlanes, personal: pPersonal, movil: pMovil };
+  function render() {
+    let r = ruta();
+    if (!PANTALLAS[r]) r = 'login';
+    let html;
+    if (r !== 'login' && !S.rol) { location.hash = 'login'; return; }
+    if (RUTAS_ADMIN.includes(r) && S.rol !== 'admin') html = pDenegado();
+    else html = PANTALLAS[r]();
+    document.getElementById('app').innerHTML = html;
+    document.title = 'FitManage · ' + (TITULOS[r] || 'Prototipo');
+  }
+  window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); const m = document.getElementById('contenido'); if (m) m.focus({ preventScroll: true }); });
+  document.addEventListener('input', (e) => {
+    const k = e.target.getAttribute('data-campo');
+    if (!k) return;
+    const [a, b] = k.split('.');
+    S[a][b] = e.target.value;
+    if (a === 'pago') S.pago.error = null;
+  });
+  document.addEventListener('change', (e) => {
+    const k = e.target.getAttribute('data-cambio');
+    if (k === 'rol') { S.login.rol = e.target.value; render(); }
+    if (k === 'escenario') { Object.assign(S.pago, { escenario: e.target.value, error: null, ok: false, ref: '' }); render(); }
+    if (k === 'autoriza') { S.socio.autoriza = e.target.checked; S.socio.intento = false; S.socio.ok = false; render(); }
+  });
+  document.addEventListener('submit', (e) => {
+    const k = e.target.getAttribute('data-envio');
+    if (!k) return;
+    e.preventDefault();
+    if (k === 'login') { S.rol = S.login.rol; ir('recepcion'); }
+    if (k === 'consultar') { S.consulta.buscado = S.consulta.doc.trim() || null; render(); const i = document.getElementById('doc'); if (i) i.focus(); }
+    if (k === 'socio') {
+      const n = S.socio.numero.trim();
+      S.socio.intento = true;
+      S.socio.ok = !!n && n !== '1090123456' && S.socio.autoriza;
+      render();
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-accion]');
+    if (!el) return;
+    const a = el.getAttribute('data-accion'), v = el.getAttribute('data-valor');
+    if (a === 'reiniciar') { e.preventDefault(); S = ESTADO_INICIAL(); location.hash = 'login'; render(); return; }
+    if (a === 'salir') { S.rol = null; ir('login'); return; }
+    if (a === 'ejemplo') { S.consulta.doc = v; S.consulta.buscado = v; render(); return; }
+    if (a === 'escenario') { Object.assign(S.pago, { escenario: v, error: null, ok: false, ref: '' }); return; }
+    if (a === 'plan' && !S.pago.ok) { S.pago.plan = v; S.pago.error = null; render(); return; }
+    if (a === 'medio' && !S.pago.ok) { S.pago.medio = v; S.pago.error = null; render(); return; }
+    if (a === 'confirmar-pago') {
+      if (S.pago.ok) return;
+      const pide = S.pago.medio !== 'Efectivo', ref = (S.pago.ref || '').trim();
+      if (pide && !ref) S.pago.error = 'vacia';
+      else if (pide && ref.toUpperCase() === 'M123456') S.pago.error = 'dup';
+      else { S.pago.ok = true; S.pago.error = null; }
+      render(); return;
+    }
+    if (a === 'abrir-anulacion') { S.hist.confirmando = true; render(); const t = document.getElementById('motivo'); if (t) t.focus(); return; }
+    if (a === 'cancelar-anulacion') { S.hist.confirmando = false; S.hist.falta = false; render(); return; }
+    if (a === 'confirmar-anulacion') {
+      if (!(S.hist.motivo || '').trim()) { S.hist.falta = true; render(); return; }
+      S.hist.anulado = true; S.hist.confirmando = false; render(); return;
+    }
+  });
+  document.addEventListener('submit', (e) => { if (e.target.getAttribute('data-envio') === 'nada') e.preventDefault(); });
+  render();
+})();
+</script>
+</body>
+</html>
