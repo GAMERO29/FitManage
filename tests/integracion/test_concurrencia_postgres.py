@@ -16,6 +16,7 @@ from infraestructura.persistencia.repositorios import (
     PagoRepositorioORM,
     PlanRepositorioORM,
     SocioRepositorioORM,
+    UsuarioRepositorioORM,
 )
 
 REPETICIONES = 100
@@ -44,6 +45,8 @@ def test_qa05_nunca_quedan_dos_pagos_vigentes_con_la_misma_referencia():
         Usuario("Laura", "laura@gimnasio.test", Rol.RECEPCIONISTA),
         Usuario("Diana", "diana@gimnasio.test", Rol.RECEPCIONISTA),
     ]
+    for usuario in recepcionistas:
+        UsuarioRepositorioORM().guardar(usuario)
     rechazos = 0
     rechazados_por_la_base: list[str] = []
     for i in range(REPETICIONES):

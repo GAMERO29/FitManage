@@ -7,7 +7,7 @@ from datetime import date
 
 import pytest
 from django.db import IntegrityError
-from dobles import PagosEnMemoria, PlanesEnMemoria, RelojFijo, SociosEnMemoria
+from dobles import PagosEnMemoria, PlanesEnMemoria, RelojFijo, SociosEnMemoria, UsuariosEnMemoria
 from fechas import bogota
 
 from aplicacion.pagos import RegistroPagoService
@@ -17,15 +17,18 @@ from infraestructura.persistencia.repositorios import (
     PagoRepositorioORM,
     PlanRepositorioORM,
     SocioRepositorioORM,
+    UsuarioRepositorioORM,
 )
 
 
 @pytest.fixture(params=["memoria", "orm"])
-def repos(request, ana, maria, mensual):
+def repos(request, ana, maria, mensual, laura, carlos):
     """Los mismos escenarios contra los dobles y contra Django ORM."""
     if request.param == "memoria":
         return SociosEnMemoria(ana, maria), PlanesEnMemoria(mensual), PagosEnMemoria()
     request.getfixturevalue("db")
+    for usuario in (laura, carlos):
+        UsuarioRepositorioORM().guardar(usuario)
     socios, planes = SocioRepositorioORM(), PlanRepositorioORM()
     for socio in (ana, maria):
         socios.guardar(socio)
@@ -99,6 +102,7 @@ def test_la_base_rechaza_dos_pagos_vigentes_con_la_misma_referencia(
     SocioRepositorioORM().guardar(ana)
     SocioRepositorioORM().guardar(maria)
     PlanRepositorioORM().guardar(mensual)
+    UsuarioRepositorioORM().guardar(laura)
     pagos = PagoRepositorioORM()
     pagos.guardar(
         fabrica_pago(
@@ -144,3 +148,35 @@ def test_otros_errores_de_integridad_no_se_disfrazan_de_comprobante_duplicado(
         PagoRepositorioORM().guardar(
             fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
         )
+
+
+@pytest.fixture(params=["memoria", "orm"])
+def repo_usuarios(request):
+    if request.param == "memoria":
+        return UsuariosEnMemoria()
+    request.getfixturevalue("db")
+    return UsuarioRepositorioORM()
+
+
+def test_el_contexto_de_acceso_guarda_y_lee_sus_usuarios(repo_usuarios, carlos):
+    repo_usuarios.guardar(carlos)
+    leido = repo_usuarios.obtener(carlos.id)
+    assert (leido.nombre, leido.rol, leido.es_administrador()) == ("Carlos", carlos.rol, True)
+
+
+def test_usuario_inexistente_devuelve_none(repo_usuarios):
+    from uuid import uuid4
+
+    assert repo_usuarios.obtener(uuid4()) is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_el_repositorio_de_pagos_ya_no_crea_usuarios(ana, mensual, laura, fabrica_pago):
+    # DT-11: si la recepcionista no existe en Acceso del personal, la base rechaza el pago.
+    SocioRepositorioORM().guardar(ana)
+    PlanRepositorioORM().guardar(mensual)
+    with pytest.raises(IntegrityError):
+        PagoRepositorioORM().guardar(
+            fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+        )
+    assert UsuarioRepositorioORM().obtener(laura.id) is None

@@ -10,7 +10,7 @@ from datetime import date, datetime
 from typing import Protocol
 from uuid import UUID
 
-from dominio.modelos import Pago, Plan, Socio, TipoDocumento
+from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
 class SocioRepositorio(Protocol):
@@ -29,6 +29,14 @@ class PagoRepositorio(Protocol):
     def existe_referencia_vigente(self, referencia: str) -> bool: ...
 
     def guardar(self, pago: Pago) -> None: ...
+
+
+class UsuarioRepositorio(Protocol):
+    """Puerto del contexto Acceso del personal: dueño de las cuentas (paga DT-11)."""
+
+    def obtener(self, usuario_id: UUID) -> Usuario | None: ...
+
+    def guardar(self, usuario: Usuario) -> None: ...
 
 
 class Reloj(Protocol):
