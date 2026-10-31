@@ -7,3 +7,5 @@ __pycache__
 coverage.xml
 .env
 docs/**/*.docx
+node_modules
+**/node_modules

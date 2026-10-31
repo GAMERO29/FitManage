@@ -43,3 +43,15 @@ class PagoNoAnulable(ErrorDeDominio):
 
 class MotivoRequerido(ErrorDeDominio):
     """La anulación exige un motivo escrito (RN-07)."""
+
+
+class PagoNoEncontrado(ErrorDeDominio):
+    """No existe un pago con ese identificador."""
+
+
+class UsuarioNoEncontrado(ErrorDeDominio):
+    """No existe una cuenta del personal con ese identificador."""
+
+
+class CorreoNoDisponible(ErrorDeDominio):
+    """El servidor de correo no aceptó el mensaje; nada del negocio cambió."""

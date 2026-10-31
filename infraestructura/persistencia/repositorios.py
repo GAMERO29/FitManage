@@ -128,6 +128,14 @@ class PagoRepositorioORM:
             referencia=referencia, estado=EstadoPago.VIGENTE.value
         ).exists()
 
+    def obtener(self, pago_id: UUID) -> Pago | None:
+        m = (
+            PagoModelo.objects.select_related("socio", "registrado_por", "anulado_por")
+            .filter(id=pago_id)
+            .first()
+        )
+        return _a_pago(m) if m else None
+
     def guardar(self, pago: Pago) -> None:
         try:
             with transaction.atomic():

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime
 from uuid import UUID
 
+from dominio.errores import CorreoNoDisponible
 from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
@@ -37,6 +39,9 @@ class PagosEnMemoria:
     def existe_referencia_vigente(self, referencia: str) -> bool:
         return any(p.referencia == referencia and p.esta_vigente() for p in self._pagos.values())
 
+    def obtener(self, pago_id: UUID) -> Pago | None:
+        return self._pagos.get(pago_id)
+
     def guardar(self, pago: Pago) -> None:
         self._pagos[pago.id] = pago
 
@@ -64,3 +69,23 @@ class UsuariosEnMemoria:
 
     def guardar(self, usuario: Usuario) -> None:
         self._usuarios[usuario.id] = usuario
+
+
+@dataclass(frozen=True)
+class Mensaje:
+    destinatario: str
+    asunto: str
+    cuerpo: str
+
+
+class CorreoEnMemoria:
+    """Doble del puerto CorreoSaliente; con falla=True simula el SMTP caído."""
+
+    def __init__(self, falla: bool = False) -> None:
+        self.falla = falla
+        self.enviados: list[Mensaje] = []
+
+    def enviar(self, destinatario: str, asunto: str, cuerpo: str) -> None:
+        if self.falla:
+            raise CorreoNoDisponible("El servidor de correo no respondió.")
+        self.enviados.append(Mensaje(destinatario, asunto, cuerpo))

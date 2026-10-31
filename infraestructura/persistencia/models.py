@@ -38,16 +38,49 @@ class PlanModelo(models.Model):
 
 
 class UsuarioModelo(models.Model):
-    """Provisional hasta el módulo cuentas (DT-11)."""
+    """Cuentas del personal; solo el contexto Acceso del personal escribe aquí (DT-11)."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=80)
     correo = models.EmailField(unique=True)
     rol = models.CharField(max_length=20)
     activo = models.BooleanField(default=True)
+    # Credenciales (Guía 7): hash de Django, nunca la contraseña; bloqueo de RF-09.
+    clave_hash = models.CharField(max_length=128, default="", blank=True)
+    intentos_fallidos = models.PositiveSmallIntegerField(default=0)
+    bloqueada_hasta = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "usuarios"
+
+
+class RenovacionModelo(models.Model):
+    """Token de renovación de 8 horas por dispositivo (ADR N.° 06). Solo se guarda su SHA-256."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.ForeignKey(
+        UsuarioModelo, on_delete=models.CASCADE, related_name="renovaciones"
+    )
+    huella = models.CharField(max_length=64, unique=True)
+    vence = models.DateTimeField()
+    revocada = models.BooleanField(default=False)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "renovaciones"
+
+
+class IdempotenciaModelo(models.Model):
+    """Respuesta guardada por `Idempotency-Key`: un doble clic no crea dos pagos (PA-11)."""
+
+    clave = models.UUIDField(primary_key=True)
+    usuario = models.ForeignKey(UsuarioModelo, on_delete=models.CASCADE)
+    estado_http = models.PositiveSmallIntegerField(default=0)
+    cuerpo = models.JSONField(default=dict)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "idempotencia"
 
 
 class PagoModelo(models.Model):

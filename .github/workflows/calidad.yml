@@ -68,3 +68,11 @@ jobs:
           curl -sf http://127.0.0.1:4010/salud
       - name: Colección de Postman contra el mock (newman)
         run: npx --yes newman@6.2.3 run docs/api/FitManage.postman_collection.json
+      - name: Pact del consumidor (vista móvil); el pact guardado debe ser el que genera la prueba
+        working-directory: vista-movil
+        env:
+          PACT_DO_NOT_TRACK: "true"
+        run: |
+          npm ci --no-audit --no-fund
+          npm run test:pact
+          git diff --exit-code pacts/

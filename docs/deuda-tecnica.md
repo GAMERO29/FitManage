@@ -21,6 +21,8 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | --- | --- | --- | --- | --- | --- | --- |
 | DT-11 | Los usuarios se guardan desde `PagoRepositorioORM` (tabla `usuarios` provisional) porque aún no existe el módulo de cuentas. | Diseño | `infraestructura/persistencia/repositorios.py`, `_guardar_usuario` | Medio: el repositorio de pagos tiene una responsabilidad que no le corresponde. | Deliberada y prudente | Semana 5: módulo `cuentas` sobre el usuario de Django; el repositorio de pagos solo referencia el id. |
 | DT-12 | `Pago` guarda el `Socio` y el `Usuario` completos en lugar de sus identificadores, cruzando la frontera de los contextos Socios y Acceso. | Diseño | `dominio/modelos.py`, clase `Pago` | Bajo mientras todo esté en el monolito; alto si algún día se separa un contexto. | Deliberada y prudente | Solo si se revisa el ADR N.° 05: Membresías guardaría `socio_id` y `usuario_id`. |
+| DT-13 | El contrato documenta 429 (60 solicitudes por minuto) en `/salud` y `/auth/token`, pero la aplicación no limita la tasa todavía. | Seguridad | `infraestructura/api/vistas.py`, `emitir_token` | Medio: el bloqueo por cuenta (RF-09) frena adivinar una clave, pero no a quien pruebe muchos correos distintos. | Deliberada y prudente | Antes del piloto: límite por IP en el proxy del PaaS o con `django-ratelimit`, y una prueba de integración del 429. |
+| DT-14 | Los eventos de auditoría (`PagoRegistrado`, `PagoAnulado`, `CuentaBloqueada`) no se guardan; PA-08 se prueba sin la parte de «auditoría registrada». | Diseño | contexto Auditoría (sin código) | Alto antes de usar datos reales: RNF-05 y RN-07 exigen el rastro. | Deliberada y prudente | Guía de seguridad: tabla `auditoria` de solo inserción escrita en la misma transacción del caso de uso, y completar PA-08. |
 
 ## Resumen
 
@@ -35,6 +37,7 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 
 | ID | Semana | Cómo se pagó | Commit de integración |
 | --- | --- | --- | --- |
+| DT-05 | 7 (API) | `infraestructura/api/seguridad.py`: cada endpoint exige JWT y el rol se consulta en la base; 403 probado para recepcionista y entrenador en 8 pruebas. Falta la parte de las plantillas, que aún no existen. | PR #3 |
 | DT-07 | 2 | `infraestructura/reloj.py` (`RelojBogota`), fechas obligatoriamente con zona horaria en `Socio` y `Pago`, regla DTZ de ruff activa y escenario QA-03 automatizado en `tests/test_reloj.py`. | `a205da0` |
 | DT-09 | 2 | Pruebas para el caso sin mora, el documento vacío y el reloj real; cobertura de líneas y ramas del 100 %. | `be87164` |
 | DT-03 | 2 | Objetos de valor `Telefono` y `NumeroDocumento`, validados al crear un `Socio`, con 11 casos de prueba nuevos. | `f9d271f` |

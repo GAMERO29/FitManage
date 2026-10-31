@@ -8,6 +8,7 @@ from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import (
     MedioPagoInvalido,
     PagoNoAnulable,
+    PagoNoEncontrado,
     PermisoDenegado,
     PlanNoDisponible,
     ReferenciaDuplicada,
@@ -108,12 +109,35 @@ class AnulacionPagoService:
         self._reloj = reloj
 
     def anular_ultimo(self, socio: Socio, usuario: Usuario, motivo: str) -> Pago:
+        self._exigir_administrador(usuario)
+        ultimo = self._ultimo_vigente(socio)
+        if ultimo is None:
+            raise PagoNoAnulable("El socio no tiene pagos vigentes.")
+        return self._anular(ultimo, usuario, motivo)
+
+    def anular(self, pago_id: UUID, usuario: Usuario, motivo: str) -> Pago:
+        """`PATCH /pagos/{pagoId}`: solo se acepta si ese pago es el último vigente de su socio."""
+        self._exigir_administrador(usuario)
+        pago = self._pagos.obtener(pago_id)
+        if pago is None:
+            raise PagoNoEncontrado(f"No existe el pago {pago_id}.")
+        if not pago.esta_vigente():
+            raise PagoNoAnulable("El pago ya está anulado.")
+        ultimo = self._ultimo_vigente(pago.socio)
+        if ultimo is None or ultimo.id != pago.id:
+            raise PagoNoAnulable("Solo se puede anular el último pago vigente del socio.")
+        return self._anular(pago, usuario, motivo)
+
+    @staticmethod
+    def _exigir_administrador(usuario: Usuario) -> None:
         if not usuario.es_administrador():
             raise PermisoDenegado("Solo un administrador puede anular pagos.")
+
+    def _ultimo_vigente(self, socio: Socio) -> Pago | None:
         vigentes = self._pagos.vigentes_de(socio)
-        if not vigentes:
-            raise PagoNoAnulable("El socio no tiene pagos vigentes.")
-        ultimo = max(vigentes, key=lambda p: (p.fecha_inicio, p.registrado_en))
-        ultimo.anular(motivo, usuario, self._reloj.ahora())
-        self._pagos.guardar(ultimo)
-        return ultimo
+        return max(vigentes, key=lambda p: (p.fecha_inicio, p.registrado_en), default=None)
+
+    def _anular(self, pago: Pago, usuario: Usuario, motivo: str) -> Pago:
+        pago.anular(motivo, usuario, self._reloj.ahora())
+        self._pagos.guardar(pago)
+        return pago

@@ -28,6 +28,8 @@ class PagoRepositorio(Protocol):
 
     def existe_referencia_vigente(self, referencia: str) -> bool: ...
 
+    def obtener(self, pago_id: UUID) -> Pago | None: ...
+
     def guardar(self, pago: Pago) -> None: ...
 
 
@@ -37,6 +39,15 @@ class UsuarioRepositorio(Protocol):
     def obtener(self, usuario_id: UUID) -> Usuario | None: ...
 
     def guardar(self, usuario: Usuario) -> None: ...
+
+
+class CorreoSaliente(Protocol):
+    """Frontera con el servidor de correo (SMTP del hosting, DAD 8.2).
+
+    Lanza `CorreoNoDisponible` si el servidor no acepta el mensaje.
+    """
+
+    def enviar(self, destinatario: str, asunto: str, cuerpo: str) -> None: ...
 
 
 class Reloj(Protocol):

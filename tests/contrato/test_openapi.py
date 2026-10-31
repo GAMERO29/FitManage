@@ -87,9 +87,11 @@ def test_toda_operacion_protegida_documenta_el_401(spec):
             assert "401" in op["responses"], f"{verbo.upper()} {ruta}"
 
 
-def test_las_operaciones_de_administrador_documentan_el_403(spec):
-    for ruta, verbo in (("/reportes/ingresos", "get"), ("/pagos/{pagoId}", "patch")):
-        assert "403" in spec["paths"][ruta][verbo]["responses"]
+def test_toda_operacion_con_jwt_documenta_el_403(spec):
+    """Hay tres roles; el entrenador no entra a pagos ni a estados (Guía 7, al implementar)."""
+    for ruta, verbo, op in operaciones(spec):
+        if f"{ruta} {verbo}" not in PUBLICOS:
+            assert "403" in op["responses"], f"{verbo.upper()} {ruta}"
 
 
 def test_ningun_get_lleva_cuerpo(spec):
