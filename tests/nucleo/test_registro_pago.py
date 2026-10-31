@@ -11,7 +11,7 @@ from dominio.errores import (
     SocioNoEncontrado,
 )
 from dominio.modelos import EstadoPago, MedioPago, SolicitudPago, TipoDocumento
-from dominio.servicios import RegistroPagoService
+from aplicacion.pagos import RegistroPagoService
 
 AHORA = bogota(2026, 10, 7, 18, 2)
 

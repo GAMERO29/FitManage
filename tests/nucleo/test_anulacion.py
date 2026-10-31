@@ -7,7 +7,7 @@ from fechas import bogota
 from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import MotivoRequerido, PagoNoAnulable, PermisoDenegado
 from dominio.modelos import EstadoMembresia, EstadoPago
-from dominio.servicios import AnulacionPagoService
+from aplicacion.pagos import AnulacionPagoService
 
 AHORA = bogota(2026, 10, 7, 19, 0)
 
