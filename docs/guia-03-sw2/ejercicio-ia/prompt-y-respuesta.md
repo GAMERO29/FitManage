@@ -22,6 +22,14 @@
 >
 > Esta arquitectura permite escalar cada servicio de forma independiente, desplegar sin tiempo de inactividad y agregar nuevas funcionalidades sin afectar al resto del sistema.
 
+## Segundo prompt, ahora con el contexto
+
+> Ahora ten en cuenta esto: es un MVP para gimnasios MiPyme de Cúcuta, lo desarrolla una sola persona, el presupuesto de infraestructura es cero, la recepción tiene internet inestable y debe funcionar en el navegador sin instalar aplicaciones. ¿Mantienes tu recomendación?
+
+## Respuesta de la IA al segundo prompt (sin modificar)
+
+> Con ese contexto no la mantendría: los microservicios agregarían costo y complejidad operativa que un solo desarrollador no puede sostener. Recomiendo un **monolito modular**: una sola aplicación web (por ejemplo, Django o Laravel) con módulos bien separados para socios, membresías y pagos, una base de datos relacional gestionada y despliegue en un PaaS con capa gratuita. Para el internet inestable, una PWA con Service Worker que guarde en caché la consulta de estados en modo solo lectura. Si más adelante el negocio crece a varias sedes, los módulos bien separados permitirían extraer servicios.
+
 ## Auditoría y corrección
 
 Ver el Ejercicio 4 de la guía resuelta y el ADR N.° 03 (`docs/adr/ADR-003-unidad-de-despliegue.md`).
