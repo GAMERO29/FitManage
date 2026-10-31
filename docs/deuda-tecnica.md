@@ -15,6 +15,12 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | DT-09 | Dos líneas del dominio no tienen prueba: el caso sin mora de `dias_de_mora` y el documento vacío en `Socio`. | Pruebas | `dominio/calculadora.py`, línea 36 · `dominio/modelos.py`, línea 61 | Bajo: son caminos simples, pero hoy un cambio en ellos pasaría sin detectarse. | Inadvertida y prudente | Semana 2: dos pruebas nuevas; el flujo `Calidad` exige cobertura mínima de 95 %. |
 | DT-10 | El texto oficial de autorización de tratamiento de datos no está redactado; el prototipo muestra un marcador. | Seguridad (cumplimiento legal) | `prototipo/FitManage_Prototipo.html`, línea 255 | Alto antes de usar datos reales: sin el texto aprobado, la autorización que exige la Ley 1581 de 2012 no es válida. | Deliberada y prudente | Antes del piloto con datos reales: redactar con el dueño del gimnasio el aviso de privacidad y la autorización, versionarlos en `docs/legal/` y guardar con cada socio la versión que aceptó. |
 
+## Ítems nuevos
+
+| ID | Ítem de deuda | Categoría | Ubicación | Impacto en calidad | Cuadrante de Fowler | Plan de pago e hito |
+| --- | --- | --- | --- | --- | --- | --- |
+| DT-11 | Los usuarios se guardan desde `PagoRepositorioORM` (tabla `usuarios` provisional) porque aún no existe el módulo de cuentas. | Diseño | `infraestructura/persistencia/repositorios.py`, `_guardar_usuario` | Medio: el repositorio de pagos tiene una responsabilidad que no le corresponde. | Deliberada y prudente | Semana 5: módulo `cuentas` sobre el usuario de Django; el repositorio de pagos solo referencia el id. |
+
 ## Resumen
 
 | Categoría | Ítems | Impacto alto |
@@ -32,3 +38,5 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | DT-09 | 2 | Pruebas para el caso sin mora, el documento vacío y el reloj real; cobertura de líneas y ramas del 100 %. | `be87164` |
 | DT-03 | 2 | Objetos de valor `Telefono` y `NumeroDocumento`, validados al crear un `Socio`, con 11 casos de prueba nuevos. | `f9d271f` |
 | DT-08 | 3 | `Dockerfile` (Python 3.12, usuario sin privilegios) y `docker-compose.yml` con PostgreSQL 16; la contraseña se lee de `.env`, que no se sube. El flujo `Calidad` agrega el trabajo `contenedores`, que construye la imagen, corre las pruebas dentro y comprueba que la app alcanza la base de datos. | `781ad56` |
+| DT-02 | 4 | Adaptadores `SocioRepositorioORM`, `PlanRepositorioORM` y `PagoRepositorioORM`; las mismas pruebas de contrato corren contra los dobles en memoria y contra Django ORM, con SQLite en el trabajo de pruebas y con PostgreSQL 16 en el trabajo de contenedores. | PR #1 (`e59244c`) |
+| DT-01 | 4 | Índice único parcial `referencia_vigente_unica` en la tabla `pagos`; el adaptador traduce la violación a `ReferenciaDuplicada`. QA-05 corre 100 pares de registros simultáneos contra PostgreSQL 16 y en los 100 la base rechaza el segundo. | PR #1 (`e59244c`) |

@@ -1,0 +1,26 @@
+flowchart LR
+  subgraph NAV["Navegador (PC de recepción o celular)"]
+    UI["Plantillas Django + Bootstrap<br/>Service Worker con caché de solo lectura"]
+  end
+  subgraph APP["Aplicación Django: un solo proceso (ADR N.° 03)"]
+    subgraph ENT["Adaptadores de entrada"]
+      VI["Vistas de recepción y pagos<br/>(semanas 5 y 6)"]
+    end
+    subgraph HEX["Núcleo hexagonal: sin Django ni base de datos"]
+      CU["aplicacion/pagos.py<br/>RegistroPagoService · AnulacionPagoService"]
+      DO["dominio/<br/>Socio · Plan · Pago · Usuario<br/>CalculadoraMembresia · reglas RN-01 a RN-10"]
+      PU[["dominio/puertos.py<br/>SocioRepositorio · PlanRepositorio<br/>PagoRepositorio · Reloj"]]
+      CU --> DO
+      CU --> PU
+    end
+    subgraph SAL["Adaptadores de salida"]
+      OR["infraestructura/persistencia/<br/>SocioRepositorioORM · PlanRepositorioORM<br/>PagoRepositorioORM"]
+      RE["infraestructura/reloj.py<br/>RelojBogota"]
+    end
+  end
+  DB[("PostgreSQL 16<br/>índice único: referencia_vigente_unica")]
+  UI -->|HTTPS| VI
+  VI --> CU
+  OR -.-> PU
+  RE -.-> PU
+  OR --> DB
