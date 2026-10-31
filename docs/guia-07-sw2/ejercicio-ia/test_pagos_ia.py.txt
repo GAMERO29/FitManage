@@ -1,0 +1,77 @@
+import os
+from datetime import date
+from unittest.mock import MagicMock, patch
+
+import pytest
+import requests
+
+os.environ["DATABASE_URL"] = "postgresql://fitmanage:fitmanage@localhost:5432/fitmanage"
+
+from infraestructura.persistencia.models import PagoModelo, PlanModelo, SocioModelo  # noqa: E402
+
+BASE_URL = "http://localhost:8000/api/v1"
+
+
+@pytest.fixture(scope="module")
+def datos():
+    plan = PlanModelo.objects.create(nombre="Mensual", duracion_dias=30, precio=75000)
+    socio = SocioModelo.objects.create(
+        tipo_documento="CC", numero_documento="1090123456", nombres="Ana",
+        apellidos="Pérez", telefono="3000000005", autorizacion_datos="2026-05-25T09:14:00-05:00",
+    )
+    yield {"plan": plan, "socio": socio}
+    PagoModelo.objects.all().delete()
+    SocioModelo.objects.all().delete()
+    PlanModelo.objects.all().delete()
+
+
+@pytest.fixture
+def token():
+    r = requests.post(f"{BASE_URL}/auth/token", json={"correo": "admin@gym.com", "contrasena": "admin123"})
+    return r.json()["tokenAcceso"]
+
+
+@pytest.mark.django_db(transaction=True)
+def test_registrar_pago_exitoso(datos, token):
+    r = requests.post(
+        f"{BASE_URL}/pagos",
+        json={"tipoDocumento": "CC", "numeroDocumento": "1090123456",
+              "planId": str(datos["plan"].id), "medio": "EFECTIVO"},
+        headers={"Authorization": f"Bearer {token}", "Idempotency-Key": "11111111-1111-1111-1111-111111111111"},
+    )
+    assert r.status_code == 201
+    assert r.json()["vence"] == "2026-11-05"
+
+
+@pytest.mark.django_db(transaction=True)
+@patch("aplicacion.pagos.CalculadoraMembresia")
+def test_vencimiento_calculado(mock_calculadora, datos, token):
+    mock_calculadora.return_value.calcular_vencimiento.return_value = date(2026, 11, 5)
+    mock_calculadora.return_value.calcular_fecha_inicio.return_value = date(2026, 10, 7)
+    r = requests.post(
+        f"{BASE_URL}/pagos",
+        json={"tipoDocumento": "CC", "numeroDocumento": "1090123456",
+              "planId": str(datos["plan"].id), "medio": "EFECTIVO"},
+        headers={"Authorization": f"Bearer {token}", "Idempotency-Key": "22222222-2222-2222-2222-222222222222"},
+    )
+    assert r.json()["vence"] == "2026-11-05"
+
+
+@pytest.mark.django_db(transaction=True)
+@patch("infraestructura.persistencia.repositorios.PagoRepositorioORM.existe_referencia_vigente")
+def test_referencia_duplicada(mock_existe, datos, token):
+    mock_existe.return_value = True
+    r = requests.post(
+        f"{BASE_URL}/pagos",
+        json={"tipoDocumento": "CC", "numeroDocumento": "1090123456",
+              "planId": str(datos["plan"].id), "medio": "NEQUI", "referencia": "M123456"},
+        headers={"Authorization": f"Bearer {token}", "Idempotency-Key": "33333333-3333-3333-3333-333333333333"},
+    )
+    assert r.status_code == 409
+
+
+@pytest.mark.django_db(transaction=True)
+def test_servicio_falla(datos, token):
+    with patch("aplicacion.pagos.RegistroPagoService.registrar_pago", side_effect=Exception("error")):
+        r = requests.post(f"{BASE_URL}/pagos", json={}, headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 500

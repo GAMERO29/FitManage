@@ -10,5 +10,6 @@ Un ADR aceptado no se edita. Si la decisión cambia, se escribe uno nuevo y el a
 | [04](ADR-004-estilo-arquitectonico.md) | Monolito modular con núcleo hexagonal en los módulos que tocan dinero | Aceptado | 30/10/2026 |
 | [05](ADR-005-distribucion.md) | Ningún contexto se distribuye: todo sigue en el monolito modular, con límites lógicos | Aceptado | 30/10/2026 |
 | [06](ADR-006-seguridad-api-jwt.md) | La API `/api/v1` se protege con JWT de acceso corto y renovación en cookie `HttpOnly`; la web sigue con sesión | Aceptado | 31/10/2026 |
+| [07](ADR-007-estrategia-de-pruebas.md) | Pirámide de pruebas con base efímera real y dobles solo en las fronteras externas; contrato verificado en cada respuesta y con Pact | Aceptado | 31/10/2026 |
 
 Los ADR 01 y 02 se escribieron con la plantilla de 5 campos de la Guía 1. Desde el ADR 03 se usa la plantilla completa de 6 campos (`plantilla.md`), que agrega las alternativas consideradas. Los dos primeros no se reescriben para cumplirla, precisamente porque un ADR aceptado es inmutable.

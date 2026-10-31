@@ -9,3 +9,4 @@ htmlcov/
 .env
 *.sqlite3
 .impeccable/questions/
+node_modules/

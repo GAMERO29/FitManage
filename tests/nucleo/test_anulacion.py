@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import uuid4
 
 import pytest
 from dobles import PagosEnMemoria, RelojFijo
@@ -6,7 +7,7 @@ from fechas import bogota
 
 from aplicacion.pagos import AnulacionPagoService
 from dominio.calculadora import CalculadoraMembresia
-from dominio.errores import MotivoRequerido, PagoNoAnulable, PermisoDenegado
+from dominio.errores import MotivoRequerido, PagoNoAnulable, PagoNoEncontrado, PermisoDenegado
 from dominio.modelos import EstadoMembresia, EstadoPago
 
 AHORA = bogota(2026, 10, 7, 19, 0)
@@ -58,3 +59,43 @@ def test_la_membresia_se_recalcula_tras_anular(ana, mensual, laura, carlos, fabr
     servicio.anular_ultimo(ana, carlos, "Plan equivocado")
     estado, vence = CalculadoraMembresia().estado_de(repo.vigentes_de(ana), date(2026, 10, 7))
     assert (estado, vence) == (EstadoMembresia.VENCIDO, date(2026, 10, 6))
+
+
+def test_anula_por_id_cuando_es_el_ultimo_pago_vigente(ana, mensual, laura, carlos, fabrica_pago):
+    anterior = fabrica_pago(ana, mensual, date(2026, 9, 7), date(2026, 10, 6), laura)
+    ultimo = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    _, servicio = preparar(anterior, ultimo)
+    assert servicio.anular(ultimo.id, carlos, "Plan equivocado") is ultimo
+    assert ultimo.estado is EstadoPago.ANULADO
+
+
+def test_por_id_no_deja_anular_un_pago_que_no_es_el_ultimo(
+    ana, mensual, laura, carlos, fabrica_pago
+):
+    anterior = fabrica_pago(ana, mensual, date(2026, 9, 7), date(2026, 10, 6), laura)
+    ultimo = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    _, servicio = preparar(anterior, ultimo)
+    with pytest.raises(PagoNoAnulable):
+        servicio.anular(anterior.id, carlos, "Intento sobre el pago viejo")
+    assert anterior.esta_vigente() and ultimo.esta_vigente()
+
+
+def test_por_id_un_pago_ya_anulado_no_se_anula_dos_veces(ana, mensual, laura, carlos, fabrica_pago):
+    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    _, servicio = preparar(pago)
+    servicio.anular(pago.id, carlos, "Primera vez")
+    with pytest.raises(PagoNoAnulable):
+        servicio.anular(pago.id, carlos, "Segunda vez")
+
+
+def test_por_id_pago_inexistente(carlos):
+    _, servicio = preparar()
+    with pytest.raises(PagoNoEncontrado):
+        servicio.anular(uuid4(), carlos, "No existe")
+
+
+def test_por_id_la_recepcionista_no_puede(ana, mensual, laura, fabrica_pago):
+    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    _, servicio = preparar(pago)
+    with pytest.raises(PermisoDenegado):
+        servicio.anular(pago.id, laura, "Intento")

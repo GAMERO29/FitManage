@@ -1,11 +1,12 @@
 # API de FitManage (contrato Design-First)
 
-El contrato [`openapi.yaml`](openapi.yaml) se escribió **antes** de los controladores (Guía 6, FPI-22). La implementación en Django tendrá que cumplirlo, y la Guía 7 lo comprueba con pruebas de integración.
+El contrato [`openapi.yaml`](openapi.yaml) se escribió **antes** de los controladores (Guía 6, FPI-22). Desde la Guía 7 (FPI-23) las 13 operaciones están implementadas en `infraestructura/api/`, cada solicitud se valida contra el contrato con openapi-core y cada respuesta de las pruebas de integración también (`tests/apoyo_api.py`).
 
 | Archivo | Qué es |
 | --- | --- |
-| [`openapi.yaml`](openapi.yaml) | Contrato OpenAPI 3.0.3: 12 operaciones en 6 contextos, seguridad JWT global y esquemas públicos sin datos sensibles. |
-| [`FitManage.postman_collection.json`](FitManage.postman_collection.json) | 11 peticiones con 17 aserciones. Hoy corren contra el mock; mañana contra la implementación cambiando `baseUrl`. |
+| [`openapi.yaml`](openapi.yaml) | Contrato OpenAPI 3.0.3 (versión 1.1.0): 13 operaciones en 6 contextos, seguridad JWT global y esquemas públicos sin datos sensibles. |
+| [`FitManage.postman_collection.json`](FitManage.postman_collection.json) | 11 peticiones con 17 aserciones contra el mock de Prism. Contra Django las reemplazan las 75 pruebas de `tests/integracion/api/`. |
+| [`../../vista-movil/pacts/`](../../vista-movil/pacts/) | Pact de la vista móvil (consumidor), verificado contra la API real en `tests/contrato/test_pact_proveedor.py`. |
 | [`evidencia-newman.txt`](evidencia-newman.txt) | Salida de la última corrida local de la colección. |
 | [`errores.md`](errores.md) | Catálogo de códigos de error (`problem+json`). |
 | [`.spectral.yaml`](.spectral.yaml) | Reglas de Spectral (`spectral:oas`). |
@@ -17,16 +18,17 @@ El contrato [`openapi.yaml`](openapi.yaml) se escribió **antes** de los control
 | GET | `/salud` | Sistema | 200, 429, 503 | No (monitoreo del PaaS, sin datos) |
 | POST | `/auth/token` | Acceso del personal | 200, 400, 401, 423, 429 | No (es el que lo entrega) |
 | POST | `/auth/renovacion` | Acceso del personal | 200, 401 | No: cookie de renovación `HttpOnly` |
+| POST | `/personal/{usuarioId}/restablecimiento` | Acceso del personal | 202, 401, 403, 404, 503 | Sí, administrador (única dependencia externa: SMTP) |
 | POST | `/socios` | Socios | 201, 400, 401, 403, 409 | Sí |
-| GET | `/estados` | Recepción (OHS) | 200, 400, 401 | Sí |
-| GET | `/estados/{tipoDocumento}/{numeroDocumento}` | Recepción (OHS) | 200, 400, 401, 404 | Sí |
-| GET | `/planes` | Membresías y cobros | 200, 401 | Sí |
-| POST | `/pagos` | Membresías y cobros | 201, 400, 401, 404, 409 | Sí |
+| GET | `/estados` | Recepción (OHS) | 200, 400, 401, 403 | Sí |
+| GET | `/estados/{tipoDocumento}/{numeroDocumento}` | Recepción (OHS) | 200, 400, 401, 403, 404 | Sí |
+| GET | `/planes` | Membresías y cobros | 200, 401, 403 | Sí |
+| POST | `/pagos` | Membresías y cobros | 201, 400, 401, 403, 404, 409 | Sí |
 | PATCH | `/pagos/{pagoId}` | Membresías y cobros | 200, 400, 401, 403, 404, 409 | Sí, rol administrador |
 | GET | `/reportes/ingresos` | Reportes | 200, 400, 401, 403 | Sí, rol administrador |
-| GET | `/vencimientos` | Recordatorios | 200, 400, 401 | Sí |
+| GET | `/vencimientos` | Recordatorios | 200, 400, 401, 403 | Sí |
 
-Auditoría no expone endpoints: solo recibe eventos dentro de la misma transacción (ADR N.° 05).
+Auditoría no expone endpoints: solo recibe eventos dentro de la misma transacción (ADR N.° 05); esos eventos todavía no se guardan (DT-14). El 429 está documentado pero aún no se emite (DT-13). En todas las operaciones con JWT, el rol Entrenador recibe 403.
 
 ## Cómo validarlo
 

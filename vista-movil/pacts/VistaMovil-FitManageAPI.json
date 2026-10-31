@@ -1,0 +1,334 @@
+{
+  "consumer": {
+    "name": "VistaMovil"
+  },
+  "interactions": [
+    {
+      "description": "la descarga de la copia de estados",
+      "providerStates": [
+        {
+          "name": "la socia CC 1090123456 tiene membresía activa"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.token-de-prueba.firma"
+        },
+        "matchingRules": {
+          "header": {
+            "Authorization": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^Bearer .+$"
+                }
+              ]
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/api/v1/estados"
+      },
+      "response": {
+        "body": {
+          "estados": [
+            {
+              "documentoEnmascarado": "CC ******3456",
+              "documentoHash": "9b1f0c7e5a2d4e8f",
+              "estado": "ACTIVO",
+              "nombreCorto": "Ana P."
+            }
+          ],
+          "generadoEl": "2026-10-07T18:45:00-05:00"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.estados": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.estados[*].documentoEnmascarado": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[A-Z]+ \\*+\\d{4}$"
+                }
+              ]
+            },
+            "$.estados[*].documentoHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-f]{16}$"
+                }
+              ]
+            },
+            "$.estados[*].estado": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^(ACTIVO|VENCIDO|SIN_MEMBRESIA)$"
+                }
+              ]
+            },
+            "$.estados[*].nombreCorto": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.generadoEl": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ssXXX",
+                  "match": "datetime"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "una consulta con un token vencido",
+      "providerStates": [
+        {
+          "name": "la socia CC 1090123456 tiene membresía activa"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token-vencido"
+        },
+        "method": "GET",
+        "path": "/api/v1/estados/CC/1090123456"
+      },
+      "response": {
+        "body": {
+          "codigo": "NO_AUTENTICADO"
+        },
+        "headers": {
+          "Content-Type": "application/problem+json"
+        },
+        "matchingRules": {
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/problem\\+json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 401
+      }
+    },
+    {
+      "description": "una consulta de estado de una socia activa",
+      "providerStates": [
+        {
+          "name": "la socia CC 1090123456 tiene membresía activa"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.token-de-prueba.firma"
+        },
+        "matchingRules": {
+          "header": {
+            "Authorization": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^Bearer .+$"
+                }
+              ]
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/api/v1/estados/CC/1090123456"
+      },
+      "response": {
+        "body": {
+          "diasRestantes": 15,
+          "documentoEnmascarado": "CC ******3456",
+          "documentoHash": "9b1f0c7e5a2d4e8f",
+          "estado": "ACTIVO",
+          "nombreCorto": "Ana P.",
+          "venceEl": "2026-10-21"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.diasRestantes": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.documentoEnmascarado": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[A-Z]+ \\*+\\d{4}$"
+                }
+              ]
+            },
+            "$.documentoHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-f]{16}$"
+                }
+              ]
+            },
+            "$.nombreCorto": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.venceEl": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "una consulta de un documento inexistente",
+      "providerStates": [
+        {
+          "name": "no hay ningún socio con el documento CC 1111111111"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.token-de-prueba.firma"
+        },
+        "matchingRules": {
+          "header": {
+            "Authorization": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^Bearer .+$"
+                }
+              ]
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/api/v1/estados/CC/1111111111"
+      },
+      "response": {
+        "body": {
+          "codigo": "NO_ENCONTRADO",
+          "status": 404,
+          "title": "No hay ningún socio con ese documento"
+        },
+        "headers": {
+          "Content-Type": "application/problem+json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/problem\\+json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 404
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "17.1.4"
+    },
+    "pactRust": {
+      "ffi": "0.5.8",
+      "models": "1.3.16"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "FitManageAPI"
+  }
+}

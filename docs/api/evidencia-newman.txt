@@ -3,71 +3,71 @@ newman
 FitManage · API v1 (contrato)
 
 → 1. Iniciar sesión (sin JWT)
-  POST http://127.0.0.1:4010/auth/token [200 OK, 477B, 31ms]
+  POST http://127.0.0.1:4010/auth/token [200 OK, 477B, 61ms]
   ✓  200 y entrega un token Bearer
   ✓  La respuesta no devuelve la contraseña
 
 → 2. Consultar estado sin token → 401
-  GET http://127.0.0.1:4010/estados/CC/1090123456 [401 Unauthorized, 619B, 7ms]
+  GET http://127.0.0.1:4010/estados/CC/1090123456 [401 Unauthorized, 619B, 22ms]
   ✓  401 cuando falta el JWT
   ✓  Error en formato problem+json
 
 → 3. Consultar estado con token
-  GET http://127.0.0.1:4010/estados/CC/1090123456 [200 OK, 453B, 5ms]
+  GET http://127.0.0.1:4010/estados/CC/1090123456 [200 OK, 453B, 13ms]
   ✓  200 con el estado público
   ✓  No expone teléfono ni documento completo
 
 → 4. Registrar pago
-  POST http://127.0.0.1:4010/pagos [201 Created, 562B, 7ms]
+  POST http://127.0.0.1:4010/pagos [201 Created, 562B, 21ms]
   ✓  201 y Location
   ✓  El servidor calcula inicio, vencimiento y valor
 
 → 5. Registrar pago con datos inválidos → 400
-  POST http://127.0.0.1:4010/pagos [400 Bad Request, 748B, 6ms]
+  POST http://127.0.0.1:4010/pagos [400 Bad Request, 748B, 12ms]
   ✓  400 si el plan no es un UUID
   ✓  Dice qué falló
 
 → 6. Comprobante duplicado → 409
-  POST http://127.0.0.1:4010/pagos [409 Conflict, 567B, 6ms]
+  POST http://127.0.0.1:4010/pagos [409 Conflict, 567B, 13ms]
   ✓  409 documentado para la referencia repetida
 
 → 7. Anular pago (PATCH)
-  PATCH http://127.0.0.1:4010/pagos/5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44 [200 OK, 674B, 6ms]
+  PATCH http://127.0.0.1:4010/pagos/5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44 [200 OK, 674B, 19ms]
   ✓  200 y el pago queda ANULADO, no borrado
 
 → 8. Reporte como recepcionista → 403
-  GET http://127.0.0.1:4010/reportes/ingresos?desde=2026-10-01&hasta=2026-10-07 [403 Forbidden, 485B, 4ms]
+  GET http://127.0.0.1:4010/reportes/ingresos?desde=2026-10-01&hasta=2026-10-07 [403 Forbidden, 485B, 15ms]
   ✓  403 documentado para un rol sin permiso
 
 → 9. Reporte como administrador
-  GET http://127.0.0.1:4010/reportes/ingresos?desde=2026-10-01&hasta=2026-10-07 [200 OK, 580B, 8ms]
+  GET http://127.0.0.1:4010/reportes/ingresos?desde=2026-10-01&hasta=2026-10-07 [200 OK, 580B, 10ms]
   ✓  200 con totales por medio de pago
   ✓  Sin datos de socios
 
 → 10. Vencimientos para recordatorios
-  GET http://127.0.0.1:4010/vencimientos?dias=3 [200 OK, 547B, 7ms]
+  GET http://127.0.0.1:4010/vencimientos?dias=3 [200 OK, 547B, 13ms]
   ✓  200 con teléfono solo para armar el enlace de WhatsApp
 
 → 11. Salud (pública a propósito)
-  GET http://127.0.0.1:4010/salud [200 OK, 344B, 10ms]
+  GET http://127.0.0.1:4010/salud [200 OK, 344B, 5ms]
   ✓  200 sin token
 
-┌─────────────────────────┬─────────────────┬─────────────────┐
-│                         │        executed │          failed │
-├─────────────────────────┼─────────────────┼─────────────────┤
-│              iterations │               1 │               0 │
-├─────────────────────────┼─────────────────┼─────────────────┤
-│                requests │              11 │               0 │
-├─────────────────────────┼─────────────────┼─────────────────┤
-│            test-scripts │              11 │               0 │
-├─────────────────────────┼─────────────────┼─────────────────┤
-│      prerequest-scripts │               0 │               0 │
-├─────────────────────────┼─────────────────┼─────────────────┤
-│              assertions │              17 │               0 │
-├─────────────────────────┴─────────────────┴─────────────────┤
-│ total run duration: 329ms                                   │
-├─────────────────────────────────────────────────────────────┤
-│ total data received: 2.4kB (approx)                         │
-├─────────────────────────────────────────────────────────────┤
-│ average response time: 8ms [min: 4ms, max: 31ms, s.d.: 7ms] │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              iterations │                1 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│                requests │               11 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│            test-scripts │               11 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│      prerequest-scripts │                0 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              assertions │               17 │                0 │
+├─────────────────────────┴──────────────────┴──────────────────┤
+│ total run duration: 479ms                                     │
+├───────────────────────────────────────────────────────────────┤
+│ total data received: 2.4kB (approx)                           │
+├───────────────────────────────────────────────────────────────┤
+│ average response time: 18ms [min: 5ms, max: 61ms, s.d.: 14ms] │
+└───────────────────────────────────────────────────────────────┘
