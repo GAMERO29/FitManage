@@ -6,6 +6,7 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from fechas import bogota
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -22,7 +23,7 @@ from dominio.modelos import (  # noqa: E402
     Usuario,
 )
 
-AUTORIZACION = datetime(2026, 6, 8, 9, 14)
+AUTORIZACION = bogota(2026, 6, 8, 9, 14)
 
 
 @pytest.fixture
@@ -87,7 +88,7 @@ def crear_pago(
         fecha_inicio=inicio,
         fecha_vencimiento=vence,
         registrado_por=usuario,
-        registrado_en=registrado_en or datetime.combine(inicio, datetime.min.time()),
+        registrado_en=registrado_en or bogota(inicio.year, inicio.month, inicio.day),
     )
 
 

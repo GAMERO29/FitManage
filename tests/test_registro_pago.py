@@ -1,6 +1,7 @@
-from datetime import date, datetime
+from datetime import date
 
 import pytest
+from fechas import bogota
 
 from dominio.errores import (
     MedioPagoInvalido,
@@ -12,7 +13,7 @@ from dominio.errores import (
 from dominio.modelos import EstadoPago, MedioPago, SolicitudPago, TipoDocumento
 from dominio.servicios import RegistroPagoService
 
-AHORA = datetime(2026, 10, 7, 18, 2)
+AHORA = bogota(2026, 10, 7, 18, 2)
 
 
 def servicio(repos):
@@ -46,7 +47,7 @@ def test_el_pago_guarda_quien_lo_registro_y_cuando(entorno, mensual, laura):
 
 
 def test_trimestral_desde_el_primero_de_marzo_vence_el_29_de_mayo(entorno, trimestral, laura):
-    repos = entorno(datetime(2026, 3, 1, 8, 0))
+    repos = entorno(bogota(2026, 3, 1, 8, 0))
     pago = servicio(repos).registrar_pago(solicitud(trimestral), laura)
     assert pago.fecha_vencimiento == date(2026, 5, 29)
 
@@ -58,7 +59,7 @@ def test_plan_diario_vence_el_mismo_dia(entorno, diario, laura):
 
 def test_renovacion_anticipada_no_pierde_dias(entorno, ana, mensual, laura, fabrica_pago):
     vigente = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
-    repos = entorno(datetime(2026, 11, 1, 9, 0), vigente)
+    repos = entorno(bogota(2026, 11, 1, 9, 0), vigente)
     pago = servicio(repos).registrar_pago(solicitud(mensual), laura)
     assert pago.fecha_inicio == date(2026, 11, 6)
 
@@ -105,7 +106,7 @@ def test_referencia_de_un_pago_anulado_se_puede_reutilizar(
         MedioPago.NEQUI,
         "M123456",
     )
-    anulado.anular("Socio equivocado", carlos, datetime(2026, 9, 16, 19, 0))
+    anulado.anular("Socio equivocado", carlos, bogota(2026, 9, 16, 19, 0))
     pago = servicio(entorno(AHORA, anulado)).registrar_pago(
         solicitud(mensual, "NEQUI", "M123456"), laura
     )

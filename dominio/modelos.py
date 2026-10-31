@@ -7,8 +7,17 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo
 
 from dominio.errores import DatosInvalidos, MotivoRequerido, PagoNoAnulable
+
+ZONA_HORARIA = ZoneInfo("America/Bogota")  # RN-03: todas las fechas del negocio
+
+
+def exigir_zona_horaria(momento: datetime, campo: str) -> None:
+    """Rechaza fechas sin zona horaria: con UTC, después de las 7 p. m. ya es otro día."""
+    if momento.tzinfo is None or momento.utcoffset() is None:
+        raise DatosInvalidos(f"{campo} debe incluir la zona horaria.")
 
 
 class TipoDocumento(Enum):
@@ -62,6 +71,7 @@ class Socio:
         if self.autorizacion_datos is None:
             # RN-02 / Ley 1581 de 2012
             raise DatosInvalidos("El socio debe autorizar el tratamiento de sus datos.")
+        exigir_zona_horaria(self.autorizacion_datos, "La fecha de autorización")
 
 
 @dataclass
@@ -125,6 +135,7 @@ class Pago:
     def __post_init__(self) -> None:
         if self.fecha_vencimiento < self.fecha_inicio:
             raise DatosInvalidos("El vencimiento no puede ser anterior al inicio.")
+        exigir_zona_horaria(self.registrado_en, "La fecha de registro")
 
     def esta_vigente(self) -> bool:
         return self.estado is EstadoPago.VIGENTE and self.fecha_anulacion is None
@@ -135,6 +146,7 @@ class Pago:
             raise PagoNoAnulable("El pago ya está anulado.")
         if not motivo or not motivo.strip():
             raise MotivoRequerido("Indique el motivo de la anulación.")
+        exigir_zona_horaria(ahora, "La fecha de anulación")
         self.estado = EstadoPago.ANULADO
         self.fecha_anulacion = ahora
         self.anulado_por = anulado_por

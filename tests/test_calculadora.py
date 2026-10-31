@@ -1,6 +1,7 @@
-from datetime import date, datetime
+from datetime import date
 
 import pytest
+from fechas import bogota
 
 from dominio.calculadora import CalculadoraMembresia
 from dominio.modelos import EstadoMembresia
@@ -45,7 +46,7 @@ def test_renovar_el_mismo_dia_del_vencimiento_inicia_manana(ana, mensual, laura,
 
 def test_pagos_anulados_no_cuentan_para_el_inicio(ana, mensual, laura, carlos, fabrica_pago):
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
-    pago.anular("Error", carlos, datetime(2026, 10, 7, 19, 0))
+    pago.anular("Error", carlos, bogota(2026, 10, 7, 19, 0))
     assert calc.calcular_fecha_inicio([pago], date(2026, 10, 7)) == date(2026, 10, 7)
 
 
@@ -80,7 +81,7 @@ def test_socio_con_solo_pagos_anulados_queda_sin_membresia(
     ana, mensual, laura, carlos, fabrica_pago
 ):
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
-    pago.anular("Error", carlos, datetime(2026, 10, 7, 19, 0))
+    pago.anular("Error", carlos, bogota(2026, 10, 7, 19, 0))
     assert calc.estado_de([pago], date(2026, 10, 7))[0] is EstadoMembresia.SIN_MEMBRESIA
 
 
