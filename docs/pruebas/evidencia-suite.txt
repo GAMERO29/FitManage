@@ -1,0 +1,21 @@
+$ pytest tests/aceptacion -v
+test_pa01_registrar_un_socio_con_un_documento_que_ya_existe PASSED
+test_pa02_un_plan_trimestral_pagado_el_01032026_vence_el_29052026 PASSED
+test_pa03_renovar_el_mismo_día_del_vencimiento_no_hace_perder_días PASSED
+test_pa05_a_las_730_p_m_un_socio_que_vence_hoy_sigue_activo PASSED
+test_pa07_la_recepcionista_no_puede_anular_ni_ver_ingresos PASSED
+test_pa08_anular_el_último_pago_recalcula_el_estado PASSED
+test_pa09_la_referencia_de_un_pago_anulado_se_puede_volver_a_usar PASSED
+test_pa10_cinco_intentos_fallidos_bloquean_la_cuenta_15_minutos PASSED
+test_pa11_un_doble_clic_en_confirmar_pago_registra_un_solo_pago PASSED
+
+$ pytest tests/contrato/test_pact_proveedor.py -s   (extracto)
+Verifying a pact between VistaMovil and FitManageAPI
+  la descarga de la copia de estados (0s loading, 114ms verification)
+  una consulta con un token vencido (0s loading, 10ms verification)
+  una consulta de estado de una socia activa (0s loading, 13ms verification)
+  una consulta de un documento inexistente (0s loading, 13ms verification)
+
+$ pytest --cov --cov-branch
+TOTAL                                            916      0    126      0   100%
+================== 202 passed, 1 skipped, 4 warnings in 6.79s ==================

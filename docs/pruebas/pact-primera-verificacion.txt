@@ -1,0 +1,17 @@
+Primera verificación del proveedor (31/10/2026), con la versión inicial del pact de la vista móvil.
+Las dos fallas eran supuestos equivocados del consumidor; se corrigió el pact, no la API.
+
+Verifying a pact between VistaMovil and FitManageAPI
+  la descarga de la copia de estados (0s loading, 88ms verification)
+      has a matching body (FAILED)
+  una consulta con un token vencido (0s loading, 6ms verification)
+        "Content-Type" with value "application/json" (FAILED)
+  una consulta de estado de una socia activa (0s loading, 9ms verification)
+  una consulta de un documento inexistente (0s loading, 8ms verification)
+Failures:
+1) Verifying a pact between VistaMovil and FitManageAPI Given la socia CC 1090123456 tiene membresía activa - la descarga de la copia de estados
+           $.estados[0] -> Actual map is missing the following keys: diasRestantes, venceEl
+           $.estados[2] -> Actual map is missing the following keys: diasRestantes
+2) Verifying a pact between VistaMovil and FitManageAPI Given la socia CC 1090123456 tiene membresía activa - una consulta con un token vencido
+           Expected header 'Content-Type' to have value 'application/json' but was 'application/problem+json'
+There were 2 pact failures
