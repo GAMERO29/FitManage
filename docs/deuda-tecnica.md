@@ -31,3 +31,4 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | DT-07 | 2 | `infraestructura/reloj.py` (`RelojBogota`), fechas obligatoriamente con zona horaria en `Socio` y `Pago`, regla DTZ de ruff activa y escenario QA-03 automatizado en `tests/test_reloj.py`. | `a205da0` |
 | DT-09 | 2 | Pruebas para el caso sin mora, el documento vacío y el reloj real; cobertura de líneas y ramas del 100 %. | `be87164` |
 | DT-03 | 2 | Objetos de valor `Telefono` y `NumeroDocumento`, validados al crear un `Socio`, con 11 casos de prueba nuevos. | `f9d271f` |
+| DT-08 | 3 | `Dockerfile` (Python 3.12, usuario sin privilegios) y `docker-compose.yml` con PostgreSQL 16; la contraseña se lee de `.env`, que no se sube. El flujo `Calidad` agrega el trabajo `contenedores`, que construye la imagen, corre las pruebas dentro y comprueba que la app alcanza la base de datos. | `781ad56` |
