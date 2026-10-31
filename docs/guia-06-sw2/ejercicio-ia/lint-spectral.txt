@@ -1,0 +1,30 @@
+
+/home/claude/fitmanage/docs/guia-06-sw2/ejercicio-ia/openapi-ia.yaml
+  2:6   warning  info-contact           Info object must have "contact" object.                        info
+  2:6   warning  info-description       Info "description" must be present and non-empty string.       info
+  9:10  warning  operation-description  Operation "description" must be present and non-empty string.  paths./login.post
+  9:10  warning  operation-operationId  Operation must have "operationId".                             paths./login.post
+  9:10  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./login.post
+ 30:10  warning  operation-description  Operation "description" must be present and non-empty string.  paths./socios.post
+ 30:10  warning  operation-operationId  Operation must have "operationId".                             paths./socios.post
+ 30:10  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./socios.post
+  43:9  warning  operation-description  Operation "description" must be present and non-empty string.  paths./socios/{cedula}.get
+  43:9  warning  operation-operationId  Operation must have "operationId".                             paths./socios/{cedula}.get
+  43:9  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./socios/{cedula}.get
+ 57:10  warning  operation-description  Operation "description" must be present and non-empty string.  paths./pagos.post
+ 57:10  warning  operation-operationId  Operation must have "operationId".                             paths./pagos.post
+ 57:10  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./pagos.post
+ 67:10  warning  operation-description  Operation "description" must be present and non-empty string.  paths./pagos/{id}/anular.post
+ 67:10  warning  operation-operationId  Operation must have "operationId".                             paths./pagos/{id}/anular.post
+ 67:10  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./pagos/{id}/anular.post
+ 78:12  warning  operation-description  Operation "description" must be present and non-empty string.  paths./pagos/{id}.delete
+ 78:12  warning  operation-operationId  Operation must have "operationId".                             paths./pagos/{id}.delete
+ 78:12  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./pagos/{id}.delete
+  89:9  warning  operation-description  Operation "description" must be present and non-empty string.  paths./reportes/ingresos.get
+  89:9  warning  operation-operationId  Operation must have "operationId".                             paths./reportes/ingresos.get
+  89:9  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./reportes/ingresos.get
+ 103:9  warning  operation-description  Operation "description" must be present and non-empty string.  paths./vencimientos.get
+ 103:9  warning  operation-operationId  Operation must have "operationId".                             paths./vencimientos.get
+ 103:9  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./vencimientos.get
+
+✖ 26 problems (0 errors, 26 warnings, 0 infos, 0 hints)

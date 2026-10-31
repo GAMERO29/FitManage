@@ -1,0 +1,1014 @@
+openapi: 3.0.3
+info:
+  title: API de FitManage
+  version: 1.0.0
+  description: |
+    Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
+    contexto delimitado de la FPI-21 que expone datos fuera del servidor.
+
+    - La interfaz web del personal sigue usando la sesión de Django (ADR N.° 03).
+      Esta API la consumen la vista móvil sin conexión (su Service Worker) y futuras
+      integraciones, y se protege con JWT (ADR N.° 06).
+    - Todo endpoint declara su seguridad. Por defecto se exige `bearerAuth`.
+      Solo `/salud` y `/auth/token` la anulan con `security: []`, y
+      `/auth/renovacion` la cambia por la cookie de renovación; cada uno explica por qué.
+    - Los errores siguen el formato `application/problem+json` (RFC 9457).
+    - Fechas en hora de Colombia (America/Bogota). Montos en pesos colombianos, sin decimales.
+  contact:
+    name: Juan Sebastián Cárdenas Acevedo
+    url: https://github.com/GAMERO29/FitManage
+  license:
+    name: Uso académico (Universidad de Pamplona)
+    url: https://github.com/GAMERO29/FitManage
+servers:
+  - url: /api/v1
+    description: Misma aplicación Django que sirve la interfaz web (ADR N.° 03); la ruta es relativa al dominio del despliegue.
+security:
+  - bearerAuth: []
+tags:
+  - name: Sistema
+    description: Disponibilidad del servicio.
+  - name: Acceso del personal
+    description: Emisión y renovación de tokens. Dueño de las cuentas del personal.
+  - name: Socios
+    description: Registro de socios con autorización de datos (Ley 1581 de 2012).
+  - name: Recepción
+    description: Servicio abierto (OHS) que publica el estado de membresía para la consulta y la caché sin conexión.
+  - name: Membresías y cobros
+    description: Planes, registro de pagos y anulación auditada.
+  - name: Reportes
+    description: Ingresos por medio de pago. Solo administrador.
+  - name: Recordatorios
+    description: Próximos vencimientos con el enlace de WhatsApp.
+
+paths:
+  /salud:
+    get:
+      tags: [Sistema]
+      operationId: consultarSalud
+      summary: Comprobar que la API responde
+      description: Público a propósito (`security` vacío) para el monitoreo del PaaS. No devuelve ningún dato del gimnasio.
+      security: []
+      responses:
+        '200':
+          description: La API y la base de datos responden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Salud'
+              example:
+                estado: ok
+                hora: '2026-10-07T18:45:00-05:00'
+        '429':
+          $ref: '#/components/responses/DemasiadasSolicitudes'
+        '503':
+          description: La base de datos no responde.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#servicio-no-disponible
+                title: Servicio no disponible
+                status: 503
+                codigo: SERVICIO_NO_DISPONIBLE
+
+  /auth/token:
+    post:
+      tags: [Acceso del personal]
+      operationId: emitirToken
+      summary: Iniciar sesión y obtener un token de acceso
+      description: |
+        No exige token porque es justo el que lo entrega. Devuelve un token de acceso de 15 minutos
+        en el cuerpo y deja el de renovación (8 horas, un turno) en una cookie `HttpOnly` y `Secure`
+        limitada a `/api/v1/auth/renovacion`. Tras 5 intentos fallidos la cuenta se bloquea 15 minutos.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credenciales'
+            example:
+              correo: laura@gimnasio-demo.co
+              contrasena: demo2026
+      responses:
+        '200':
+          description: Credenciales correctas.
+          headers:
+            Set-Cookie:
+              description: Token de renovación (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/renovacion`).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenAcceso'
+              example:
+                tokenAcceso: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjFlIiwicm9sIjoiUkVDRVBDSU9OSVNUQSJ9.firma
+                tipo: Bearer
+                expiraEn: 900
+                rol: RECEPCIONISTA
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          description: Correo o contraseña incorrectos. El mensaje no dice cuál de los dos falló.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#credenciales-invalidas
+                title: Correo o contraseña incorrectos
+                status: 401
+                codigo: CREDENCIALES_INVALIDAS
+        '423':
+          description: Cuenta bloqueada por 5 intentos fallidos.
+          headers:
+            Retry-After:
+              description: Segundos que faltan para el desbloqueo automático.
+              schema:
+                type: integer
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#cuenta-bloqueada
+                title: Cuenta bloqueada
+                status: 423
+                detail: La cuenta se desbloquea a las 21:25 o cuando el administrador la desbloquee.
+                codigo: CUENTA_BLOQUEADA
+        '429':
+          $ref: '#/components/responses/DemasiadasSolicitudes'
+
+  /auth/renovacion:
+    post:
+      tags: [Acceso del personal]
+      operationId: renovarToken
+      summary: Renovar el token de acceso con la cookie de renovación
+      description: |
+        No usa `bearerAuth` porque el token de acceso ya venció; se autentica con la cookie
+        `HttpOnly` de renovación (`renovacionCookie`). Cada uso rota la cookie y revisa que la
+        cuenta siga activa, así que una cuenta bloqueada pierde el acceso en máximo 15 minutos.
+      security:
+        - renovacionCookie: []
+      responses:
+        '200':
+          description: Token renovado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenAcceso'
+              example:
+                tokenAcceso: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3YjFlIiwicm9sIjoiUkVDRVBDSU9OSVNUQSJ9.firma2
+                tipo: Bearer
+                expiraEn: 900
+                rol: RECEPCIONISTA
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+
+  /socios:
+    post:
+      tags: [Socios]
+      operationId: registrarSocio
+      summary: Registrar un socio
+      description: Exige la autorización de tratamiento de datos (RN-08). La respuesta no repite el documento ni el teléfono completos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocioNuevo'
+            example:
+              tipoDocumento: PPT
+              numeroDocumento: '25789456'
+              nombres: María Fernanda
+              apellidos: Gil
+              telefono: '3000000004'
+              autorizaTratamientoDatos: true
+      responses:
+        '201':
+          description: Socio registrado. Queda sin membresía hasta su primer pago.
+          headers:
+            Location:
+              description: Ruta del estado del socio recién creado.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocioRegistrado'
+              example:
+                id: 4f6a2c1e-8d0b-4d0e-9a51-0c2b7e1f9a10
+                nombreCorto: María Fernanda G.
+                documentoEnmascarado: PPT ****9456
+                estado: SIN_MEMBRESIA
+                registradoEl: '2026-10-07T18:50:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '409':
+          description: Ya existe un socio con ese tipo y número de documento (RN-01).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#documento-duplicado
+                title: Documento ya registrado
+                status: 409
+                codigo: DOCUMENTO_DUPLICADO
+
+  /estados:
+    get:
+      tags: [Recepción]
+      operationId: listarEstados
+      summary: Descargar los estados para la caché sin conexión
+      description: |
+        Lo usa el Service Worker de la vista móvil cada 15 minutos. Solo trae el esquema público
+        (`EstadoPublico`): nada de teléfonos, pagos ni ingresos, para que un celular perdido no
+        exponga datos sensibles (QA-02, Ley 1581 de 2012).
+      parameters:
+        - name: cambiadosDesde
+          in: query
+          required: false
+          description: Si se envía, solo devuelve los socios cuyo estado cambió después de esa hora.
+          schema:
+            type: string
+            format: date-time
+          example: '2026-10-07T18:30:00-05:00'
+      responses:
+        '200':
+          description: Estados de los socios.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaEstados'
+              example:
+                generadoEl: '2026-10-07T18:45:00-05:00'
+                estados:
+                  - documentoHash: 9b1f0c7e5a2d4e8f
+                    nombreCorto: Ana P.
+                    documentoEnmascarado: CC ******3456
+                    estado: ACTIVO
+                    venceEl: '2026-10-21'
+                    diasRestantes: 15
+                  - documentoHash: 0c2e7d1a9f4b6c3e
+                    nombreCorto: Jorge R.
+                    documentoEnmascarado: CC ******5566
+                    estado: VENCIDO
+                    venceEl: '2026-09-29'
+                    diasMora: 8
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+
+  /estados/{tipoDocumento}/{numeroDocumento}:
+    get:
+      tags: [Recepción]
+      operationId: consultarEstado
+      summary: Consultar si un socio puede ingresar
+      description: La consulta de la recepción (RF-04, QA-01). Devuelve el esquema público, no el socio completo.
+      parameters:
+        - $ref: '#/components/parameters/TipoDocumento'
+        - $ref: '#/components/parameters/NumeroDocumento'
+      responses:
+        '200':
+          description: Estado del socio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoPublico'
+              example:
+                documentoHash: 9b1f0c7e5a2d4e8f
+                nombreCorto: Ana P.
+                documentoEnmascarado: CC ******3456
+                estado: ACTIVO
+                venceEl: '2026-10-21'
+                diasRestantes: 15
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /planes:
+    get:
+      tags: [Membresías y cobros]
+      operationId: listarPlanes
+      summary: Listar los planes vigentes
+      description: Lo usa el formulario de pago para mostrar duración y precio. El precio que vale es el del servidor al registrar el pago.
+      responses:
+        '200':
+          description: Planes con su duración y precio actual.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plan'
+              example:
+                - id: 1d3c9a0e-2f51-4b7a-8a1e-6c0d2e9b7f11
+                  nombre: Diario
+                  duracionDias: 1
+                  precio: 8000
+                - id: 7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22
+                  nombre: Mensual
+                  duracionDias: 30
+                  precio: 75000
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+
+  /pagos:
+    post:
+      tags: [Membresías y cobros]
+      operationId: registrarPago
+      summary: Registrar el pago de una membresía
+      description: |
+        El servidor calcula inicio y vencimiento (RN-03, RN-04); el cliente no los envía.
+        La referencia es obligatoria salvo en efectivo y no puede repetirse en un pago vigente (RN-06, QA-05).
+        Se envía `Idempotency-Key` para que un doble clic o un reintento por mala señal no cree dos pagos.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: UUID generado por el cliente para este intento de pago.
+          schema:
+            type: string
+            format: uuid
+          example: 3c1f7a2e-5b9d-4e60-8f21-7d0a6b4c9e33
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PagoNuevo'
+            example:
+              tipoDocumento: CC
+              numeroDocumento: '1090123456'
+              planId: 7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22
+              medio: NEQUI
+              referencia: M654321
+      responses:
+        '201':
+          description: Pago registrado y membresía actualizada.
+          headers:
+            Location:
+              description: Ruta del pago creado.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+              example:
+                id: 5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44
+                plan: Mensual
+                medio: NEQUI
+                referencia: M654321
+                valor: 75000
+                inicia: '2026-10-22'
+                vence: '2026-11-20'
+                estado: VIGENTE
+                registradoPor: Laura
+                registradoEl: '2026-10-07T18:52:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: La referencia ya pertenece a un pago vigente (RN-06).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#comprobante-duplicado
+                title: Comprobante duplicado
+                status: 409
+                detail: La referencia M123456 ya pertenece a un pago vigente del 16/09/2026.
+                codigo: COMPROBANTE_DUPLICADO
+
+  /pagos/{pagoId}:
+    patch:
+      tags: [Membresías y cobros]
+      operationId: anularPago
+      summary: Anular el último pago vigente de un socio
+      description: |
+        Solo administrador (RN-07). Es un `PATCH` porque cambia el estado de un pago que ya existe:
+        el pago no se borra (por eso no es `DELETE`) y queda con motivo, usuario y fecha en la auditoría.
+      parameters:
+        - name: pagoId
+          in: path
+          required: true
+          description: Identificador del pago.
+          schema:
+            type: string
+            format: uuid
+          example: 5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Anulacion'
+            example:
+              estado: ANULADO
+              motivo: Se registró Mensual y el socio pagó Quincenal
+      responses:
+        '200':
+          description: Pago anulado. La membresía se recalcula.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+              example:
+                id: 5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44
+                plan: Mensual
+                medio: NEQUI
+                referencia: M654321
+                valor: 75000
+                inicia: '2026-10-22'
+                vence: '2026-11-20'
+                estado: ANULADO
+                registradoPor: Laura
+                registradoEl: '2026-10-07T18:52:00-05:00'
+                anulacion:
+                  motivo: Se registró Mensual y el socio pagó Quincenal
+                  anuladoPor: Carlos
+                  anuladoEl: '2026-10-07T19:05:00-05:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El pago ya estaba anulado o no es el último pago vigente del socio (RN-07).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#no-es-el-ultimo-pago
+                title: Solo se puede anular el último pago vigente
+                status: 409
+                codigo: NO_ES_EL_ULTIMO_PAGO
+
+  /reportes/ingresos:
+    get:
+      tags: [Reportes]
+      operationId: reporteIngresos
+      summary: Ingresos por medio de pago en un periodo
+      description: Solo administrador (QA-04). Excluye los pagos anulados. No incluye datos de socios.
+      parameters:
+        - name: desde
+          in: query
+          required: true
+          description: Primer día del periodo (inclusive).
+          schema:
+            type: string
+            format: date
+          example: '2026-10-01'
+        - name: hasta
+          in: query
+          required: true
+          description: Último día del periodo (inclusive). Máximo 366 días después de `desde`.
+          schema:
+            type: string
+            format: date
+          example: '2026-10-07'
+      responses:
+        '200':
+          description: Totales del periodo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReporteIngresos'
+              example:
+                desde: '2026-10-01'
+                hasta: '2026-10-07'
+                total: 2157000
+                pagos: 33
+                anulados: 1
+                porMedio:
+                  - medio: EFECTIVO
+                    pagos: 16
+                    total: 722000
+                  - medio: NEQUI
+                    pagos: 10
+                    total: 690000
+                  - medio: DAVIPLATA
+                    pagos: 4
+                    total: 270000
+                  - medio: TRANSFERENCIA
+                    pagos: 3
+                    total: 475000
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+
+  /vencimientos:
+    get:
+      tags: [Recordatorios]
+      operationId: listarVencimientos
+      summary: Socios que vencen en los próximos días
+      description: |
+        Es el único esquema que devuelve el teléfono, porque sin él no se puede armar el
+        recordatorio por WhatsApp (RF-06), finalidad que el socio aceptó en su autorización de datos.
+        No incluye documento ni pagos.
+      parameters:
+        - name: dias
+          in: query
+          required: false
+          description: Días hacia adelante desde hoy (incluido). Por defecto 3.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 15
+            default: 3
+          example: 3
+      responses:
+        '200':
+          description: Vencimientos del rango.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vencimiento'
+              example:
+                - nombreCorto: Camilo D.
+                  plan: Mensual
+                  venceEl: '2026-10-07'
+                  telefono: '3000000001'
+                  enlaceWhatsApp: https://wa.me/573000000001?text=Hola%20Camilo
+                - nombreCorto: Andrés P.
+                  plan: Trimestral
+                  venceEl: '2026-10-10'
+                  telefono: '30000003'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token de acceso firmado con HS256, válido 15 minutos. Claims: `sub` (id del usuario),
+        `rol` (`RECEPCIONISTA` o `ADMINISTRADOR`), `iss` (`fitmanage`), `aud` (`fitmanage-api`),
+        `iat`, `exp` y `jti`. Ver ADR N.° 06.
+    renovacionCookie:
+      type: apiKey
+      in: cookie
+      name: fm_renovacion
+      description: Token de renovación opaco de 8 horas, en cookie `HttpOnly; Secure; SameSite=Strict`, que rota en cada uso.
+
+  parameters:
+    TipoDocumento:
+      name: tipoDocumento
+      in: path
+      required: true
+      description: Tipo de documento del socio.
+      schema:
+        $ref: '#/components/schemas/TipoDocumento'
+      example: CC
+    NumeroDocumento:
+      name: numeroDocumento
+      in: path
+      required: true
+      description: Número de documento, solo dígitos y letras (RN-01).
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9]{5,15}$'
+      example: '1090123456'
+
+  responses:
+    DemasiadasSolicitudes:
+      description: Se superó el límite de 60 solicitudes por minuto desde la misma dirección IP.
+      headers:
+        Retry-After:
+          description: Segundos que hay que esperar.
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problema'
+          example:
+            type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#demasiadas-solicitudes
+            title: Demasiadas solicitudes
+            status: 429
+            codigo: DEMASIADAS_SOLICITUDES
+    SolicitudInvalida:
+      description: Falta un campo, sobra uno o alguno no cumple el formato.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problema'
+          example:
+            type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#solicitud-invalida
+            title: Solicitud inválida
+            status: 400
+            codigo: SOLICITUD_INVALIDA
+            errores:
+              - campo: referencia
+                mensaje: Para pagos por Nequi escriba el número del comprobante.
+    NoAutenticado:
+      description: Falta el token, venció o la firma no es válida.
+      headers:
+        WWW-Authenticate:
+          description: Indica el esquema esperado.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problema'
+          example:
+            type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#no-autenticado
+            title: Inicie sesión de nuevo
+            status: 401
+            codigo: NO_AUTENTICADO
+    SinPermiso:
+      description: El token es válido pero el rol no puede hacer esto. El intento queda en la auditoría (RNF-05).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problema'
+          example:
+            type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#sin-permiso
+            title: Solo el administrador puede hacer esto
+            status: 403
+            codigo: SIN_PERMISO
+    NoEncontrado:
+      description: El recurso no existe.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problema'
+          example:
+            type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#no-encontrado
+            title: No hay ningún socio con ese documento
+            status: 404
+            codigo: NO_ENCONTRADO
+
+  schemas:
+    TipoDocumento:
+      type: string
+      description: CC cédula de ciudadanía, CE cédula de extranjería, PPT permiso por protección temporal, PA pasaporte.
+      enum: [CC, CE, PPT, PA]
+    MedioPago:
+      type: string
+      enum: [EFECTIVO, NEQUI, DAVIPLATA, TRANSFERENCIA]
+    EstadoMembresia:
+      type: string
+      enum: [ACTIVO, VENCIDO, SIN_MEMBRESIA]
+    Rol:
+      type: string
+      enum: [RECEPCIONISTA, ADMINISTRADOR]
+
+    Salud:
+      type: object
+      additionalProperties: false
+      required: [estado, hora]
+      properties:
+        estado:
+          type: string
+          enum: [ok]
+        hora:
+          type: string
+          format: date-time
+
+    Credenciales:
+      type: object
+      additionalProperties: false
+      required: [correo, contrasena]
+      properties:
+        correo:
+          type: string
+          format: email
+          maxLength: 254
+        contrasena:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          writeOnly: true
+
+    TokenAcceso:
+      type: object
+      additionalProperties: false
+      required: [tokenAcceso, tipo, expiraEn, rol]
+      properties:
+        tokenAcceso:
+          type: string
+          description: JWT firmado (HS256).
+        tipo:
+          type: string
+          enum: [Bearer]
+        expiraEn:
+          type: integer
+          description: Segundos de vigencia del token.
+          example: 900
+        rol:
+          $ref: '#/components/schemas/Rol'
+
+    SocioNuevo:
+      type: object
+      additionalProperties: false
+      required: [tipoDocumento, numeroDocumento, nombres, apellidos, telefono, autorizaTratamientoDatos]
+      properties:
+        tipoDocumento:
+          $ref: '#/components/schemas/TipoDocumento'
+        numeroDocumento:
+          type: string
+          pattern: '^[A-Za-z0-9]{5,15}$'
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 60
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 60
+        telefono:
+          type: string
+          description: Celular colombiano de 10 dígitos.
+          pattern: '^3[0-9]{9}$'
+        autorizaTratamientoDatos:
+          type: boolean
+          description: Debe ser `true`; sin autorización no se registra (Ley 1581 de 2012).
+          enum: [true]
+
+    SocioRegistrado:
+      type: object
+      additionalProperties: false
+      description: Respuesta sin documento ni teléfono completos.
+      required: [id, nombreCorto, documentoEnmascarado, estado, registradoEl]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombreCorto:
+          type: string
+          description: Nombres y la inicial del primer apellido.
+        documentoEnmascarado:
+          type: string
+          description: Tipo y los últimos 4 dígitos.
+        estado:
+          $ref: '#/components/schemas/EstadoMembresia'
+        registradoEl:
+          type: string
+          format: date-time
+
+    EstadoPublico:
+      type: object
+      additionalProperties: false
+      description: |
+        Esquema público del estado de membresía. Excluye a propósito el documento completo,
+        el teléfono, los pagos y los montos. `documentoHash` permite a la caché buscar por el
+        documento que digita la recepcionista sin guardar el número en el celular.
+      required: [documentoHash, nombreCorto, documentoEnmascarado, estado]
+      properties:
+        documentoHash:
+          type: string
+          description: HMAC-SHA256 truncado de tipo + número de documento.
+          pattern: '^[0-9a-f]{16}$'
+        nombreCorto:
+          type: string
+          description: Primer nombre y la inicial del primer apellido.
+        documentoEnmascarado:
+          type: string
+        estado:
+          $ref: '#/components/schemas/EstadoMembresia'
+        venceEl:
+          type: string
+          format: date
+          description: Último día con acceso. No aparece si el socio no tiene membresía.
+        diasRestantes:
+          type: integer
+          minimum: 1
+          description: Solo si está ACTIVO. Incluye el día de hoy.
+        diasMora:
+          type: integer
+          minimum: 1
+          description: Solo si está VENCIDO.
+
+    ListaEstados:
+      type: object
+      additionalProperties: false
+      required: [generadoEl, estados]
+      properties:
+        generadoEl:
+          type: string
+          format: date-time
+          description: Hora de la copia; la vista móvil la muestra para saber qué tan reciente es.
+        estados:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstadoPublico'
+
+    Plan:
+      type: object
+      additionalProperties: false
+      required: [id, nombre, duracionDias, precio]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        duracionDias:
+          type: integer
+          minimum: 1
+        precio:
+          type: integer
+          minimum: 0
+          description: Pesos colombianos.
+
+    PagoNuevo:
+      type: object
+      additionalProperties: false
+      description: El cliente no envía fechas ni valor; los calcula el servidor con el plan vigente.
+      required: [tipoDocumento, numeroDocumento, planId, medio]
+      properties:
+        tipoDocumento:
+          $ref: '#/components/schemas/TipoDocumento'
+        numeroDocumento:
+          type: string
+          pattern: '^[A-Za-z0-9]{5,15}$'
+        planId:
+          type: string
+          format: uuid
+        medio:
+          $ref: '#/components/schemas/MedioPago'
+        referencia:
+          type: string
+          description: Obligatoria salvo en EFECTIVO.
+          pattern: '^[A-Za-z0-9-]{4,30}$'
+
+    Pago:
+      type: object
+      additionalProperties: false
+      required: [id, plan, medio, valor, inicia, vence, estado, registradoPor, registradoEl]
+      properties:
+        id:
+          type: string
+          format: uuid
+        plan:
+          type: string
+        medio:
+          $ref: '#/components/schemas/MedioPago'
+        referencia:
+          type: string
+        valor:
+          type: integer
+          minimum: 0
+        inicia:
+          type: string
+          format: date
+        vence:
+          type: string
+          format: date
+        estado:
+          type: string
+          enum: [VIGENTE, ANULADO]
+        registradoPor:
+          type: string
+          description: Nombre del usuario del personal.
+        registradoEl:
+          type: string
+          format: date-time
+        anulacion:
+          $ref: '#/components/schemas/DetalleAnulacion'
+
+    Anulacion:
+      type: object
+      additionalProperties: false
+      required: [estado, motivo]
+      properties:
+        estado:
+          type: string
+          enum: [ANULADO]
+        motivo:
+          type: string
+          minLength: 5
+          maxLength: 300
+
+    DetalleAnulacion:
+      type: object
+      additionalProperties: false
+      required: [motivo, anuladoPor, anuladoEl]
+      properties:
+        motivo:
+          type: string
+        anuladoPor:
+          type: string
+        anuladoEl:
+          type: string
+          format: date-time
+
+    ReporteIngresos:
+      type: object
+      additionalProperties: false
+      required: [desde, hasta, total, pagos, anulados, porMedio]
+      properties:
+        desde:
+          type: string
+          format: date
+        hasta:
+          type: string
+          format: date
+        total:
+          type: integer
+          minimum: 0
+        pagos:
+          type: integer
+          minimum: 0
+        anulados:
+          type: integer
+          minimum: 0
+          description: Pagos anulados del periodo; no suman en el total.
+        porMedio:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [medio, pagos, total]
+            properties:
+              medio:
+                $ref: '#/components/schemas/MedioPago'
+              pagos:
+                type: integer
+                minimum: 0
+              total:
+                type: integer
+                minimum: 0
+
+    Vencimiento:
+      type: object
+      additionalProperties: false
+      required: [nombreCorto, plan, venceEl, telefono]
+      properties:
+        nombreCorto:
+          type: string
+        plan:
+          type: string
+        venceEl:
+          type: string
+          format: date
+        telefono:
+          type: string
+          description: Necesario para el recordatorio (RF-06); finalidad aceptada en la autorización de datos.
+        enlaceWhatsApp:
+          type: string
+          format: uri
+          description: No aparece si el teléfono no tiene 10 dígitos.
+
+    Problema:
+      type: object
+      description: Detalle de error según RFC 9457.
+      required: [type, title, status, codigo]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        codigo:
+          type: string
+          description: Código estable para que el cliente decida qué mostrar.
+        errores:
+          type: array
+          items:
+            type: object
+            required: [campo, mensaje]
+            properties:
+              campo:
+                type: string
+              mensaje:
+                type: string

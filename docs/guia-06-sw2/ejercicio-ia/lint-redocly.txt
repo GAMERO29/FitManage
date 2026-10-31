@@ -1,0 +1,35 @@
+No configurations were provided -- using built in recommended configuration by default.
+
+validating openapi-ia.yaml...
+openapi-ia.yaml:
+  9:5    error    security-defined        Every operation should have security defined on it or on the root level.
+  30:5   error    security-defined        Every operation should have security defined on it or on the root level.
+  43:5   error    security-defined        Every operation should have security defined on it or on the root level.
+  57:5   error    security-defined        Every operation should have security defined on it or on the root level.
+  67:5   error    security-defined        Every operation should have security defined on it or on the root level.
+  78:5   error    security-defined        Every operation should have security defined on it or on the root level.
+  89:5   error    security-defined        Every operation should have security defined on it or on the root level.
+  103:5  error    security-defined        Every operation should have security defined on it or on the root level.
+  2:1    warning  info-license            Info object should contain `license` field.
+  9:5    warning  operation-operationId   Operation object should contain `operationId` field.
+  19:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  30:5   warning  operation-operationId   Operation object should contain `operationId` field.
+  36:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  43:5   warning  operation-operationId   Operation object should contain `operationId` field.
+  50:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  57:5   warning  operation-operationId   Operation object should contain `operationId` field.
+  63:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  67:5   warning  operation-operationId   Operation object should contain `operationId` field.
+  74:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  78:5   warning  operation-operationId   Operation object should contain `operationId` field.
+  85:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  89:5   warning  operation-operationId   Operation object should contain `operationId` field.
+  99:7   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  103:5  warning  operation-operationId   Operation object should contain `operationId` field.
+  105:7  warning  operation-4xx-response  Operation must have at least one `4XX` response.
+
+openapi-ia.yaml: validated in 34ms
+
+❌ Validation failed with 8 errors and 17 warnings.
+run `redocly lint --generate-ignore-file` to add all problems to the ignore file.
+

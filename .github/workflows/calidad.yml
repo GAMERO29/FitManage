@@ -49,3 +49,22 @@ jobs:
       - name: Apagar
         if: always()
         run: docker compose down -v
+
+  contrato-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: El contrato OpenAPI no tiene errores ni advertencias (Redocly y Spectral)
+        run: |
+          npx --yes @redocly/cli@1.34.22 lint docs/api/openapi.yaml
+          npx --yes @stoplight/spectral-cli@6.17.0 lint docs/api/openapi.yaml --ruleset docs/api/.spectral.yaml --fail-severity=warn
+      - name: Mock del contrato con Prism
+        run: |
+          npx --yes @stoplight/prism-cli@5.14.2 mock docs/api/openapi.yaml -p 4010 > prism.log 2>&1 &
+          for i in $(seq 1 60); do curl -s http://127.0.0.1:4010/salud > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:4010/salud
+      - name: Colección de Postman contra el mock (newman)
+        run: npx --yes newman@6.2.3 run docs/api/FitManage.postman_collection.json

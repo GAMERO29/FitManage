@@ -1,0 +1,515 @@
+{
+  "info": {
+    "_postman_id": "dbdd20bc-6cc1-5b07-8303-39361d0f540b",
+    "name": "FitManage · API v1 (contrato)",
+    "description": "Pruebas del contrato docs/api/openapi.yaml (Guía 6). Por ahora corren contra el mock de Prism generado desde el contrato: `npx @stoplight/prism-cli mock docs/api/openapi.yaml`. Cuando existan los controladores, se cambia `baseUrl` y las mismas pruebas validan la implementación (Guía 7).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:4010"
+    },
+    {
+      "key": "tokenAcceso",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Iniciar sesión (sin JWT)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 y entrega un token Bearer', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const b = pm.response.json();",
+              "  pm.expect(b.tipo).to.eql('Bearer');",
+              "  pm.expect(b.expiraEn).to.eql(900);",
+              "  pm.collectionVariables.set('tokenAcceso', b.tokenAcceso);",
+              "});",
+              "pm.test('La respuesta no devuelve la contraseña', () => pm.expect(pm.response.text()).to.not.include('contrasena'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/token",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "token"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"laura@gimnasio-demo.co\",\n  \"contrasena\": \"demo2026\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Consultar estado sin token → 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 cuando falta el JWT', () => pm.response.to.have.status(401));",
+              "pm.test('Error en formato problem+json', () => {",
+              "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+              "  pm.expect(pm.response.json().codigo).to.eql('NO_AUTENTICADO');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/estados/CC/1090123456",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "estados",
+            "CC",
+            "1090123456"
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "3. Consultar estado con token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 con el estado público', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const b = pm.response.json();",
+              "  pm.expect(b.estado).to.be.oneOf(['ACTIVO', 'VENCIDO', 'SIN_MEMBRESIA']);",
+              "  pm.expect(b.documentoEnmascarado).to.match(/\\*{4,}\\d{4}$/);",
+              "});",
+              "pm.test('No expone teléfono ni documento completo', () => {",
+              "  const t = pm.response.text();",
+              "  pm.expect(t).to.not.include('telefono');",
+              "  pm.expect(t).to.not.include('1090123456');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/estados/CC/1090123456",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "estados",
+            "CC",
+            "1090123456"
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "4. Registrar pago",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 y Location', () => {",
+              "  pm.response.to.have.status(201);",
+              "  pm.expect(pm.response.headers.has('Location')).to.be.true;",
+              "});",
+              "pm.test('El servidor calcula inicio, vencimiento y valor', () => {",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.include.keys('inicia', 'vence', 'valor');",
+              "  pm.expect(b.estado).to.eql('VIGENTE');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "3c1f7a2e-5b9d-4e60-8f21-7d0a6b4c9e33"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/pagos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pagos"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipoDocumento\": \"CC\",\n  \"numeroDocumento\": \"1090123456\",\n  \"planId\": \"7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22\",\n  \"medio\": \"NEQUI\",\n  \"referencia\": \"M654321\"\n}"
+        }
+      }
+    },
+    {
+      "name": "5. Registrar pago con datos inválidos → 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 si el plan no es un UUID', () => pm.response.to.have.status(400));",
+              "pm.test('Dice qué falló', () => pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "8d2b6e4f-1a3c-4f7e-9b05-6c2d1e0f3a77"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/pagos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pagos"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipoDocumento\": \"CC\",\n  \"numeroDocumento\": \"1090123456\",\n  \"planId\": \"mensual\",\n  \"medio\": \"NEQUI\"\n}"
+        }
+      }
+    },
+    {
+      "name": "6. Comprobante duplicado → 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 documentado para la referencia repetida', () => {",
+              "  pm.response.to.have.status(409);",
+              "  pm.expect(pm.response.json().codigo).to.eql('COMPROBANTE_DUPLICADO');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "a71c3e90-4b2d-4c8e-8f6a-0d5b9e2c1f48"
+          },
+          {
+            "key": "Prefer",
+            "value": "code=409"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/pagos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pagos"
+          ]
+        },
+        "description": "El header Prefer le pide al mock la respuesta 409 del contrato; con la implementación real se quita.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipoDocumento\": \"CC\",\n  \"numeroDocumento\": \"1093445566\",\n  \"planId\": \"7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22\",\n  \"medio\": \"NEQUI\",\n  \"referencia\": \"M123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "7. Anular pago (PATCH)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 y el pago queda ANULADO, no borrado', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const b = pm.response.json();",
+              "  pm.expect(b.estado).to.eql('ANULADO');",
+              "  pm.expect(b.anulacion).to.include.keys('motivo', 'anuladoPor', 'anuladoEl');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/pagos/5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pagos",
+            "5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"estado\": \"ANULADO\",\n  \"motivo\": \"Se registró Mensual y el socio pagó Quincenal\"\n}"
+        }
+      }
+    },
+    {
+      "name": "8. Reporte como recepcionista → 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('403 documentado para un rol sin permiso', () => {",
+              "  pm.response.to.have.status(403);",
+              "  pm.expect(pm.response.json().codigo).to.eql('SIN_PERMISO');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          },
+          {
+            "key": "Prefer",
+            "value": "code=403"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/reportes/ingresos?desde=2026-10-01&hasta=2026-10-07",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "reportes",
+            "ingresos"
+          ],
+          "query": [
+            {
+              "key": "desde",
+              "value": "2026-10-01"
+            },
+            {
+              "key": "hasta",
+              "value": "2026-10-07"
+            }
+          ]
+        },
+        "description": "El mock no conoce roles; Prefer pide la respuesta 403 del contrato."
+      }
+    },
+    {
+      "name": "9. Reporte como administrador",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 con totales por medio de pago', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const b = pm.response.json();",
+              "  const suma = b.porMedio.reduce((a, m) => a + m.total, 0);",
+              "  pm.expect(suma).to.eql(b.total);",
+              "});",
+              "pm.test('Sin datos de socios', () => pm.expect(pm.response.text()).to.not.match(/telefono|nombre|documento/));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/reportes/ingresos?desde=2026-10-01&hasta=2026-10-07",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "reportes",
+            "ingresos"
+          ],
+          "query": [
+            {
+              "key": "desde",
+              "value": "2026-10-01"
+            },
+            {
+              "key": "hasta",
+              "value": "2026-10-07"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "10. Vencimientos para recordatorios",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 con teléfono solo para armar el enlace de WhatsApp', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const b = pm.response.json();",
+              "  pm.expect(b[0]).to.include.keys('telefono', 'venceEl');",
+              "  pm.expect(pm.response.text()).to.not.include('numeroDocumento');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenAcceso}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/vencimientos?dias=3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "vencimientos"
+          ],
+          "query": [
+            {
+              "key": "dias",
+              "value": "3"
+            }
+          ]
+        },
+        "description": ""
+      }
+    },
+    {
+      "name": "11. Salud (pública a propósito)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 sin token', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/salud",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "salud"
+          ]
+        },
+        "description": ""
+      }
+    }
+  ]
+}

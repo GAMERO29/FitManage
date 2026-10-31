@@ -1,0 +1,147 @@
+openapi: 3.0.0
+info:
+  title: Gym Management API
+  version: 1.0.0
+servers:
+  - url: https://api.gimnasio.com/v1
+paths:
+  /login:
+    post:
+      summary: Login de usuario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/Usuario' }
+  /socios:
+    post:
+      summary: Registrar socio
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Socio' }
+      responses:
+        '200':
+          description: Socio creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Socio' }
+  /socios/{cedula}:
+    get:
+      summary: Consultar estado del socio
+      parameters:
+        - name: cedula
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Datos del socio
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Socio' }
+  /pagos:
+    post:
+      summary: Registrar pago
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Pago' }
+      responses:
+        '200':
+          description: Pago registrado
+  /pagos/{id}/anular:
+    post:
+      summary: Anular pago
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Pago anulado
+  /pagos/{id}:
+    delete:
+      summary: Eliminar pago
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Pago eliminado
+  /reportes/ingresos:
+    get:
+      summary: Reporte de ingresos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fechaInicio: { type: string, format: date }
+                fechaFin: { type: string, format: date }
+      responses:
+        '200':
+          description: Reporte generado
+  /vencimientos:
+    get:
+      summary: Próximos vencimientos
+      responses:
+        '200':
+          description: Lista de socios
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Socio' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Usuario:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        password: { type: string }
+        rol: { type: string }
+    Socio:
+      type: object
+      properties:
+        id: { type: integer }
+        cedula: { type: string }
+        nombre: { type: string }
+        telefono: { type: string }
+        email: { type: string }
+        direccion: { type: string }
+        fechaNacimiento: { type: string, format: date }
+        estado: { type: string }
+        fechaVencimiento: { type: string, format: date }
+    Pago:
+      type: object
+      properties:
+        id: { type: integer }
+        socioId: { type: integer }
+        monto: { type: number }
+        metodo: { type: string }
+        fechaInicio: { type: string, format: date }
+        fechaFin: { type: string, format: date }
