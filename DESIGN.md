@@ -26,6 +26,11 @@ colors:
   gris: "#77738A"
   gris-fondo: "#ECEAF1"
   gris-tinta: "#3D3A4D"
+  foco-riel: "#F2C14E"
+  lavanda-riel: "#BFB2D9"
+  placeholder: "#6F6985"
+  desactivado: "#C9C4D6"
+  borde-peligro: "#EBC3BE"
 typography:
   display:
     fontFamily: "Sora, Atkinson Hyperlegible Next, system-ui, sans-serif"
@@ -44,11 +49,74 @@ typography:
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.5
+  t12:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "12px"
+  t13:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "13px"
+  t14:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "14px"
+  t15:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "15px"
+  t17:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "17px"
+  t18:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "18px"
+  t19:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "19px"
+  t20:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "20px"
+  t21:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "21px"
+  t22:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "22px"
+  t24:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "24px"
+  t25:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "25px"
+  t26:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "26px"
+  t28:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "28px"
+  t34:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "34px"
+  t36:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "36px"
+  t38:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "38px"
+  t40:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "40px"
+  t44:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "44px"
+  t46:
+    fontFamily: "Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "46px"
 rounded:
+  xxs: "4px"
+  xs: "6px"
   s: "10px"
   m: "14px"
   l: "20px"
   pill: "999px"
+  dispositivo: "44px"
 spacing:
   xs: "8px"
   s: "12px"
@@ -120,6 +188,14 @@ Radios de 10 px (campos y botones), 14 px (hojas) y 20 px (resultado de consulta
 - **Anillo de vigencia**: círculo con pista translúcida y arco del color del estado; el arco es la parte de los días del plan que le quedan al socio. Vencido = pista roja vacía con los días de mora en el centro; sin membresía = pista punteada gris. En el pago, el anillo suma los días que ya tenía (verde) y los del plan nuevo (morado 3). Es el único elemento animado: el arco se dibuja al aparecer y se desactiva con `prefers-reduced-motion`.
 - **Resultado de consulta**: anillo grande + palabra de estado en Sora 52 px + datos del socio + acción.
 - **Opción de plan / chip de medio de pago**: botones con `aria-pressed`.
+
+## Motion
+
+- El anillo se llena desde cero la primera vez que aparece y, en los cambios siguientes (otro socio, otro plan), se mueve desde su valor anterior; el número del centro cuenta junto con el arco (650–950 ms, `cubic-bezier(.16,1,.3,1)`).
+- Cambio de pantalla con View Transitions: el contenido sale en 140 ms y entra en 360 ms subiendo 14 px; la pastilla del menú activo se desliza al nuevo elemento; el riel no se mueve.
+- Nueva consulta: el panel de resultado cambia de tamaño y color con una transición de 420 ms.
+- Retroalimentación: los avisos entran desde abajo, los errores se sacuden una vez, el chulito de éxito se dibuja, el anillo del pago confirma con un pulso verde y las barras del reporte crecen de izquierda a derecha.
+- Con `prefers-reduced-motion` no hay desplazamientos ni conteos: solo fundidos cortos.
 
 ## Do's and Don'ts
 
