@@ -23,3 +23,11 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | Diseño / arquitectónica | DT-01, DT-03, DT-04, DT-07 | 3 |
 | Pruebas | DT-02, DT-09 | 1 |
 | Seguridad e infraestructura | DT-05, DT-08, DT-10 | 3 |
+
+## Pagos realizados
+
+| ID | Semana | Cómo se pagó | Commit de integración |
+| --- | --- | --- | --- |
+| DT-07 | 2 | `infraestructura/reloj.py` (`RelojBogota`), fechas obligatoriamente con zona horaria en `Socio` y `Pago`, regla DTZ de ruff activa y escenario QA-03 automatizado en `tests/test_reloj.py`. | `a205da0` |
+| DT-09 | 2 | Pruebas para el caso sin mora, el documento vacío y el reloj real; cobertura de líneas y ramas del 100 %. | `be87164` |
+| DT-03 | 2 | Objetos de valor `Telefono` y `NumeroDocumento`, validados al crear un `Socio`, con 11 casos de prueba nuevos. | `f9d271f` |
