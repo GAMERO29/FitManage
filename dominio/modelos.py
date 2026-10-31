@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -55,6 +56,39 @@ class EstadoMembresia(Enum):
     SIN_MEMBRESIA = "SIN_MEMBRESIA"
 
 
+_SOLO_DIGITOS = re.compile(r"[0-9]+")
+_ALFANUMERICO = re.compile(r"[A-Za-z0-9]+")
+
+
+@dataclass(frozen=True)
+class Telefono:
+    """Celular colombiano de 10 dígitos; lo usan los recordatorios de WhatsApp (RF-06)."""
+
+    valor: str
+
+    def __post_init__(self) -> None:
+        if len(self.valor) != 10 or not _SOLO_DIGITOS.fullmatch(self.valor):
+            raise DatosInvalidos("El teléfono debe tener exactamente 10 dígitos.")
+
+
+@dataclass(frozen=True)
+class NumeroDocumento:
+    """CC, CE y PPT son numéricos; el pasaporte admite letras y números."""
+
+    tipo: TipoDocumento
+    valor: str
+
+    def __post_init__(self) -> None:
+        if not self.valor.strip():
+            raise DatosInvalidos("El número de documento es obligatorio.")
+        if self.tipo is TipoDocumento.PASAPORTE:
+            valido = 5 <= len(self.valor) <= 20 and _ALFANUMERICO.fullmatch(self.valor)
+        else:
+            valido = 5 <= len(self.valor) <= 15 and _SOLO_DIGITOS.fullmatch(self.valor)
+        if not valido:
+            raise DatosInvalidos(f"Número de documento no válido para {self.tipo.value}.")
+
+
 @dataclass(frozen=True)
 class Socio:
     tipo_documento: TipoDocumento
@@ -66,8 +100,8 @@ class Socio:
     id: UUID = field(default_factory=uuid4)
 
     def __post_init__(self) -> None:
-        if not self.numero_documento.strip():
-            raise DatosInvalidos("El número de documento es obligatorio.")
+        NumeroDocumento(self.tipo_documento, self.numero_documento)  # paga DT-03
+        Telefono(self.telefono)
         if self.autorizacion_datos is None:
             # RN-02 / Ley 1581 de 2012
             raise DatosInvalidos("El socio debe autorizar el tratamiento de sus datos.")
