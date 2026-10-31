@@ -22,13 +22,13 @@ jobs:
       - name: Estilo y errores (ruff)
         run: ruff check .
       - name: Seguridad (bandit)
-        run: bandit -q -r dominio infraestructura
+        run: bandit -q -r dominio aplicacion infraestructura config -x "*/migrations/*"
       - name: Complejidad ciclomática (radon, falla si algún bloque supera 10)
         run: |
-          radon cc -s -a dominio infraestructura
-          test -z "$(radon cc -n C dominio infraestructura)"
+          radon cc -s -a -e "*/migrations/*" dominio aplicacion infraestructura config
+          test -z "$(radon cc -n C -e "*/migrations/*" dominio aplicacion infraestructura config)"
       - name: Pruebas y cobertura
-        run: pytest --cov=dominio --cov=infraestructura --cov-branch --cov-report=xml --cov-fail-under=95
+        run: pytest --cov --cov-branch --cov-report=xml --cov-fail-under=95
       - name: Análisis en SonarCloud
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v5
