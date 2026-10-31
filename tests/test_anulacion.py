@@ -1,14 +1,15 @@
-from datetime import date, datetime
+from datetime import date
 
 import pytest
 from dobles import PagosEnMemoria, RelojFijo
+from fechas import bogota
 
 from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import MotivoRequerido, PagoNoAnulable, PermisoDenegado
 from dominio.modelos import EstadoMembresia, EstadoPago
 from dominio.servicios import AnulacionPagoService
 
-AHORA = datetime(2026, 10, 7, 19, 0)
+AHORA = bogota(2026, 10, 7, 19, 0)
 
 
 def preparar(*pagos):

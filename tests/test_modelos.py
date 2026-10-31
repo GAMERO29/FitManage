@@ -1,7 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 import pytest
+from fechas import bogota
 
 from dominio.errores import DatosInvalidos, MotivoRequerido, PagoNoAnulable
 from dominio.modelos import (
@@ -40,7 +41,7 @@ def test_socio_con_ppt_se_registra():
         "María",
         "Gil",
         "3000000004",
-        datetime(2026, 1, 1),
+        bogota(2026, 1, 1),
     )
     assert socio.tipo_documento is TipoDocumento.PPT
 
@@ -66,7 +67,7 @@ def test_anular_pago_lo_deja_anulado_con_motivo_y_responsable(
     ana, mensual, laura, carlos, fabrica_pago
 ):
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
-    ahora = datetime(2026, 10, 7, 19, 0)
+    ahora = bogota(2026, 10, 7, 19, 0)
     pago.anular("  Plan equivocado ", carlos, ahora)
     assert pago.estado is EstadoPago.ANULADO
     assert pago.motivo_anulacion == "Plan equivocado"
@@ -76,12 +77,12 @@ def test_anular_pago_lo_deja_anulado_con_motivo_y_responsable(
 
 def test_un_pago_no_se_anula_dos_veces(ana, mensual, laura, carlos, fabrica_pago):
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
-    pago.anular("Error", carlos, datetime(2026, 10, 7, 19, 0))
+    pago.anular("Error", carlos, bogota(2026, 10, 7, 19, 0))
     with pytest.raises(PagoNoAnulable):
-        pago.anular("Otra vez", carlos, datetime(2026, 10, 7, 19, 5))
+        pago.anular("Otra vez", carlos, bogota(2026, 10, 7, 19, 5))
 
 
 def test_anular_sin_motivo_se_rechaza(ana, mensual, laura, carlos, fabrica_pago):
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
     with pytest.raises(MotivoRequerido):
-        pago.anular("   ", carlos, datetime(2026, 10, 7, 19, 0))
+        pago.anular("   ", carlos, bogota(2026, 10, 7, 19, 0))
