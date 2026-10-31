@@ -53,3 +53,7 @@ def test_autorizacion_de_datos_sin_zona_horaria_se_rechaza():
 
 def test_fixture_de_fechas_usa_bogota():
     assert bogota(2026, 10, 7, 19, 30).utcoffset().total_seconds() == -5 * 3600
+
+
+def test_reloj_real_entrega_la_hora_en_bogota():
+    assert RelojBogota().ahora().utcoffset().total_seconds() == -5 * 3600

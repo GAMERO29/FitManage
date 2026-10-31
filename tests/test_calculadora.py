@@ -89,3 +89,8 @@ def test_con_varios_pagos_manda_el_vencimiento_mas_lejano(ana, mensual, laura, f
     viejo = fabrica_pago(ana, mensual, date(2026, 9, 8), date(2026, 10, 7), laura)
     nuevo = fabrica_pago(ana, mensual, date(2026, 10, 8), date(2026, 11, 6), laura)
     assert calc.estado_de([nuevo, viejo], date(2026, 10, 7))[1] == date(2026, 11, 6)
+
+
+def test_socio_activo_no_tiene_dias_de_mora(ana, mensual, laura, fabrica_pago):
+    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    assert calc.dias_de_mora([pago], date(2026, 10, 7)) == 0
