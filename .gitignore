@@ -8,3 +8,4 @@ htmlcov/
 .venv/
 .env
 *.sqlite3
+.impeccable/questions/
