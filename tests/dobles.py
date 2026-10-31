@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from uuid import UUID
 
-from dominio.modelos import Pago, Plan, Socio, TipoDocumento
+from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
 class SociosEnMemoria:
@@ -53,3 +53,14 @@ class RelojFijo:
 
     def ahora(self) -> datetime:
         return self._ahora
+
+
+class UsuariosEnMemoria:
+    def __init__(self, *usuarios: Usuario) -> None:
+        self._usuarios = {u.id: u for u in usuarios}
+
+    def obtener(self, usuario_id: UUID) -> Usuario | None:
+        return self._usuarios.get(usuario_id)
+
+    def guardar(self, usuario: Usuario) -> None:
+        self._usuarios[usuario.id] = usuario

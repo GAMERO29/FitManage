@@ -59,17 +59,23 @@ def _a_pago(m: PagoModelo) -> Pago:
     )
 
 
-def _guardar_usuario(usuario: Usuario) -> None:
-    # DT-11: se guarda desde aquí mientras no exista el módulo cuentas.
-    UsuarioModelo.objects.update_or_create(
-        id=usuario.id,
-        defaults={
-            "nombre": usuario.nombre,
-            "correo": usuario.correo,
-            "rol": usuario.rol.value,
-            "activo": usuario.activo,
-        },
-    )
+class UsuarioRepositorioORM:
+    """Contexto Acceso del personal: es el único que escribe en la tabla usuarios (paga DT-11)."""
+
+    def obtener(self, usuario_id: UUID) -> Usuario | None:
+        m = UsuarioModelo.objects.filter(id=usuario_id).first()
+        return _a_usuario(m) if m else None
+
+    def guardar(self, usuario: Usuario) -> None:
+        UsuarioModelo.objects.update_or_create(
+            id=usuario.id,
+            defaults={
+                "nombre": usuario.nombre,
+                "correo": usuario.correo,
+                "rol": usuario.rol.value,
+                "activo": usuario.activo,
+            },
+        )
 
 
 class SocioRepositorioORM:
@@ -125,9 +131,6 @@ class PagoRepositorioORM:
     def guardar(self, pago: Pago) -> None:
         try:
             with transaction.atomic():
-                _guardar_usuario(pago.registrado_por)
-                if pago.anulado_por:
-                    _guardar_usuario(pago.anulado_por)
                 PagoModelo.objects.update_or_create(id=pago.id, defaults=self._campos(pago))
         except IntegrityError as error:
             if RESTRICCION_REFERENCIA in str(error) or "pagos.referencia" in str(error):
