@@ -8,9 +8,11 @@ from dominio.errores import DatosInvalidos, MotivoRequerido, PagoNoAnulable
 from dominio.modelos import (
     EstadoPago,
     MedioPago,
+    NumeroDocumento,
     Plan,
     Rol,
     Socio,
+    Telefono,
     TipoDocumento,
     Usuario,
 )
@@ -91,3 +93,33 @@ def test_anular_sin_motivo_se_rechaza(ana, mensual, laura, carlos, fabrica_pago)
 def test_socio_sin_numero_de_documento_no_se_crea():
     with pytest.raises(DatosInvalidos):
         Socio(TipoDocumento.CC, "  ", "Pedro", "Ríos", "3000000009", bogota(2026, 1, 1))
+
+
+@pytest.mark.parametrize("telefono", ["300000000", "30000000001", "300-000-000", "30000000ab"])
+def test_telefono_debe_tener_diez_digitos(telefono):
+    with pytest.raises(DatosInvalidos):
+        Telefono(telefono)
+
+
+@pytest.mark.parametrize(
+    ("tipo", "numero", "valido"),
+    [
+        (TipoDocumento.CC, "1090123456", True),
+        (TipoDocumento.CC, "10901A3456", False),
+        (TipoDocumento.CC, "1234", False),
+        (TipoDocumento.PPT, "25789456", True),
+        (TipoDocumento.PASAPORTE, "AB123456", True),
+        (TipoDocumento.PASAPORTE, "AB-123456", False),
+    ],
+)
+def test_formato_del_numero_de_documento_segun_su_tipo(tipo, numero, valido):
+    if valido:
+        assert NumeroDocumento(tipo, numero).valor == numero
+    else:
+        with pytest.raises(DatosInvalidos):
+            NumeroDocumento(tipo, numero)
+
+
+def test_socio_con_telefono_invalido_no_se_crea():
+    with pytest.raises(DatosInvalidos):
+        Socio(TipoDocumento.CC, "1090000001", "Pedro", "Ríos", "30000003", bogota(2026, 1, 1))
