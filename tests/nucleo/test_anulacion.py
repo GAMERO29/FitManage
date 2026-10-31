@@ -4,10 +4,10 @@ import pytest
 from dobles import PagosEnMemoria, RelojFijo
 from fechas import bogota
 
+from aplicacion.pagos import AnulacionPagoService
 from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import MotivoRequerido, PagoNoAnulable, PermisoDenegado
 from dominio.modelos import EstadoMembresia, EstadoPago
-from dominio.servicios import AnulacionPagoService
 
 AHORA = bogota(2026, 10, 7, 19, 0)
 

@@ -1,4 +1,4 @@
-"""Servicios del dominio: un servicio por intención (SRP, FPI-11)."""
+"""Casos de uso de pagos: CU-01 Registrar pago y RF-10 Anular pago (SRP, FPI-11)."""
 
 from __future__ import annotations
 

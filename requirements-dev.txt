@@ -1,6 +1,7 @@
+-r requirements.txt
 pytest==9.1.1
 pytest-cov==7.1.0
 ruff==0.17.3
 radon==6.0.1
 bandit==1.9.4
-tzdata==2026.6; sys_platform == "win32"
+pytest-django==4.14.0

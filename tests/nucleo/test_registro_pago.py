@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 from fechas import bogota
 
+from aplicacion.pagos import RegistroPagoService
 from dominio.errores import (
     MedioPagoInvalido,
     PlanNoDisponible,
@@ -11,7 +12,6 @@ from dominio.errores import (
     SocioNoEncontrado,
 )
 from dominio.modelos import EstadoPago, MedioPago, SolicitudPago, TipoDocumento
-from dominio.servicios import RegistroPagoService
 
 AHORA = bogota(2026, 10, 7, 18, 2)
 
