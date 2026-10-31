@@ -86,3 +86,8 @@ def test_anular_sin_motivo_se_rechaza(ana, mensual, laura, carlos, fabrica_pago)
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
     with pytest.raises(MotivoRequerido):
         pago.anular("   ", carlos, bogota(2026, 10, 7, 19, 0))
+
+
+def test_socio_sin_numero_de_documento_no_se_crea():
+    with pytest.raises(DatosInvalidos):
+        Socio(TipoDocumento.CC, "  ", "Pedro", "Ríos", "3000000009", bogota(2026, 1, 1))
