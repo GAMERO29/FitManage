@@ -20,6 +20,7 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | ID | Ítem de deuda | Categoría | Ubicación | Impacto en calidad | Cuadrante de Fowler | Plan de pago e hito |
 | --- | --- | --- | --- | --- | --- | --- |
 | DT-11 | Los usuarios se guardan desde `PagoRepositorioORM` (tabla `usuarios` provisional) porque aún no existe el módulo de cuentas. | Diseño | `infraestructura/persistencia/repositorios.py`, `_guardar_usuario` | Medio: el repositorio de pagos tiene una responsabilidad que no le corresponde. | Deliberada y prudente | Semana 5: módulo `cuentas` sobre el usuario de Django; el repositorio de pagos solo referencia el id. |
+| DT-12 | `Pago` guarda el `Socio` y el `Usuario` completos en lugar de sus identificadores, cruzando la frontera de los contextos Socios y Acceso. | Diseño | `dominio/modelos.py`, clase `Pago` | Bajo mientras todo esté en el monolito; alto si algún día se separa un contexto. | Deliberada y prudente | Solo si se revisa el ADR N.° 05: Membresías guardaría `socio_id` y `usuario_id`. |
 
 ## Resumen
 
@@ -40,3 +41,4 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | DT-08 | 3 | `Dockerfile` (Python 3.12, usuario sin privilegios) y `docker-compose.yml` con PostgreSQL 16; la contraseña se lee de `.env`, que no se sube. El flujo `Calidad` agrega el trabajo `contenedores`, que construye la imagen, corre las pruebas dentro y comprueba que la app alcanza la base de datos. | `781ad56` |
 | DT-02 | 4 | Adaptadores `SocioRepositorioORM`, `PlanRepositorioORM` y `PagoRepositorioORM`; las mismas pruebas de contrato corren contra los dobles en memoria y contra Django ORM, con SQLite en el trabajo de pruebas y con PostgreSQL 16 en el trabajo de contenedores. | PR #1 (`e59244c`) |
 | DT-01 | 4 | Índice único parcial `referencia_vigente_unica` en la tabla `pagos`; el adaptador traduce la violación a `ReferenciaDuplicada`. QA-05 corre 100 pares de registros simultáneos contra PostgreSQL 16 y en los 100 la base rechaza el segundo. | PR #1 (`e59244c`) |
+| DT-11 | 5 | Puerto `UsuarioRepositorio` y adaptador `UsuarioRepositorioORM`, único dueño de la tabla `usuarios`; el repositorio de pagos solo los referencia. | PR #2 (`fdb1b2c`) |

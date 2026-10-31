@@ -1,0 +1,18 @@
+flowchart LR
+  ACC["<b>Acceso del personal</b><br/>Usuario · Rol · bloqueo"]
+  SOC["<b>Socios</b><br/>Socio · documento · teléfono<br/>autorización de datos"]
+  MEM["<b>Membresías y cobros</b><br/>(núcleo)<br/>Plan · Pago · CalculadoraMembresia<br/>vencimiento · anulación · comprobante"]
+  REC["<b>Recepción</b><br/>consulta Activo / Vencido<br/>caché sin conexión"]
+  REP["<b>Reportes</b><br/>ingresos · próximos vencimientos"]
+  AUD["<b>Auditoría</b><br/>actor · acción · motivo · fecha"]
+  RCD["<b>Recordatorios</b><br/>enlace wa.me"]
+
+  SOC -->|"C/P"| MEM
+  ACC -->|"CF"| MEM
+  MEM -->|"OHS /api/v1/estados/"| REC
+  MEM -->|"lectura"| REP
+  REP -->|"vencen en 3 días"| RCD
+  SOC -->|"teléfono"| RCD
+  MEM -.->|"eventos"| AUD
+  SOC -.->|"eventos"| AUD
+  ACC -.->|"eventos"| AUD
