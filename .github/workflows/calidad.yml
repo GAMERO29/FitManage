@@ -27,8 +27,8 @@ jobs:
         run: |
           radon cc -s -a -e "*/migrations/*" dominio aplicacion infraestructura config
           test -z "$(radon cc -n C -e "*/migrations/*" dominio aplicacion infraestructura config)"
-      - name: Pruebas y cobertura
-        run: pytest --cov --cov-branch --cov-report=xml --cov-fail-under=95
+      - name: Suite de regresión en paralelo (pytest-xdist) y cobertura
+        run: pytest -n auto --cov --cov-branch --cov-report=xml --cov-fail-under=95
       - name: Análisis en SonarCloud
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v5

@@ -1,6 +1,7 @@
 """Salud del servicio y la regla de oro: ninguna prueba toca la base de desarrollo."""
 
 import os
+import re
 
 from django.conf import settings
 from django.db import connection
@@ -31,5 +32,6 @@ def test_la_base_de_estas_pruebas_es_efimera(db):
     usada = str(connection.settings_dict["NAME"])
     desarrollo = str(_base_de_datos(os.environ.get("DATABASE_URL"))["NAME"])  # la de todos los días
     assert usada != desarrollo
-    assert "memory" in usada or usada == f"test_{desarrollo}", usada
+    # Con pytest-xdist cada proceso tiene su propia base: test_fitmanage_gw0, _gw1, ...
+    assert "memory" in usada or re.fullmatch(rf"test_{desarrollo}(_gw\d+)?", usada), usada
     assert settings.EMAIL_BACKEND.endswith("locmem.EmailBackend")
