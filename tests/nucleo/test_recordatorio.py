@@ -7,6 +7,7 @@ muestra socios que vencen hoy o mañana. La recepcionista pidió que el mensaje 
 from datetime import date
 
 import pytest
+
 from dominio.recordatorio import texto_recordatorio
 
 HOY = date(2026, 10, 7)
