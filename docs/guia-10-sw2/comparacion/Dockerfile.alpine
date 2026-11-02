@@ -1,0 +1,22 @@
+# Experimento del foro de la Guía 10: la misma etapa de producción sobre Alpine (musl en vez de glibc).
+# No se usa para desplegar; el informe de contenedores la construye para comparar peso y compatibilidad.
+FROM python:3.12-alpine AS construccion
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
+
+FROM python:3.12-alpine AS produccion
+ENV PATH=/opt/venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+RUN adduser -S -D -H -u 10001 fitmanage
+WORKDIR /app
+COPY --from=construccion /opt/venv /opt/venv
+COPY manage.py ./
+COPY config/ config/
+COPY dominio/ dominio/
+COPY aplicacion/ aplicacion/
+COPY infraestructura/ infraestructura/
+COPY docs/api/openapi.yaml docs/api/openapi.yaml
+USER 10001
+CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "2"]

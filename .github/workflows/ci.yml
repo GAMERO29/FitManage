@@ -6,8 +6,9 @@
 #   3. analisis   SonarCloud; el job espera el veredicto del Quality Gate y falla si no pasa
 #   y en paralelo:
 #   contrato-api  contrato OpenAPI, mock, Postman y Pact del consumidor
-#   artefacto     construye UNA imagen, la prueba contra PostgreSQL 16 y con k6, y solo
-#                 en main la publica en GHCR con el SHA del commit (inmutable)
+#   artefacto     construye UNA imagen de producción (multietapa, ADR N.° 10), corre la suite con la
+#                 etapa de pruebas, pasa el humo de k6 contra la de producción y solo en main publica
+#                 esa misma imagen en GHCR con el SHA del commit (inmutable)
 #
 # Todas las acciones van fijadas por el SHA de su commit: una etiqueta como @v7 se puede mover,
 # un SHA no. La versión va en el comentario de la misma línea.
@@ -166,34 +167,45 @@ jobs:
           tags: |
             type=sha,format=long
             type=semver,pattern={{version}}
-      - name: Construir la imagen una sola vez
+      - name: Construir la imagen de producción una sola vez
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
+          target: produccion
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - name: La misma imagen pasa la suite completa contra PostgreSQL 16 (incluida QA-05)
-        env:
-          IMG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
-        run: docker run --rm --network host -e DATABASE_URL "$IMG" pytest -p no:cacheprovider
-      - name: Base de carga sembrada con el volumen de QA-01
+      - name: Construir la etapa de pruebas (no se publica)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: pruebas
+          load: true
+          tags: fitmanage:pruebas
+      - name: La suite completa contra PostgreSQL 16 (incluida QA-05)
+        run: docker run --rm --network host -e DATABASE_URL fitmanage:pruebas
+      - name: La imagen de producción no corre como root y no trae herramientas de desarrollo
         env:
           IMG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
         run: |
+          test "$(docker run --rm "$IMG" id -u)" = "10001"
+          if docker run --rm "$IMG" python -c "import pytest" 2>/dev/null; then echo "::error::pytest quedó en producción"; exit 1; fi
+          if docker run --rm "$IMG" test -d /app/tests; then echo "::error::las pruebas quedaron en producción"; exit 1; fi
+      - name: Base de carga sembrada con el volumen de QA-01
+        run: |
           psql -h 127.0.0.1 -U fitmanage -d fitmanage -c "CREATE DATABASE fitmanage_carga"
           docker run --rm --network host -e DATABASE_URL=postgresql://fitmanage@127.0.0.1:5432/fitmanage_carga \
-            "$IMG" python pruebas_carga/sembrar.py
-      - name: La misma imagen sirve la API con gunicorn
+            fitmanage:pruebas python pruebas_carga/sembrar.py
+      - name: La imagen de producción sirve la API con su comando por defecto
         env:
           IMG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
         run: |
           JWT_CLAVE=$(openssl rand -hex 32); echo "::add-mask::$JWT_CLAVE"
           DJANGO_SECRET_KEY=$(openssl rand -hex 32); echo "::add-mask::$DJANGO_SECRET_KEY"
-          docker run -d --name api --network host \
+          docker run -d --name api --network host --read-only --tmpfs /tmp --cap-drop ALL \
             -e DATABASE_URL=postgresql://fitmanage@127.0.0.1:5432/fitmanage_carga \
             -e JWT_CLAVE="$JWT_CLAVE" -e DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
-            "$IMG" gunicorn config.wsgi --workers 2 --bind 127.0.0.1:8000
+            "$IMG"
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/v1/salud && break; sleep 1; done
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
         with:
