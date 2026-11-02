@@ -65,6 +65,10 @@ jobs:
           import psycopg, django, jwt, openapi_core, gunicorn
           print('psycopg', psycopg.__version__, 'libpq', psycopg.pq.version(), 'implementación', psycopg.pq.__impl__)
           print('django', django.get_version(), 'openapi-core OK')"
+          for img in fitmanage:multietapa fitmanage:alpine; do
+            echo "== $img: zona horaria de Bogotá (QA-03)"
+            docker run --rm "$img" python -c "from dominio.modelos import ZONA_HORARIA; from datetime import datetime; print(datetime.now(ZONA_HORARIA).isoformat())" 2>&1 | tail -2 || true
+          done
       - name: Tamaño de la imagen base de cada variante
         run: |
           for base in python:3.9 python:3.12-slim-trixie python:3.12-alpine; do

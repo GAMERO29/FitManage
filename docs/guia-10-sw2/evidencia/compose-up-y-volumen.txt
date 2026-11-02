@@ -1,0 +1,117 @@
+# docker compose up -d, red interna y persistencia · corrida 41538783723
+
+ db Pulled 
+ migrar  Built
+ app  Built
+ Network fitmanage_publica  Creating
+ Network fitmanage_publica  Created
+ Network fitmanage_interna  Creating
+ Network fitmanage_interna  Created
+ Volume "fitmanage_datos"  Creating
+ Volume "fitmanage_datos"  Created
+ Container fitmanage-db-1  Creating
+ Container fitmanage-db-1  Created
+ Container fitmanage-migrar-1  Creating
+ Container fitmanage-migrar-1  Created
+ Container fitmanage-app-1  Creating
+ Container fitmanage-app-1  Created
+ Container fitmanage-db-1  Starting
+ Container fitmanage-db-1  Started
+ Container fitmanage-db-1  Healthy
+ Container fitmanage-migrar-1  Starting
+ Container fitmanage-migrar-1  Started
+ Container fitmanage-migrar-1  Exited
+ Container fitmanage-app-1  Starting
+ Container fitmanage-app-1  Started
+SERVICE   STATUS
+app       Up 6 seconds (healthy)
+db        Up 10 seconds (healthy)
+migrar    Exited (0) 6 seconds ago
+{"estado": "ok", "hora": "2026-11-02T17:37:58-05:00"}
+uid=10001(fitmanage) gid=999(fitmanage) groups=999(fitmanage)
+app tiene salida a internet por la red pública (esperado: sí)
+La red interna no tiene salida a internet (internal: true)
+INSERT 0 1
+Antes de bajar los contenedores: 1 plan(es)
+ Container fitmanage-app-1  Stopping
+ Container fitmanage-app-1  Stopped
+ Container fitmanage-app-1  Removed
+ Container fitmanage-migrar-1  Stopping
+ Container fitmanage-migrar-1  Stopped
+ Container fitmanage-migrar-1  Removed
+ Container fitmanage-db-1  Stopping
+ Container fitmanage-db-1  Stopped
+ Container fitmanage-db-1  Removed
+ Network fitmanage_publica  Removed
+ Network fitmanage_interna  Removed
+ Network fitmanage_publica  Creating
+ Network fitmanage_publica  Created
+ Network fitmanage_interna  Creating
+ Network fitmanage_interna  Created
+ Container fitmanage-db-1  Creating
+ Container fitmanage-db-1  Created
+ Container fitmanage-migrar-1  Creating
+ Container fitmanage-migrar-1  Created
+ Container fitmanage-app-1  Creating
+ Container fitmanage-app-1  Created
+ Container fitmanage-db-1  Starting
+ Container fitmanage-db-1  Started
+ Container fitmanage-db-1  Healthy
+ Container fitmanage-migrar-1  Starting
+ Container fitmanage-migrar-1  Started
+ Container fitmanage-migrar-1  Exited
+ Container fitmanage-app-1  Starting
+ Container fitmanage-app-1  Started
+Después de down + up (el volumen se conserva): 1 plan(es)
+DRIVER    VOLUME NAME
+local     fitmanage_datos
+ Container fitmanage-app-1  Stopping
+ Container fitmanage-app-1  Stopped
+ Container fitmanage-app-1  Removed
+ Container fitmanage-migrar-1  Stopping
+ Container fitmanage-migrar-1  Stopped
+ Container fitmanage-migrar-1  Removed
+ Container fitmanage-db-1  Stopping
+ Container fitmanage-db-1  Stopped
+ Container fitmanage-db-1  Removed
+ Network fitmanage_interna  Removed
+ Network fitmanage_publica  Removed
+ Volume fitmanage_datos  Removed
+ Network fitmanage_interna  Creating
+ Network fitmanage_interna  Created
+ Network fitmanage_publica  Creating
+ Network fitmanage_publica  Created
+ Volume "fitmanage_datos"  Creating
+ Volume "fitmanage_datos"  Created
+ Container fitmanage-db-1  Creating
+ Container fitmanage-db-1  Created
+ Container fitmanage-migrar-1  Creating
+ Container fitmanage-migrar-1  Created
+ Container fitmanage-app-1  Creating
+ Container fitmanage-app-1  Created
+ Container fitmanage-db-1  Starting
+ Container fitmanage-db-1  Started
+ Container fitmanage-db-1  Healthy
+ Container fitmanage-migrar-1  Starting
+ Container fitmanage-migrar-1  Started
+ Container fitmanage-migrar-1  Exited
+ Container fitmanage-app-1  Starting
+ Container fitmanage-app-1  Started
+Después de down -v + up (volumen borrado): 0 plan(es)
+ Container fitmanage-db-1  Running
+........................................................................ [ 34%]
+........................................................................ [ 68%]
+..................................................................       [100%]
+210 passed in 6.69s
+ Container fitmanage-app-1  Stopping
+ Container fitmanage-app-1  Stopped
+ Container fitmanage-app-1  Removed
+ Container fitmanage-migrar-1  Stopping
+ Container fitmanage-migrar-1  Stopped
+ Container fitmanage-migrar-1  Removed
+ Container fitmanage-db-1  Stopping
+ Container fitmanage-db-1  Stopped
+ Container fitmanage-db-1  Removed
+ Network fitmanage_interna  Removed
+ Network fitmanage_publica  Removed
+ Volume fitmanage_datos  Removed
