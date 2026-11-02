@@ -12,6 +12,7 @@ from uuid import UUID
 
 from dominio.calculadora import CalculadoraMembresia
 from dominio.modelos import ZONA_HORARIA, EstadoMembresia, EstadoPago, MedioPago, Pago, Socio
+from dominio.recordatorio import texto_recordatorio
 from infraestructura.persistencia.models import PagoModelo, SocioModelo
 from infraestructura.persistencia.repositorios import _a_pago, _a_socio
 
@@ -78,11 +79,8 @@ def reporte_ingresos(desde: date, hasta: date) -> dict:
     }
 
 
-def _enlace_whatsapp(socio: Socio, vence: date) -> str:
-    texto = (
-        f"Hola {socio.nombres.split()[0]}, te recordamos que tu membresía en el gimnasio "
-        f"vence el {vence.strftime('%d/%m/%Y')}. Te esperamos para renovarla."
-    )
+def _enlace_whatsapp(socio: Socio, vence: date, hoy: date) -> str:
+    texto = texto_recordatorio(socio.nombres, vence, hoy)
     return f"https://wa.me/57{socio.telefono}?text={quote(texto)}"
 
 
@@ -105,7 +103,7 @@ def vencimientos(hoy: date, dias: int, nombres_de_plan: dict[UUID, str]) -> list
                 "plan": nombres_de_plan.get(_plan_del_ultimo(pagos), "Plan"),
                 "venceEl": vence.isoformat(),
                 "telefono": socio.telefono,
-                "enlaceWhatsApp": _enlace_whatsapp(socio, vence),
+                "enlaceWhatsApp": _enlace_whatsapp(socio, vence, hoy),
             }
         )
     return sorted(filas, key=lambda f: (f["venceEl"], f["nombreCorto"]))
