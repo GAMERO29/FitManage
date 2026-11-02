@@ -40,7 +40,7 @@ npx newman@6.2.3 run docs/api/FitManage.postman_collection.json
 pytest tests/contrato                                                 # regla de oro de la guía
 ```
 
-El trabajo `contrato-api` del flujo `Calidad` corre los cuatro primeros pasos en cada push. Las pruebas de `tests/contrato/` revisan la regla de oro de la guía: ningún endpoint sin seguridad declarada salvo los justificados, ningún esquema con datos sensibles salvo el teléfono de los recordatorios, ningún `GET` con cuerpo y la anulación como `PATCH`.
+El trabajo `contrato-api` del pipeline `CI` corre los cuatro primeros pasos en cada push. Las pruebas de `tests/contrato/` revisan la regla de oro de la guía: ningún endpoint sin seguridad declarada salvo los justificados, ningún esquema con datos sensibles salvo el teléfono de los recordatorios, ningún `GET` con cuerpo y la anulación como `PATCH`.
 
 ## Privacidad de las respuestas
 
