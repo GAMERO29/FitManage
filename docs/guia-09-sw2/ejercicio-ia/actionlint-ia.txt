@@ -1,0 +1,28 @@
+ci-ia.yml:13:15: the runner of "actions/checkout@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+13 |       - uses: actions/checkout@v2
+   |               ^~~~~~~~~~~~~~~~~~~
+ci-ia.yml:15:15: the runner of "actions/setup-python@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+15 |         uses: actions/setup-python@v2
+   |               ^~~~~~~~~~~~~~~~~~~~~~~
+ci-ia.yml:38:15: the runner of "actions/checkout@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+38 |       - uses: actions/checkout@v2
+   |               ^~~~~~~~~~~~~~~~~~~
+ci-ia.yml:41:15: the runner of "actions/setup-python@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+41 |       - uses: actions/setup-python@v2
+   |               ^~~~~~~~~~~~~~~~~~~~~~~
+ci-ia.yml:50:15: the runner of "actions/upload-artifact@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+50 |       - uses: actions/upload-artifact@v2
+   |               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+ci-ia.yml:59:15: the runner of "actions/checkout@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+59 |       - uses: actions/checkout@v2
+   |               ^~~~~~~~~~~~~~~~~~~
+ci-ia.yml:62:15: the runner of "actions/download-artifact@v2" action is too old to run on GitHub Actions. update the action's version to fix this issue [action]
+   |
+62 |       - uses: actions/download-artifact@v2
+   |               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
