@@ -30,7 +30,12 @@ jobs:
           construir() {  # nombre, dockerfile, target opcional
             local inicio fin
             inicio=$(date +%s)
-            docker build -q -f "$2" ${3:+--target "$3"} -t "$1" . > /dev/null
+            if ! docker build --progress=plain -f "$2" ${3:+--target "$3"} -t "$1" . > "build-${1#*:}.log" 2>&1; then
+              echo "::warning::$1 no construye; últimas líneas:"
+              grep -vE "^#[0-9]+ (sha256|extracting|DONE)" "build-${1#*:}.log" | tail -15
+              echo "$1|no construye|$(( $(date +%s) - inicio ))|—" >> medidas.txt
+              return 0
+            fi
             fin=$(date +%s)
             echo "$1|$(( $(docker image inspect -f '{{.Size}}' "$1") / 1000000 ))|$(( fin - inicio ))|$(docker run --rm --entrypoint id "$1" -u)" >> medidas.txt
           }
