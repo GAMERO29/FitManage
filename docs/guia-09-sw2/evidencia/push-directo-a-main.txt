@@ -1,0 +1,8 @@
+$ git push origin HEAD:main   # 2/11/2026, con la regla de main activa
+error: GH013: Repository rule violations found for refs/heads/main.        
+Review all repository rules at https://github.com/GAMERO29/FitManage/rules?ref=refs%2Fheads%2Fmain        
+- Changes must be made through a pull request.        
+- 5 of 5 required status checks are expected.        
+To https://github.com/GAMERO29/fitmanage
+ ! [remote rejected] HEAD -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/GAMERO29/fitmanage'
