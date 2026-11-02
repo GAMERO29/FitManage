@@ -52,6 +52,9 @@ def _base_de_datos(url: str | None) -> dict:
         "PASSWORD": unquote(partes.password or ""),
         "HOST": partes.hostname or "",
         "PORT": str(partes.port or 5432),
+        # ADR N.° 08: conexiones persistentes. Con 0 se abre una conexión nueva en cada petición.
+        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
+        "CONN_HEALTH_CHECKS": True,
     }
 
 
