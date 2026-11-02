@@ -1,0 +1,62 @@
+# Experimento de la auditoría: patrón de la IA (login en cada iteración, sin espera) con 10 VUs y 30 s, entorno local
+     execution: local
+        script: docs/guia-08-sw2/ejercicio-ia/login_por_iteracion.js
+        output: -
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 1m0s max duration (incl. graceful stop):
+              * default: 10 looping VUs for 30s (gracefulStop: 30s)
+default   [   3% ] 10 VUs  01.0s/30s
+default   [   7% ] 10 VUs  02.0s/30s
+default   [  10% ] 10 VUs  03.0s/30s
+default   [  13% ] 10 VUs  04.0s/30s
+default   [  17% ] 10 VUs  05.0s/30s
+default   [  20% ] 10 VUs  06.0s/30s
+default   [  23% ] 10 VUs  07.0s/30s
+default   [  27% ] 10 VUs  08.0s/30s
+default   [  30% ] 10 VUs  09.0s/30s
+default   [  33% ] 10 VUs  10.0s/30s
+default   [  37% ] 10 VUs  11.0s/30s
+default   [  40% ] 10 VUs  12.0s/30s
+default   [  43% ] 10 VUs  13.0s/30s
+default   [  47% ] 10 VUs  14.0s/30s
+default   [  50% ] 10 VUs  15.0s/30s
+default   [  53% ] 10 VUs  16.0s/30s
+default   [  57% ] 10 VUs  17.0s/30s
+default   [  60% ] 10 VUs  18.0s/30s
+default   [  63% ] 10 VUs  19.0s/30s
+default   [  67% ] 10 VUs  20.0s/30s
+default   [  70% ] 10 VUs  21.0s/30s
+default   [  73% ] 10 VUs  22.0s/30s
+default   [  77% ] 10 VUs  23.0s/30s
+default   [  80% ] 10 VUs  24.0s/30s
+default   [  83% ] 10 VUs  25.0s/30s
+default   [  87% ] 10 VUs  26.0s/30s
+default   [  90% ] 10 VUs  27.0s/30s
+default   [  93% ] 10 VUs  28.0s/30s
+default   [  97% ] 10 VUs  29.0s/30s
+default   [ 100% ] 10 VUs  30.0s/30s
+  █ THRESHOLDS 
+    http_req_duration{endpoint:consultarEstado}
+    ✓ 'p(95)<60000' p(95)=1.32s
+    http_req_duration{endpoint:emitirToken}
+    ✓ 'p(95)<60000' p(95)=1.62s
+  █ TOTAL RESULTS 
+    checks_total.......: 165     5.401318/s
+    checks_succeeded...: 100.00% 165 out of 165
+    checks_failed......: 0.00%   0 out of 165
+    ✓ responde 200
+    HTTP
+    http_req_duration................: avg=914.32ms min=16.51ms  med=913.49ms max=2.14s p(90)=1.45s p(95)=1.57s
+      { endpoint:consultarEstado }...: avg=790.41ms min=16.51ms  med=810.21ms max=1.67s p(90)=1.27s p(95)=1.32s
+      { endpoint:emitirToken }.......: avg=1.03s    min=239.74ms med=995.88ms max=2.14s p(90)=1.56s p(95)=1.62s
+      { expected_response:true }.....: avg=914.32ms min=16.51ms  med=913.49ms max=2.14s p(90)=1.45s p(95)=1.57s
+    http_req_failed..................: 0.00%  0 out of 330
+    http_reqs........................: 330    10.802636/s
+    EXECUTION
+    iteration_duration...............: avg=1.82s    min=569.55ms med=1.7s     max=3.59s p(90)=2.43s p(95)=2.79s
+    iterations.......................: 165    5.401318/s
+    vus..............................: 10     min=10       max=10
+    vus_max..........................: 10     min=10       max=10
+    NETWORK
+    data_received....................: 184 kB 6.0 kB/s
+    data_sent........................: 111 kB 3.6 kB/s
+default ✓ [ 100% ] 10 VUs  30s

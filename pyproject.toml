@@ -27,3 +27,6 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "DTZ"]
 source = ["dominio", "aplicacion", "infraestructura"]
 omit = ["*/migrations/*"]
 branch = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["dominio", "aplicacion", "infraestructura", "config"]

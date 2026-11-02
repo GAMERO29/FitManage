@@ -76,6 +76,7 @@ def test_vencimientos_con_enlace_de_whatsapp(api):
     [ana] = recepcion.get("/api/v1/vencimientos", {"dias": 15}).json()
     assert (ana["nombreCorto"], ana["plan"], ana["venceEl"]) == ("Ana P.", "Mensual", "2026-10-21")
     assert ana["enlaceWhatsApp"].startswith("https://wa.me/573000000005?text=Hola%20Ana")
+    assert "vence%20en%2014%20d%C3%ADas%2C%20el%2021/10/2026" in ana["enlaceWhatsApp"]
 
 
 def test_dias_fuera_de_rango_es_400(api):
