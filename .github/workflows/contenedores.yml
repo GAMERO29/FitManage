@@ -1,0 +1,126 @@
+# Informe de contenedores (Guía 10, FPI-26, ADR N.° 10). No es una puerta de calidad: mide.
+#   1. Peso de cuatro imágenes: la anterior, la que propuso la IA, la multietapa y el experimento Alpine.
+#   2. docker compose up -d con la base en un volumen, la red interna y la prueba de persistencia.
+name: Informe de contenedores
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .dockerignore
+      - requirements*.txt
+      - docs/guia-10-sw2/comparacion/**
+      - docs/guia-10-sw2/ejercicio-ia/Dockerfile.ia.txt
+      - .github/workflows/contenedores.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  peso-de-imagenes:
+    name: peso-de-imagenes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Construir las cuatro imágenes y medir
+        run: |
+          set -euo pipefail
+          construir() {  # nombre, dockerfile, target opcional
+            local inicio fin
+            inicio=$(date +%s)
+            docker build -q -f "$2" ${3:+--target "$3"} -t "$1" . > /dev/null
+            fin=$(date +%s)
+            echo "$1|$(( $(docker image inspect -f '{{.Size}}' "$1") / 1000000 ))|$(( fin - inicio ))|$(docker run --rm --entrypoint id "$1" -u)" >> medidas.txt
+          }
+          construir fitmanage:anterior docs/guia-10-sw2/comparacion/Dockerfile.anterior
+          construir fitmanage:ia docs/guia-10-sw2/ejercicio-ia/Dockerfile.ia.txt
+          construir fitmanage:multietapa Dockerfile produccion
+          construir fitmanage:pruebas Dockerfile pruebas
+          construir fitmanage:alpine docs/guia-10-sw2/comparacion/Dockerfile.alpine
+          {
+            echo "### Peso de las imágenes"
+            echo "| Imagen | MB | Construcción en frío (s) | UID del proceso |"
+            echo "| --- | ---: | ---: | ---: |"
+            while IFS='|' read -r n mb s u; do echo "| \`$n\` | $mb | $s | $u |"; done < medidas.txt
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Capas de la imagen multietapa
+        run: docker history --format 'table {{.Size}}\t{{.CreatedBy}}' fitmanage:multietapa | cut -c1-150
+      - name: Reconstruir tras cambiar solo el código (la capa de dependencias debe venir de la caché)
+        run: |
+          echo "# cambio de prueba" >> dominio/__init__.py
+          inicio=$(date +%s)
+          docker build -f Dockerfile --target produccion -t fitmanage:multietapa . 2>&1 | grep -E "CACHED|pip install" | head -5
+          echo "Reconstrucción tras cambiar código: $(( $(date +%s) - inicio )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+          git checkout dominio/__init__.py
+      - name: Compatibilidad de Alpine (musl) con las dependencias nativas
+        run: |
+          docker run --rm fitmanage:alpine python -c "
+          import psycopg, django, jwt, openapi_core, gunicorn
+          print('psycopg', psycopg.__version__, 'libpq', psycopg.pq.version(), 'implementación', psycopg.pq.__impl__)
+          print('django', django.get_version(), 'openapi-core OK')"
+      - name: Tamaño de la imagen base de cada variante
+        run: |
+          for base in python:3.9 python:3.12-slim-trixie python:3.12-alpine; do
+            docker pull -q "$base" > /dev/null
+            echo "$base $(( $(docker image inspect -f '{{.Size}}' "$base") / 1000000 )) MB"
+          done | tee -a "$GITHUB_STEP_SUMMARY"
+
+  compose:
+    name: compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: .env con claves generadas en la corrida (nunca en el repositorio)
+        run: |
+          for v in POSTGRES_PASSWORD JWT_CLAVE DJANGO_SECRET_KEY; do
+            valor=$(openssl rand -hex 24); echo "::add-mask::$valor"; echo "$v=$valor" >> .env
+          done
+      - name: docker compose up -d
+        run: |
+          esperar() {
+            for i in $(seq 1 60); do
+              [ "$(docker compose ps app --format '{{.Health}}')" = "healthy" ] && return 0; sleep 2
+            done
+            docker compose logs; return 1
+          }
+          docker compose up -d --build
+          esperar
+          docker compose ps -a --format 'table {{.Service}}\t{{.Status}}'
+      - name: La API responde y la base no es alcanzable desde afuera
+        run: |
+          curl -sf http://127.0.0.1:8000/api/v1/salud; echo
+          docker compose exec -T app id
+          if docker compose exec -T app python -c "import urllib.request; urllib.request.urlopen('https://pypi.org', timeout=5)" 2>/dev/null; then
+            echo "app tiene salida a internet por la red pública (esperado: sí)"
+          fi
+          if docker run --rm --network "$(basename "$PWD" | tr '[:upper:]' '[:lower:]')_interna" postgres:16 \
+               sh -c "timeout 5 bash -c '</dev/tcp/pypi.org/443'" 2>/dev/null; then
+            echo "::error::la red interna tiene salida a internet"; exit 1
+          else
+            echo "La red interna no tiene salida a internet (internal: true)"
+          fi
+      - name: Persistencia del volumen
+        run: |
+          sql() { docker compose exec -T db psql -U fitmanage -d fitmanage -tAc "$1"; }
+          esperar() {
+            for i in $(seq 1 60); do
+              [ "$(docker compose ps app --format '{{.Health}}')" = "healthy" ] && return 0; sleep 2
+            done
+            docker compose logs; return 1
+          }
+          sql "INSERT INTO planes (id, nombre, duracion_dias, precio, activo) VALUES (gen_random_uuid(), 'Mensual', 30, 75000, true)"
+          echo "Antes de bajar los contenedores: $(sql 'SELECT count(*) FROM planes') plan(es)"
+          docker compose down
+          docker compose up -d && esperar
+          echo "Después de down + up (el volumen se conserva): $(sql 'SELECT count(*) FROM planes') plan(es)"
+          docker volume ls --filter name=datos
+          docker compose down -v
+          docker compose up -d && esperar
+          echo "Después de down -v + up (volumen borrado): $(sql 'SELECT count(*) FROM planes') plan(es)"
+      - name: La suite completa dentro de compose (perfil pruebas)
+        run: docker compose --profile pruebas run --rm pruebas
+      - name: Apagar
+        if: always()
+        run: docker compose --profile pruebas down -v

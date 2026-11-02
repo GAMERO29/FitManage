@@ -1,29 +1,83 @@
-# Uso: copie .env.example a .env, ponga una contraseña y ejecute
-#   docker compose up --build --abort-on-container-exit --exit-code-from app
+# FitManage en tu máquina: PostgreSQL 16 + migraciones + la API con gunicorn (Guía 10, ADR N.° 10).
+#
+#   cp .env.example .env        # y cambie los tres valores (el archivo .env nunca se sube)
+#   docker compose up -d --build
+#   docker compose ps           # db y app en "healthy"; migrar en "exited (0)"
+#   docker compose down         # apaga sin borrar datos (el volumen "datos" se conserva)
+#   docker compose down -v      # apaga y BORRA la base
+#
+#   docker compose --profile pruebas run --rm pruebas   # la suite completa contra este PostgreSQL
+
+x-entorno-app: &entorno-app
+  DATABASE_URL: postgresql://fitmanage:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}@db:5432/fitmanage
+  TZ: America/Bogota
+
 services:
   db:
     image: postgres:16
     environment:
       POSTGRES_DB: fitmanage
       POSTGRES_USER: fitmanage
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en el archivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
+    volumes:
+      - datos:/var/lib/postgresql/data
+    networks: [interna]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fitmanage -d fitmanage"]
       interval: 2s
       timeout: 3s
       retries: 15
-    volumes:
-      - datos:/var/lib/postgresql/data
+    restart: unless-stopped
 
-  app:
-    build: .
+  migrar:
+    image: ${FITMANAGE_IMAGEN:-fitmanage:local}
+    build:
+      context: .
+      target: produccion
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    environment: *entorno-app
+    networks: [interna]
     depends_on:
       db:
         condition: service_healthy
+    restart: "no"
+
+  app:
+    image: ${FITMANAGE_IMAGEN:-fitmanage:local}
+    build:
+      context: .
+      target: produccion
     environment:
-      DATABASE_URL: postgresql://fitmanage:${POSTGRES_PASSWORD}@db:5432/fitmanage
-      TZ: America/Bogota
-    command: pytest
+      <<: *entorno-app
+      JWT_CLAVE: ${JWT_CLAVE:?Defina JWT_CLAVE en .env}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Defina DJANGO_SECRET_KEY en .env}
+    ports:
+      - "127.0.0.1:8000:8000" # solo desde esta máquina
+    networks: [interna, publica]
+    depends_on:
+      migrar:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  pruebas:
+    profiles: [pruebas]
+    build:
+      context: .
+      target: pruebas
+    environment: *entorno-app
+    networks: [interna]
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   datos:
+
+networks:
+  interna:
+    internal: true # sin salida a internet: la base solo habla con la app
+  publica:
