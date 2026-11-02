@@ -32,7 +32,7 @@ jobs:
             inicio=$(date +%s)
             if ! docker build --progress=plain -f "$2" ${3:+--target "$3"} -t "$1" . > "build-${1#*:}.log" 2>&1; then
               echo "::warning::$1 no construye; últimas líneas:"
-              grep -vE "^#[0-9]+ (sha256|extracting|DONE)" "build-${1#*:}.log" | tail -15
+              grep -E "ERROR|[Rr]equires|No matching distribution|UndefinedVar|SecretsUsed" "build-${1#*:}.log" | cut -c1-220 | head -12
               echo "$1|no construye|$(( $(date +%s) - inicio ))|—" >> medidas.txt
               return 0
             fi
