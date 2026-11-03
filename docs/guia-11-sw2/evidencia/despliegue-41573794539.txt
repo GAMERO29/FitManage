@@ -1,0 +1,13 @@
+# Corrida 41573794539 · https://github.com/GAMERO29/FitManage/actions/runs/41573794539
+      1 Versión estable: 6432f55eecc1886e0b81cbc2971311f9cfb5589e
+      1 Render aceptó el despliegue de ghcr.io/gamero29/fitmanage:simulacro-41573794539 (HTTP 200)
+     89 Esperando: HTTP 200, versión en línea 6432f55eecc1886e0b81cbc2971311f9cfb5589e
+      1 FALLA: la versión simulacro-41 no quedó sana en 900 s
+      1 ##[error]Process completed with exit code 1.
+      1 ##[error]ghcr.io/gamero29/fitmanage:simulacro-41573794539 no pasó el healthcheck. Rollback.
+      1 Render aceptó el despliegue de ghcr.io/gamero29/fitmanage:sha-6432f55eecc1886e0b81cbc2971311f9cfb5589e (HTTP 200)
+      1 OK 1/3: versión 6432f55eecc1 en línea
+      1 OK 2/3: versión 6432f55eecc1 en línea
+      1 OK 3/3: versión 6432f55eecc1 en línea
+      1 OK: /api/v1/estados sigue exigiendo token (401)
+      1 ##[error]Process completed with exit code 1.

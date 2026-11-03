@@ -1,0 +1,9 @@
+# Corrida 41570369527 · https://github.com/GAMERO29/FitManage/actions/runs/41570369527
+      1 Versión estable: ninguna todavía
+      1 Render aceptó el despliegue de ghcr.io/gamero29/fitmanage:sha-75f1866d10f6fdd52865029ed9eb3d2caa84fe35 (HTTP 200)
+     23 Esperando: HTTP 0, versión en línea None (TimeoutError: The read operation timed out)
+      1 FALLA: la versión 75f1866d10f6 no quedó sana en 900 s
+      1 ##[error]Process completed with exit code 1.
+      1 ##[error]ghcr.io/gamero29/fitmanage:sha-75f1866d10f6fdd52865029ed9eb3d2caa84fe35 no pasó el healthcheck. Rollback.
+      1 ##[error]No hay versión estable a la cual volver: intervención manual en Render.
+      1 ##[error]Process completed with exit code 1.

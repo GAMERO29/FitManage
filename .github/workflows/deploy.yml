@@ -30,6 +30,7 @@ concurrency:
 
 env:
   IMAGEN: ghcr.io/gamero29/fitmanage
+  PYTHONUNBUFFERED: "1" # cada línea del healthcheck aparece en el log en el momento en que ocurre
 
 jobs:
   desplegar:

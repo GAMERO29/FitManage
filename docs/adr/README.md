@@ -14,5 +14,6 @@ Un ADR aceptado no se edita. Si la decisión cambia, se escribe uno nuevo y el a
 | [08](ADR-008-rendimiento-consulta-recepcion.md) | La consulta de recepción se vigila con k6 contra un entorno de carga local; conexiones persistentes a PostgreSQL y sin caché | Aceptado | 02/11/2026 |
 | [09](ADR-009-pipeline-ci-y-quality-gate.md) | El pipeline `CI` es la única puerta a `main`: cinco checks requeridos, Quality Gate en dos capas e imagen inmutable por commit | Aceptado | 02/11/2026 |
 | [10](ADR-010-contenedores.md) | Imagen multietapa sobre `python:3.12-slim-trixie` sin root; Compose con la base en un volumen dentro de una red interna | Aceptado | 02/11/2026 |
+| [11](ADR-011-despliegue-continuo.md) | Despliegue continuo a Render desde la imagen de CI, con healthcheck de versión y rollback a `estable` | Aceptado | 02/11/2026 |
 
 Los ADR 01 y 02 se escribieron con la plantilla de 5 campos de la Guía 1. Desde el ADR 03 se usa la plantilla completa de 6 campos (`plantilla.md`), que agrega las alternativas consideradas. Los dos primeros no se reescriben para cumplirla, precisamente porque un ADR aceptado es inmutable.
