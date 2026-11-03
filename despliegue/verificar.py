@@ -33,6 +33,7 @@ SEGUIDAS = 3
 class Lectura:
     estado_http: int
     version: str | None
+    detalle: str = ""
 
 
 def url_permitida(url_base: str) -> bool:
@@ -43,17 +44,24 @@ def url_permitida(url_base: str) -> bool:
     return partes.scheme == "http" and partes.hostname in {"127.0.0.1", "localhost"}
 
 
-def leer_salud(url_base: str, timeout: float = 10) -> Lectura:
+def leer_salud(url_base: str, timeout: float = 30) -> Lectura:
+    peticion = urllib.request.Request(
+        f"{url_base}/api/v1/salud", headers={"User-Agent": "fitmanage-healthcheck/1.0"}
+    )
+    texto = b""
     try:
         # verificar() solo llega aquí con una URL que pasó url_permitida(); de ahí el nosec.
-        with urllib.request.urlopen(f"{url_base}/api/v1/salud", timeout=timeout) as r:  # noqa: S310 # nosec B310
-            cuerpo = json.loads(r.read())
+        with urllib.request.urlopen(peticion, timeout=timeout) as r:  # noqa: S310 # nosec B310
+            texto = r.read()
+            cuerpo = json.loads(texto)
             version = cuerpo.get("version") if cuerpo.get("estado") == "ok" else None
             return Lectura(r.status, version)
     except urllib.error.HTTPError as error:
-        return Lectura(error.code, None)
-    except (urllib.error.URLError, TimeoutError, ValueError):
-        return Lectura(0, None)
+        return Lectura(error.code, None, error.reason)
+    except ValueError:
+        return Lectura(0, None, f"la respuesta no es JSON: {texto[:80]!r}")
+    except (urllib.error.URLError, TimeoutError) as error:
+        return Lectura(0, None, f"{type(error).__name__}: {getattr(error, 'reason', error)}")
 
 
 def ruta_protegida_exige_token(url_base: str, timeout: float = 10) -> bool:
@@ -86,7 +94,10 @@ def verificar(url_base: str, esperada: str, espera_max: float, pausa: float = 10
                 return False
         else:
             seguidas = 0
-            print(f"Esperando: HTTP {lectura.estado_http}, versión en línea {lectura.version}")
+            print(
+                f"Esperando: HTTP {lectura.estado_http}, versión en línea {lectura.version}"
+                + (f" ({lectura.detalle})" if lectura.detalle else "")
+            )
         time.sleep(pausa)
     print(f"FALLA: la versión {esperada[:12]} no quedó sana en {espera_max:.0f} s")
     return False

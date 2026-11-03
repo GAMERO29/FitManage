@@ -222,6 +222,19 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/v1/salud && break; sleep 1; done
           # La imagen dice qué commit es: el healthcheck del despliegue depende de esto (ADR N.° 11).
           test "$(curl -sf http://127.0.0.1:8000/api/v1/salud | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')" = "$GITHUB_SHA"
+      - name: Arranque como en Render (base vacía, migraciones y PORT asignado por la plataforma)
+        env:
+          IMG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+        run: |
+          psql -h 127.0.0.1 -U fitmanage -d fitmanage -c "CREATE DATABASE fitmanage_render"
+          docker run -d --name render --network host --read-only --tmpfs /tmp --cap-drop ALL \
+            -e DATABASE_URL=postgresql://fitmanage@127.0.0.1:5432/fitmanage_render \
+            -e PORT=10000 -e JWT_CLAVE=x -e DJANGO_SECRET_KEY=y \
+            "$IMG" /app/arrancar.sh
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:10000/api/v1/salud && break; sleep 1; done
+          curl -sf http://127.0.0.1:10000/api/v1/salud > /dev/null || { docker logs render; exit 1; }
+          docker logs render 2>&1 | head -5
+          docker rm -f render
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
         with:
           k6-version: "1.5.0"
