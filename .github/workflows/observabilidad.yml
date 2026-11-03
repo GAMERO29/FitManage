@@ -83,23 +83,14 @@ jobs:
           [ "$disparos" = "1" ] || { echo "::error::la alerta no se disparó durante el apagón"; exit 1; }
       - name: Muestreo de trazas en Jaeger (se espera cerca del 10 %)
         run: |
-          set -a; . ./.env; set +a
           total=$(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=sum(http_server_request_duration_seconds_count)' | jq -r '.data.result[0].value[1]')
-          echo "Servicios que conoce Jaeger: $(curl -s http://127.0.0.1:16686/api/services)"
-          if ! curl -sfG http://127.0.0.1:16686/api/traces --data-urlencode service=fitmanage \
-               --data-urlencode limit=20000 --data-urlencode lookback=1h -o trazas.json; then
-            curl -sG http://127.0.0.1:16686/api/traces --data-urlencode service=fitmanage \
-              --data-urlencode limit=20000 --data-urlencode lookback=1h | head -c 500; echo
-            docker compose logs --no-color jaeger | tail -40
-            docker compose logs --no-color app | grep -iE "otlp|export|4318" | tail -20
-            exit 1
-          fi
-          trazas=$(jq '.data | length' trazas.json)
-          echo "Peticiones: ${total%.*}  ·  trazas guardadas: $trazas  ·  proporción: $(echo "scale=3; $trazas / ${total%.*}" | bc)"
-          jq -r '[.data[] | select(any(.spans[]; .operationName == "consultar_estado"))][0].traceID' trazas.json > trace_id.txt
-          echo "Traza de ejemplo: $(cat trace_id.txt)"
-          jq '[.data[] | select(any(.spans[]; .operationName == "consultar_estado"))][0]
-              | {traceID, spans: [.spans[] | {operationName, duracion_us: .duration, tags: [.tags[] | select(.key | test("^(http|fitmanage)")) | {(.key): .value}] | add}]}' trazas.json
+          # Jaeger 2.21 ya no tiene la API /api/traces de búsqueda: se usa la API v3.
+          echo "Servicios en Jaeger: $(curl -sf http://127.0.0.1:16686/api/v3/services)"
+          curl -sfG http://127.0.0.1:16686/api/v3/traces --data-urlencode query.serviceName=fitmanage \
+            --data-urlencode "query.startTimeMin=$(date -u -d '-1 hour' +%Y-%m-%dT%H:%M:%SZ)" \
+            --data-urlencode "query.startTimeMax=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --data-urlencode query.searchDepth=20000 -o trazas.json
+          python observabilidad/ci/trazas.py "$total"
       - name: Ley 1581 - ningún documento en logs, métricas ni trazas
         run: |
           set -a; . ./.env; set +a
@@ -118,6 +109,16 @@ jobs:
             fugas=$((fugas + n))
           done
           [ "$fugas" -eq 0 ] || { echo "::error::hay documentos de socios en la telemetría"; exit 1; }
+      - name: Costo de almacenamiento de la telemetría
+        run: |
+          total=$(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=sum(http_server_request_duration_seconds_count)' | jq -r '.data.result[0].value[1]')
+          total=${total%.*}
+          bytes_log=$(grep -h '{"momento"' logs-app.txt | cut -d'|' -f2- | wc -c)
+          echo "Peticiones: $total"
+          echo "Logs JSON de la app: $bytes_log bytes ($((bytes_log / total)) bytes por petición)"
+          echo "Trazas exportadas a Jaeger (JSON de la API): $(wc -c < trazas.json) bytes"
+          echo "Series en Prometheus: $(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=count({job="fitmanage"})' | jq -r '.data.result[0].value[1]')"
+          echo "Disco de Prometheus: $(docker compose exec -T prometheus du -sk /prometheus | cut -f1) KB"
       - name: Capturas del tablero de Grafana y de una traza en Jaeger
         run: |
           pip install --quiet playwright==1.64.1

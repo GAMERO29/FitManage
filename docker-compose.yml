@@ -71,6 +71,11 @@ services:
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
+    logging: # ADR N.° 13: Docker rota los logs JSON; nunca ocupan más de 30 MB
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
 
   pruebas:
     profiles: [pruebas]

@@ -23,7 +23,11 @@ INSTALLED_APPS = [
     "infraestructura.persistencia",
 ]
 # Guía 13 (ADR N.° 13): una traza, una métrica y un log JSON por petición, sin datos personales.
-MIDDLEWARE = ["infraestructura.observabilidad.middleware.MiddlewareTelemetria"]
+# FITMANAGE_TELEMETRIA=0 la apaga sin tocar el código (por ejemplo, para medir cuánto cuesta).
+TELEMETRIA = os.environ.get("FITMANAGE_TELEMETRIA", "1") != "0"
+MIDDLEWARE = (
+    ["infraestructura.observabilidad.middleware.MiddlewareTelemetria"] if TELEMETRIA else []
+)
 ROOT_URLCONF = "config.urls"
 
 # Una línea JSON por evento en la salida estándar (Render la guarda y la muestra en su panel).

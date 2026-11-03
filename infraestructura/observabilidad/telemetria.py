@@ -29,9 +29,22 @@ proporcion = PROPORCION_POR_DEFECTO
 muestrear_todo = False  # solo lo cambian las pruebas
 _proveedor: TracerProvider | None = None
 _candado = threading.Lock()
+
+# Se crean al importar, contra los proveedores «proxy» de OpenTelemetry: mientras nadie llame a
+# configurar() no hacen nada, y después reportan al proveedor real. Con FITMANAGE_TELEMETRIA=0 el
+# middleware no se instala, configurar() nunca corre y el costo es casi cero.
 tracer = trace.get_tracer(NOMBRE)
-duracion = None
-consultas_estado = None
+_medidor = metrics.get_meter(NOMBRE)
+duracion = _medidor.create_histogram(
+    "http.server.request.duration",
+    unit="s",
+    description="Duración de las peticiones a la API",
+    explicit_bucket_boundaries_advisory=LIMITES_LATENCIA,
+)
+consultas_estado = _medidor.create_counter(
+    "fitmanage.consultas_estado",
+    description="Consultas de estado en recepción, por resultado",
+)
 
 
 def proporcion_muestreo(valor: str | None) -> float:
@@ -67,7 +80,7 @@ def procesador_de_exportacion() -> BatchSpanProcessor | None:
 
 
 def configurar() -> TracerProvider:
-    global _proveedor, proporcion, tracer, duracion, consultas_estado
+    global _proveedor, proporcion
     with _candado:
         if _proveedor is not None:
             return _proveedor
@@ -82,17 +95,5 @@ def configurar() -> TracerProvider:
         trace.set_tracer_provider(_proveedor)
         metrics.set_meter_provider(
             MeterProvider(resource=recurso, metric_readers=[PrometheusMetricReader()])
-        )
-        tracer = trace.get_tracer(NOMBRE)
-        medidor = metrics.get_meter(NOMBRE)
-        duracion = medidor.create_histogram(
-            "http.server.request.duration",
-            unit="s",
-            description="Duración de las peticiones a la API",
-            explicit_bucket_boundaries_advisory=LIMITES_LATENCIA,
-        )
-        consultas_estado = medidor.create_counter(
-            "fitmanage.consultas_estado",
-            description="Consultas de estado en recepción, por resultado",
         )
         return _proveedor
