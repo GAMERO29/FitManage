@@ -63,7 +63,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "sum(rate(http_server_request_duration_seconds_count[1m]))",
+          "expr": "sum(rate(http_server_request_duration_seconds_count[$__rate_interval]))",
           "instant": false
         }
       ]
@@ -123,7 +123,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[$__rate_interval])))",
           "instant": false
         }
       ]
@@ -184,7 +184,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count[1m]))",
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[$__rate_interval])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count[$__rate_interval]))",
           "instant": false
         }
       ]
@@ -303,7 +303,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count[1m]))",
+          "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count[$__rate_interval]))",
           "legendFormat": "{{http_response_status_code}}"
         }
       ]
@@ -374,7 +374,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[$__rate_interval])))",
           "legendFormat": "p95"
         },
         {
@@ -383,7 +383,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[$__rate_interval])))",
           "legendFormat": "p50"
         }
       ]
@@ -450,7 +450,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count[1m]))",
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[$__rate_interval])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count[$__rate_interval]))",
           "legendFormat": "5xx"
         }
       ]
@@ -513,7 +513,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "sum by (resultado) (rate(fitmanage_consultas_estado_total[1m]))",
+          "expr": "sum by (resultado) (rate(fitmanage_consultas_estado_total[$__rate_interval]))",
           "legendFormat": "{{resultado}}"
         }
       ]
