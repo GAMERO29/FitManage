@@ -9,7 +9,7 @@
 #   4. si no pasa, hace rollback: vuelve a desplegar la imagen "estable", la verifica y deja la
 #      corrida en rojo para que el equipo se entere.
 #
-# Un push de una etiqueta simulacro-rollback-* despliega una imagen rota a propósito para
+# Un push a una rama simulacro/rollback-* despliega una imagen rota a propósito para
 # ensayar el rollback de punta a punta.
 name: Despliegue
 
@@ -19,7 +19,7 @@ on:
     types: [completed]
     branches: [main]
   push:
-    tags: ["simulacro-rollback-*"]
+    branches: ["simulacro/rollback-*"]
 
 permissions:
   contents: read
