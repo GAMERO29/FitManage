@@ -3,6 +3,7 @@
 #
 #   construccion  instala las dependencias de producción en un entorno virtual
 #   pruebas       la etapa anterior + herramientas de desarrollo + todo el repositorio; corre pytest
+#   venv-produccion  copia del entorno virtual sin pip (pip no hace falta para servir; ADR N.° 12)
 #   produccion    solo Python, el entorno virtual y el código de la aplicación; usuario sin privilegios
 #
 #   docker build --target produccion -t fitmanage .     # la que se despliega (por defecto)
@@ -37,7 +38,14 @@ USER 10001
 ENV PYTHONUNBUFFERED=1
 CMD ["pytest", "-p", "no:cacheprovider"]
 
-# ---------- 3. produccion (la que se publica en GHCR) ----------
+# ---------- 3. venv-produccion (no se publica) ----------
+# pip solo sirve para instalar, y es una de las piezas con más CVE de la imagen. Aquí se quita del
+# entorno virtual que va a producción; la etapa pruebas conserva el suyo.
+# nosemgrep: dockerfile.best-practice.missing-image-version (versión y digest en PYTHON_IMAGEN)
+FROM construccion AS venv-produccion
+RUN python -m pip uninstall --yes --root-user-action=ignore pip
+
+# ---------- 4. produccion (la que se publica en GHCR) ----------
 # nosemgrep: dockerfile.best-practice.missing-image-version (versión y digest en PYTHON_IMAGEN)
 FROM ${PYTHON_IMAGEN} AS produccion
 # El pipeline pasa el SHA del commit; /api/v1/salud lo publica (ADR N.° 11).
@@ -49,9 +57,15 @@ ENV PATH=/opt/venv/bin:$PATH \
     FITMANAGE_VERSION=$VERSION \
     PORT=8000 \
     HOME=/tmp
-RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage
+# Endurecimiento del sistema base (ADR N.° 12):
+#   - fuera el pip de Python del sistema: en ejecución nadie instala paquetes;
+#   - ningún ejecutable con setuid/setgid (mount, umount, su, passwd, chfn...): aunque alguien tome
+#     el proceso, no tiene un binario de root con qué escalar. Mitiga los CVE de util-linux.
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage \
+    && python -m pip uninstall --yes --root-user-action=ignore pip \
+    && find / -xdev -perm /6000 -type f -exec chmod a-s {} +
 WORKDIR /app
-COPY --from=construccion /opt/venv /opt/venv
+COPY --from=venv-produccion /opt/venv /opt/venv
 # Solo el código que corre en el servidor. Queda de root y en solo lectura para el proceso:
 # si alguien explota la aplicación, no puede reescribirla.
 COPY manage.py ./

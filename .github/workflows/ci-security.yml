@@ -51,7 +51,12 @@ jobs:
         run: |
           semgrep scan --metrics off --config reglas/python --config reglas/dockerfile \
             --config reglas/yaml/github-actions --exclude reglas --exclude docs --exclude prototipo \
-            --exclude vista-movil --sarif-output semgrep.sarif .
+            --exclude vista-movil --sarif-output semgrep-completo.sarif .
+          # Los hallazgos marcados con nosemgrep (cada uno con su razón en el código) no se suben como
+          # alertas: el panel Security mostraría como abiertos falsos positivos ya revisados.
+          jq '.runs[].results |= map(select((.suppressions // []) | length == 0))' \
+            semgrep-completo.sarif > semgrep.sarif
+          echo "Suprimidos con razón: $(jq '[.runs[].results[] | select(.suppressions)] | length' semgrep-completo.sarif)"
       - name: Puerta - falla ante cualquier hallazgo de severidad ERROR (alto)
         run: |
           semgrep scan --metrics off --config reglas/python --config reglas/dockerfile \
