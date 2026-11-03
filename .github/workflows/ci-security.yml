@@ -1,0 +1,130 @@
+# Seguridad del pipeline (Guía 12, FPI-28, ADR N.° 12): Shift-Left Security.
+#
+#   sast              Semgrep sobre el código propio, el Dockerfile y los workflows.
+#   sca-dependencias  Trivy sobre requirements*.txt y el package-lock.json de la vista móvil.
+#   sca-imagen        Trivy sobre la imagen de producción ya construida (paquetes de Debian incluidos).
+#   secretos          Trivy busca claves y tokens en todo el árbol del repositorio.
+#
+# Cada job FALLA (código distinto de 0) ante cualquier hallazgo CRÍTICO o ALTO sin mitigar. Las
+# excepciones viven en .trivyignore y en comentarios nosemgrep, cada una con su razón y, en Trivy,
+# con fecha de vencimiento. Los reportes completos van al panel Security del repositorio (SARIF) y
+# como artefactos privados de la corrida; nunca a un servidor externo.
+name: Seguridad
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 11 * * 1" # lunes 6:17 a. m. en Bogotá: aparecen CVE nuevos aunque el código no cambie
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seguridad-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TRIVY: aquasec/trivy:0.76.0
+  SEMGREP_VERSION: "1.181.0"
+  REGLAS_SEMGREP: 16b9e6d45f10649f6a531ec4838ed9924372c3bc # semgrep/semgrep-rules, 21/10/2026
+
+jobs:
+  sast:
+    name: sast
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # subir el SARIF al panel Security (solo lo ven quienes administran el repo)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Semgrep y sus reglas, en versiones fijas
+        run: |
+          pip install "semgrep==$SEMGREP_VERSION"
+          git init -q reglas && git -C reglas fetch -q --depth 1 https://github.com/semgrep/semgrep-rules "$REGLAS_SEMGREP"
+          git -C reglas checkout -q FETCH_HEAD
+      - name: Reporte completo (todas las severidades) en SARIF
+        run: |
+          semgrep scan --metrics off --config reglas/python --config reglas/dockerfile \
+            --config reglas/yaml/github-actions --exclude reglas --exclude docs --exclude prototipo \
+            --exclude vista-movil --sarif-output semgrep.sarif .
+      - name: Puerta - falla ante cualquier hallazgo de severidad ERROR (alto)
+        run: |
+          semgrep scan --metrics off --config reglas/python --config reglas/dockerfile \
+            --config reglas/yaml/github-actions --exclude reglas --exclude docs --exclude prototipo \
+            --exclude vista-movil --severity ERROR --error .
+      - uses: github/codeql-action/upload-sarif@6f2ac81fd5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        if: always() && hashFiles('semgrep.sarif') != ''
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  sca-dependencias:
+    name: sca-dependencias
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Reporte completo en SARIF
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners vuln --ignorefile .trivyignore \
+            --format sarif --output trivy-dependencias.sarif .
+      - name: Puerta - falla ante cualquier CVE CRÍTICO o ALTO sin mitigar
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners vuln --ignorefile .trivyignore \
+            --severity CRITICAL,HIGH --exit-code 1 .
+      - uses: github/codeql-action/upload-sarif@6f2ac81fd5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        if: always() && hashFiles('trivy-dependencias.sarif') != ''
+        with:
+          sarif_file: trivy-dependencias.sarif
+          category: trivy-dependencias
+
+  sca-imagen:
+    name: sca-imagen
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Construir la imagen de producción (la misma etapa que se publica)
+        run: docker build -q --target produccion -t fitmanage:escaneo .
+      - name: Reporte completo en tabla y SARIF
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/src" -w /src "$TRIVY" \
+            image --scanners vuln --ignorefile .trivyignore --format table --output trivy-imagen.txt fitmanage:escaneo
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/src" -w /src "$TRIVY" \
+            image --scanners vuln --ignorefile .trivyignore --format sarif --output trivy-imagen.sarif fitmanage:escaneo
+          cat trivy-imagen.txt
+      - name: Puerta - falla ante cualquier CVE CRÍTICO o ALTO sin mitigar
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/src" -w /src "$TRIVY" \
+            image --scanners vuln --ignorefile .trivyignore --severity CRITICAL,HIGH --exit-code 1 fitmanage:escaneo
+      - uses: github/codeql-action/upload-sarif@6f2ac81fd5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        if: always() && hashFiles('trivy-imagen.sarif') != ''
+        with:
+          sarif_file: trivy-imagen.sarif
+          category: trivy-imagen
+      - name: Guardar el reporte como artefacto privado de la corrida
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reporte-trivy-imagen
+          path: trivy-imagen.txt
+          retention-days: 30
+
+  secretos:
+    name: secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Puerta - falla si aparece una clave o un token en el repositorio
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners secret --secret-config trivy-secret.yaml \
+            --exit-code 1 .

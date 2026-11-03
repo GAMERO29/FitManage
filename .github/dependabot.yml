@@ -1,0 +1,20 @@
+# Dependabot (Guía 12, ADR N.° 12): abre PR con las actualizaciones, y cada PR pasa por la misma
+# puerta de calidad y de seguridad que cualquier otro cambio. Nunca se unen solos.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Bogota }
+    open-pull-requests-limit: 5
+    groups:
+      parches-python:
+        update-types: [patch]
+  - package-ecosystem: docker
+    directory: "/"
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Bogota }
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Bogota }
+  - package-ecosystem: npm
+    directory: "/vista-movil"
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Bogota }

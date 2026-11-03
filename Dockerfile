@@ -8,9 +8,11 @@
 #   docker build --target produccion -t fitmanage .     # la que se despliega (por defecto)
 #   docker build --target pruebas    -t fitmanage:pruebas .
 
-ARG PYTHON_IMAGEN=python:3.12-slim-trixie
+# Fijada por digest: la etiqueta puede cambiar con un parche; el digest no. Dependabot la actualiza.
+ARG PYTHON_IMAGEN=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30
 
 # ---------- 1. construccion ----------
+# nosemgrep: dockerfile.best-practice.missing-image-version (versión y digest en PYTHON_IMAGEN)
 FROM ${PYTHON_IMAGEN} AS construccion
 ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -23,6 +25,7 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
 # ---------- 2. pruebas (no se publica) ----------
+# nosemgrep: dockerfile.best-practice.missing-image-version (versión y digest en PYTHON_IMAGEN)
 FROM construccion AS pruebas
 COPY requirements-dev.txt /tmp/requirements-dev.txt
 # requirements-dev.txt incluye -r requirements.txt, que ya está instalado en la etapa anterior.
@@ -35,6 +38,7 @@ ENV PYTHONUNBUFFERED=1
 CMD ["pytest", "-p", "no:cacheprovider"]
 
 # ---------- 3. produccion (la que se publica en GHCR) ----------
+# nosemgrep: dockerfile.best-practice.missing-image-version (versión y digest en PYTHON_IMAGEN)
 FROM ${PYTHON_IMAGEN} AS produccion
 # El pipeline pasa el SHA del commit; /api/v1/salud lo publica (ADR N.° 11).
 ARG VERSION=desarrollo

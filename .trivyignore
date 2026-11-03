@@ -1,0 +1,3 @@
+# Excepciones de Trivy (Guía 12, ADR N.° 12). Cada línea necesita una razón y una fecha de vencimiento
+# (exp:): cuando vence, el CVE vuelve a romper el pipeline y hay que revisarlo otra vez.
+# Formato:  CVE-AAAA-NNNNN exp:AAAA-MM-DD   # razón

@@ -113,9 +113,10 @@ jobs:
         run: |
           filtro="componentKeys=GAMERO29_FitManage&resolved=false&inNewCodePeriod=true&ps=50"
           [ -n "$PR" ] && filtro="$filtro&pullRequest=$PR"
-          curl -sf -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/issues/search?$filtro" | python3 -c "
-          import json, sys
-          for i in json.load(sys.stdin)['issues']:
+          curl -sf -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/issues/search?$filtro" -o problemas.json
+          python3 -c "
+          import json
+          for i in json.load(open('problemas.json'))['issues']:
               print(f\"{i['severity']:9} {i.get('type',''):14} {i['rule']:28} {i['component'].split(':',1)[-1]}:{i.get('line','-')}  {i['message']}\")"
 
   contrato-api:
@@ -213,15 +214,17 @@ jobs:
         env:
           IMG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
         run: |
-          JWT_CLAVE=$(openssl rand -hex 32); echo "::add-mask::$JWT_CLAVE"
-          DJANGO_SECRET_KEY=$(openssl rand -hex 32); echo "::add-mask::$DJANGO_SECRET_KEY"
+          # Claves de un solo uso para este contenedor; se enmascaran antes de usarlas (ADR N.° 12).
+          JWT_CLAVE=$(openssl rand -hex 32); echo "::add-mask::$JWT_CLAVE" # nosemgrep: yaml.github-actions.security.audit.unsafe-add-mask-workflow-command
+          DJANGO_SECRET_KEY=$(openssl rand -hex 32); echo "::add-mask::$DJANGO_SECRET_KEY" # nosemgrep: yaml.github-actions.security.audit.unsafe-add-mask-workflow-command
           docker run -d --name api --network host --read-only --tmpfs /tmp --cap-drop ALL \
             -e DATABASE_URL=postgresql://fitmanage@127.0.0.1:5432/fitmanage_carga \
             -e JWT_CLAVE="$JWT_CLAVE" -e DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
             "$IMG"
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/v1/salud && break; sleep 1; done
           # La imagen dice qué commit es: el healthcheck del despliegue depende de esto (ADR N.° 11).
-          test "$(curl -sf http://127.0.0.1:8000/api/v1/salud | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')" = "$GITHUB_SHA"
+          curl -sf http://127.0.0.1:8000/api/v1/salud -o salud.json
+          test "$(python3 -c 'import json; print(json.load(open("salud.json"))["version"])')" = "$GITHUB_SHA"
       - name: Arranque como en Render (base vacía, migraciones y PORT asignado por la plataforma)
         env:
           IMG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
