@@ -106,3 +106,29 @@ def test_acepta_el_servicio_de_render():
 
 def test_si_no_hay_respuesta_la_ruta_protegida_no_cuenta_como_protegida():
     assert ruta_protegida_exige_token("http://127.0.0.1:9", timeout=0.2) is False
+
+
+def test_explica_por_que_espera(servidor, capsys):
+    servidor.salud_status = 503
+    correr(servidor)
+    assert "HTTP 503" in capsys.readouterr().out
+
+
+def test_una_respuesta_que_no_es_json_se_explica(capsys):
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Html(BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"<html>Service waking up</html>")
+
+        def log_message(self, *args):
+            pass
+
+    http = HTTPServer(("127.0.0.1", 0), Html)
+    threading.Thread(target=http.serve_forever, daemon=True).start()
+    assert lanzar(f"http://127.0.0.1:{http.server_port}") == 1
+    http.shutdown()
+    assert "no es JSON" in capsys.readouterr().out
