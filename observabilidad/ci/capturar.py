@@ -1,7 +1,10 @@
 """Captura el tablero de Grafana y una traza de Jaeger con Chromium (workflow Observabilidad).
 
 Imprime cada PNG en base64 entre marcas, para poder sacarlo del log de la corrida sin publicar
-artefactos. Uso: python observabilidad/ci/capturar.py <trace_id>
+artefactos.
+
+    python observabilidad/ci/capturar.py grafana-apagon            # solo el tablero
+    python observabilidad/ci/capturar.py grafana <trace_id>        # el tablero y una traza
 """
 
 from __future__ import annotations
@@ -22,15 +25,19 @@ def imprimir(nombre: str, png: bytes) -> None:
 
 
 def main() -> None:
+    nombre = sys.argv[1]
+    trace_id = sys.argv[2] if len(sys.argv) > 2 else None
     with sync_playwright() as p:
         navegador = p.chromium.launch()
         pagina = navegador.new_page(viewport={"width": 1600, "height": 1000})
         pagina.goto(GRAFANA, wait_until="networkidle")
         pagina.wait_for_timeout(8000)  # que terminen de dibujarse los paneles
-        imprimir("grafana.png", pagina.screenshot(full_page=True))
-        if len(sys.argv) > 1:
-            pagina.goto(JAEGER.format(sys.argv[1]), wait_until="networkidle")
-            pagina.wait_for_timeout(4000)
+        imprimir(f"{nombre}.png", pagina.screenshot(full_page=True))
+        if trace_id:
+            pagina.goto(JAEGER.format(trace_id), wait_until="networkidle")
+            pagina.wait_for_timeout(3000)
+            pagina.get_by_text("consultar_estado").first.click()  # abre los atributos del span
+            pagina.wait_for_timeout(1500)
             imprimir("jaeger.png", pagina.screenshot(full_page=True))
         navegador.close()
 

@@ -59,12 +59,19 @@ jobs:
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
         with:
           k6-version: "1.5.0"
+      - name: Chromium para las capturas
+        run: |
+          pip install --quiet playwright==1.64.1
+          python -m playwright install --with-deps chromium > /dev/null
       - name: 6 minutos de tráfico, con un apagón de la base de 2 min 30 s a partir del minuto 2
         run: |
           (sleep 120; echo "::notice::$(date -u +%T) apagando la base"; docker compose stop db
            sleep 150; echo "::notice::$(date -u +%T) encendiendo la base"; docker compose start db) &
+          (sleep 250; echo "::notice::$(date -u +%T) captura del tablero durante el apagón"
+           python observabilidad/ci/capturar.py grafana-apagon > captura-apagon.txt) &
           k6 run --quiet pruebas_carga/trafico_observabilidad.js
           wait
+          cat captura-apagon.txt
           sleep 45 # un par de lecturas más de Prometheus con la base ya recuperada
       - name: Las tres señales del tablero y la alerta, según Prometheus
         run: |
@@ -120,10 +127,7 @@ jobs:
           echo "Series en Prometheus: $(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=count({job="fitmanage"})' | jq -r '.data.result[0].value[1]')"
           echo "Disco de Prometheus: $(docker compose exec -T prometheus du -sk /prometheus | cut -f1) KB"
       - name: Capturas del tablero de Grafana y de una traza en Jaeger
-        run: |
-          pip install --quiet playwright==1.64.1
-          python -m playwright install --with-deps chromium > /dev/null
-          python observabilidad/ci/capturar.py "$(cat trace_id.txt)"
+        run: python observabilidad/ci/capturar.py grafana "$(cat trace_id.txt)"
       - name: Apagar
         if: always()
         run: docker compose --profile observabilidad --profile pruebas down -v
