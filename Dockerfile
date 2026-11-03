@@ -55,6 +55,7 @@ COPY dominio/ dominio/
 COPY aplicacion/ aplicacion/
 COPY infraestructura/ infraestructura/
 COPY docs/api/openapi.yaml docs/api/openapi.yaml
+COPY --chmod=755 docker/arrancar.sh /app/arrancar.sh
 USER 10001
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \

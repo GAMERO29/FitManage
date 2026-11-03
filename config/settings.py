@@ -57,6 +57,8 @@ def _base_de_datos(url: str | None) -> dict:
         # ADR N.° 08: conexiones persistentes. Con 0 se abre una conexión nueva en cada petición.
         "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
         "CONN_HEALTH_CHECKS": True,
+        # Si la base no contesta, fallar en 10 s con un error claro en lugar de quedar colgado.
+        "OPTIONS": {"connect_timeout": 10},
     }
 
 
