@@ -46,6 +46,18 @@
                     },
                     {
                         "context": "artefacto"
+                    },
+                    {
+                        "context": "sast"
+                    },
+                    {
+                        "context": "sca-dependencias"
+                    },
+                    {
+                        "context": "sca-imagen"
+                    },
+                    {
+                        "context": "secretos"
                     }
                 ]
             }

@@ -25,7 +25,7 @@ El plan gratuito de SonarCloud no permite editar el Quality Gate, por eso el umb
 
 ## Qué hace que la puerta bloquee de verdad
 
-1. **La regla de `main`** ([`ruleset-main.json`](ruleset-main.json), importada en *Settings → Rules → Rulesets*): exige PR y los cinco checks en verde, sin lista de excepciones.
+1. **La regla de `main`** ([`ruleset-main.json`](ruleset-main.json), importada en *Settings → Rules → Rulesets*): exige PR y nueve checks en verde, sin lista de excepciones: los cinco del pipeline `CI` y, desde la Guía 12 (ADR N.° 12), los cuatro del workflow `Seguridad` (`sast`, `sca-dependencias`, `sca-imagen` y `secretos`).
 2. **Ningún paso de la puerta tiene `continue-on-error`**, y `analisis` falla si falta `SONAR_TOKEN` en lugar de saltarse.
 3. **`sonar.qualitygate.wait=true`**: el job no termina hasta que SonarCloud da su veredicto, y si es «Failed» queda en rojo.
 
