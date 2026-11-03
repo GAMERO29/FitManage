@@ -57,11 +57,14 @@ jobs:
           jq '.runs[].results |= map(select((.suppressions // []) | length == 0))' \
             semgrep-completo.sarif > semgrep.sarif
           echo "Suprimidos con razón: $(jq '[.runs[].results[] | select(.suppressions)] | length' semgrep-completo.sarif)"
-      - name: Puerta - falla ante cualquier hallazgo de severidad ERROR (alto)
+      # Semgrep solo tiene tres severidades, y varias reglas de inyección SQL de Django (CWE-89, impacto
+      # alto) vienen como WARNING. La puerta toma ERROR y WARNING para no depender de que otra regla en
+      # ERROR cubra el mismo caso; solo INFO (estilo) queda fuera.
+      - name: Puerta - falla ante cualquier hallazgo de severidad ERROR o WARNING
         run: |
           semgrep scan --metrics off --config reglas/python --config reglas/dockerfile \
             --config reglas/yaml/github-actions --exclude reglas --exclude docs --exclude prototipo \
-            --exclude vista-movil --severity ERROR --error .
+            --exclude vista-movil --severity ERROR --severity WARNING --error .
       - uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         if: always() && hashFiles('semgrep.sarif') != ''
         with:
