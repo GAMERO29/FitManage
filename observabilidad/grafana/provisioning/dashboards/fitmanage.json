@@ -22,7 +22,7 @@
       "description": "Todas las rutas de la API, sin /salud ni /metrics.",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 0,
@@ -61,7 +61,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "sum(rate(http_server_request_duration_seconds_count[1m]))",
           "instant": false
@@ -75,7 +75,7 @@
       "description": "Naranja: alarma de ingeniería (300 ms, ADR N.° 08). Rojo: QA-01 incumplido (2 s).",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 6,
@@ -121,7 +121,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1m])))",
           "instant": false
@@ -135,7 +135,7 @@
       "description": "Rojo: dispara la alerta ErroresDelServidor (más del 5 % durante 1 minuto).",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 12,
@@ -182,7 +182,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count[1m]))",
           "instant": false
@@ -193,10 +193,10 @@
       "id": 4,
       "type": "stat",
       "title": "Alertas activas",
-      "description": "Reglas de observabilidad/prometheus/alertas.yml que están disparadas.",
+      "description": "Reglas de observabilidad/prometheus/alertas.yml disparadas. Solo con el Prometheus de compose; en Grafana Cloud las alertas se crean en Alerting.",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 18,
@@ -238,7 +238,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
           "instant": false
@@ -252,7 +252,7 @@
       "description": "Peticiones por segundo, apiladas por código HTTP.",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 0,
@@ -301,7 +301,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count[1m]))",
           "legendFormat": "{{http_response_status_code}}"
@@ -315,7 +315,7 @@
       "description": "GET /api/v1/estados/{tipoDocumento}/{numeroDocumento}. Umbrales: 300 ms (aviso) y 2 s (QA-01).",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 12,
@@ -372,7 +372,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1m])))",
           "legendFormat": "p95"
@@ -381,7 +381,7 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1m])))",
           "legendFormat": "p50"
@@ -395,7 +395,7 @@
       "description": "Proporción de respuestas 5xx sobre el total, en ventanas de 1 minuto.",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 0,
@@ -448,7 +448,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count[1m]))",
           "legendFormat": "5xx"
@@ -462,7 +462,7 @@
       "description": "ACTIVO, VENCIDO, SIN_MEMBRESIA o NO_ENCONTRADO. Ningún documento: la métrica solo cuenta resultados.",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${fuente}"
       },
       "gridPos": {
         "x": 12,
@@ -511,7 +511,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${fuente}"
           },
           "expr": "sum by (resultado) (rate(fitmanage_consultas_estado_total[1m]))",
           "legendFormat": "{{resultado}}"
@@ -523,6 +523,16 @@
     "list": []
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "fuente",
+        "label": "Fuente de datos",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1,
+        "hide": 0,
+        "current": {}
+      }
+    ]
   }
 }
