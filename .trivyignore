@@ -1,0 +1,37 @@
+# Excepciones de Trivy (Guía 12, ADR N.° 12). Cada línea necesita una razón y una fecha de vencimiento
+# (exp:): cuando vence, el CVE vuelve a romper el pipeline y hay que revisarlo otra vez.
+# Formato:  CVE-AAAA-NNNNN exp:AAAA-MM-DD   # razón
+#
+# Revisión del 2/11/2026 sobre python:3.12-slim-trixie (Debian 13). Ninguno tiene versión corregida
+# en Debian todavía; el escaneo semanal del lunes y Dependabot (digest de la base) los traen cuando
+# salga el parche. Vencen el 1/2/2027 para obligar a una segunda revisión aunque no salga nada.
+
+# util-linux (bsdutils, libblkid1, liblastlog2-2, libmount1, libsmartcols1, libuuid1, login, mount):
+# fallas de mount/umount con privilegios (X-mount.*) y de nsenter --join-cgroup. Para explotarlas hay
+# que ejecutar mount como root o tener CAP_SYS_ADMIN. La imagen quita el setuid de mount y umount, el
+# proceso corre como UID 10001 y en compose sin capacidades (cap_drop: ALL, no-new-privileges).
+CVE-2026-76642 exp:2027-02-01
+CVE-2026-78408 exp:2027-02-01
+CVE-2026-78409 exp:2027-02-01
+CVE-2026-78410 exp:2027-02-01
+
+# ncurses (libncursesw6, libtinfo6, ncurses-base, ncurses-bin): desbordamiento al procesar un terminfo
+# manipulado. Ningún programa del servidor usa ncurses (gunicorn y Django no abren terminales) y el
+# contenedor no tiene terminal interactiva.
+CVE-2025-69720 exp:2027-02-01
+
+# libsqlite3-0: denegación de servicio en la extensión FTS5. FitManage usa PostgreSQL 16:
+# SQLite solo existe como dependencia de Python y no recibe SQL de nadie.
+CVE-2026-119373 exp:2027-02-01
+
+# libsystemd0, libudev1: escalada local en systemd-homed. La imagen solo trae las bibliotecas; homed
+# no está instalado y en el contenedor no corre systemd.
+CVE-2026-16742 exp:2027-02-01
+
+# libacl1: recorrido de enlaces simbólicos al cambiar ACL. Requiere que un proceso con privilegios
+# aplique ACL sobre rutas que controla el atacante; la aplicación no usa ACL y no corre como root.
+CVE-2026-54369 exp:2027-02-01
+
+# perl-base: denegación de servicio en Archive::Tar con un tar manipulado. Debian aplazó la corrección
+# (fix_deferred). En ejecución no se invoca Perl ni se abren archivos tar.
+CVE-2026-9538 exp:2027-02-01

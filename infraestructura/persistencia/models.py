@@ -90,7 +90,9 @@ class PagoModelo(models.Model):
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     duracion_dias = models.PositiveIntegerField()
     medio = models.CharField(max_length=20)
-    referencia = models.CharField(max_length=40, null=True, blank=True)
+    # NULL a propósito: el índice único parcial (RN-06) solo aplica a referencias no nulas,
+    # y los pagos en efectivo no tienen referencia. Una cadena vacía chocaría entre sí.
+    referencia = models.CharField(max_length=40, null=True, blank=True)  # nosemgrep
     fecha_inicio = models.DateField()
     fecha_vencimiento = models.DateField()
     registrado_por = models.ForeignKey(
@@ -106,7 +108,8 @@ class PagoModelo(models.Model):
         blank=True,
         related_name="pagos_anulados",
     )
-    motivo_anulacion = models.TextField(null=True, blank=True)
+    # NULL distingue «nunca se anuló» de un motivo, y la migración ya está en producción.
+    motivo_anulacion = models.TextField(null=True, blank=True)  # nosemgrep
 
     class Meta:
         db_table = "pagos"

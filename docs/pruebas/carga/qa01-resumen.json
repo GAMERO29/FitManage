@@ -130,28 +130,28 @@
         }
     },
     "setup_data": {
-        "token": "eyJhbGciOiJIUzI1NiIsImtpZCI6ImsxIiwidHlwIjoiSldUIn0.eyJzdWIiOiIzNjY4OWYyZC03MjExLTRlZDEtYmU2Ni1lODg4MDEyOTFmNzAiLCJyb2wiOiJSRUNFUENJT05JU1RBIiwiaXNzIjoiZml0bWFuYWdlIiwiYXVkIjoiZml0bWFuYWdlLWFwaSIsImlhdCI6MTc5MzY0MzYyOSwiZXhwIjoxNzkzNjQ0NTI5LCJqdGkiOiI5YjFkMmQ2OS1hNWU0LTRkODktYjk0ZS1lOTAxZWIxYzk4NWUifQ.0u4XNuCRxXbUFVzWLCgRciXXnDwIm-Fqgl-w6zyfb9M"
+        "token": "[eliminado: token de acceso del entorno de carga, ver ADR N.° 12]"
     },
     "root_group": {
         "path": "",
         "id": "d41d8cd98f00b204e9800998ecf8427e",
         "groups": {},
         "checks": {
-                "responde 200": {
-                    "name": "responde 200",
-                    "path": "::responde 200",
-                    "id": "98ed9f003132871fdd4cbb00c48e8f42",
-                    "passes": 5306,
-                    "fails": 0
-                },
-                "trae el estado": {
-                    "id": "bef7199b829e5748b75f92177b6f151e",
-                    "passes": 5306,
-                    "fails": 0,
-                    "name": "trae el estado",
-                    "path": "::trae el estado"
-                }
+            "responde 200": {
+                "name": "responde 200",
+                "path": "::responde 200",
+                "id": "98ed9f003132871fdd4cbb00c48e8f42",
+                "passes": 5306,
+                "fails": 0
             },
+            "trae el estado": {
+                "id": "bef7199b829e5748b75f92177b6f151e",
+                "passes": 5306,
+                "fails": 0,
+                "name": "trae el estado",
+                "path": "::trae el estado"
+            }
+        },
         "name": ""
     }
 }

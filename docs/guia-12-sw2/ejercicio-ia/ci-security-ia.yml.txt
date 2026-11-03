@@ -1,0 +1,101 @@
+# Workflow generado por la IA en el Ejercicio 5 de la Guía 12, copiado sin modificar.
+# Extensión .txt para que GitHub nunca lo ejecute. Auditoría en prompt-y-respuesta.md.
+# .github/workflows/ci-security.yml
+name: Seguridad FitManage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 1"   # lunes 07:00 hora Colombia
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seguridad-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  escaneo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar carpeta del sitio
+        run: mkdir -p site
+
+      - name: Trivy (vulnerabilidades, secretos, IaC) a HTML
+        run: |
+          docker run --rm -v "$PWD:/src" aquasec/trivy:0.56.2 fs \
+            --scanners vuln,secret,misconfig \
+            --skip-dirs .git,.venv,venv,node_modules \
+            --format template --template "@/contrib/html.tpl" \
+            -o /src/site/trivy.html /src
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Semgrep (SAST) a JSON y HTML
+        run: |
+          pip install semgrep==1.100.0
+          semgrep scan --metrics=off \
+            --config p/python --config p/django --config p/owasp-top-ten --config p/secrets \
+            --exclude .venv --exclude venv --exclude migrations \
+            --json -o semgrep.json .
+          python3 - <<'EOF'
+          import html, json
+          data = json.load(open("semgrep.json", encoding="utf-8"))
+          rows = []
+          for r in data.get("results", []):
+              e = r.get("extra", {})
+              rows.append(
+                  f"<tr><td>{html.escape(e.get('severity', 'INFO'))}</td>"
+                  f"<td>{html.escape(r['check_id'])}</td>"
+                  f"<td>{html.escape(r['path'])}:{r['start']['line']}</td>"
+                  f"<td>{html.escape(e.get('message', ''))}</td></tr>"
+              )
+          page = (
+              '<!doctype html><html lang="es"><meta charset="utf-8"><title>Semgrep</title>'
+              '<body style="font-family:sans-serif"><h1>Semgrep: %d hallazgos</h1>'
+              '<table border="1" cellpadding="6"><tr><th>Severidad</th><th>Regla</th>'
+              '<th>Archivo</th><th>Mensaje</th></tr>%s</table></body></html>'
+          ) % (len(rows), "".join(rows))
+          open("site/semgrep.html", "w", encoding="utf-8").write(page)
+          EOF
+
+      - name: Índice del reporte
+        run: |
+          cat > site/index.html <<EOF
+          <!doctype html>
+          <html lang="es"><meta charset="utf-8"><title>Reporte de seguridad FitManage</title>
+          <body style="font-family:sans-serif;max-width:720px;margin:auto">
+          <h1>Reporte de seguridad - FitManage</h1>
+          <p>Commit: ${GITHUB_SHA}<br>Generado: $(date -u '+%Y-%m-%d %H:%M') UTC</p>
+          <ul>
+            <li><a href="trivy.html">Trivy: vulnerabilidades, secretos y configuración</a></li>
+            <li><a href="semgrep.html">Semgrep: análisis estático del código</a></li>
+          </ul>
+          </body></html>
+          EOF
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publicar:
+    needs: escaneo
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - id: despliegue
+        uses: actions/deploy-pages@v4

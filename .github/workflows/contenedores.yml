@@ -84,7 +84,8 @@ jobs:
       - name: .env con claves generadas en la corrida (nunca en el repositorio)
         run: |
           for v in POSTGRES_PASSWORD JWT_CLAVE DJANGO_SECRET_KEY; do
-            valor=$(openssl rand -hex 24); echo "::add-mask::$valor"; echo "$v=$valor" >> .env
+            # Generada en la corrida y enmascarada antes de escribirla (ADR N.° 12).
+            valor=$(openssl rand -hex 24); echo "::add-mask::$valor"; echo "$v=$valor" >> .env # nosemgrep: yaml.github-actions.security.audit.unsafe-add-mask-workflow-command
           done
       - name: docker compose up -d
         run: |

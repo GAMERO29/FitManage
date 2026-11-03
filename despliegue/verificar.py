@@ -51,7 +51,7 @@ def leer_salud(url_base: str, timeout: float = 30) -> Lectura:
     texto = b""
     try:
         # verificar() solo llega aquí con una URL que pasó url_permitida(); de ahí el nosec.
-        with urllib.request.urlopen(peticion, timeout=timeout) as r:  # noqa: S310 # nosec B310
+        with urllib.request.urlopen(peticion, timeout=timeout) as r:  # noqa: S310 # nosec B310 # nosemgrep
             texto = r.read()
             cuerpo = json.loads(texto)
             version = cuerpo.get("version") if cuerpo.get("estado") == "ok" else None
@@ -66,7 +66,7 @@ def leer_salud(url_base: str, timeout: float = 30) -> Lectura:
 
 def ruta_protegida_exige_token(url_base: str, timeout: float = 10) -> bool:
     try:
-        urllib.request.urlopen(f"{url_base}/api/v1/estados", timeout=timeout)  # noqa: S310 # nosec B310
+        urllib.request.urlopen(f"{url_base}/api/v1/estados", timeout=timeout)  # noqa: S310 # nosec B310 # nosemgrep
     except urllib.error.HTTPError as error:
         return error.code == 401
     except (urllib.error.URLError, TimeoutError):
@@ -98,7 +98,8 @@ def verificar(url_base: str, esperada: str, espera_max: float, pausa: float = 10
                 f"Esperando: HTTP {lectura.estado_http}, versión en línea {lectura.version}"
                 + (f" ({lectura.detalle})" if lectura.detalle else "")
             )
-        time.sleep(pausa)
+        # La espera entre consultas es el propósito del healthcheck, no un descuido.
+        time.sleep(pausa)  # nosemgrep: python.lang.best-practice.arbitrary-sleep
     print(f"FALLA: la versión {esperada[:12]} no quedó sana en {espera_max:.0f} s")
     return False
 

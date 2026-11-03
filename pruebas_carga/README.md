@@ -19,6 +19,10 @@ k6 run pruebas_carga/consulta_estado.js                        # QA-01: 10 VUs, 
 k6 run -e PERFIL=exploracion pruebas_carga/consulta_estado.js  # margen: hasta 50 VUs
 ```
 
+## Antes de guardar un resumen de k6
+
+`--summary-export` incluye `setup_data`, y ahí va el token de acceso que `setup()` obtuvo. En la Guía 8 se subieron cinco resúmenes con ese token. Era de 15 minutos y estaba firmado con una clave del entorno de carga que ya no existe, así que no sirve para nada, pero era un token real dentro del repositorio. En la Guía 12 el job `secretos` lo detectó, se reemplazó por un texto y desde entonces el pipeline rechaza cualquier JWT nuevo en el repositorio (ADR N.° 12).
+
 ## Umbrales
 
 | Umbral | Valor | De dónde sale |
