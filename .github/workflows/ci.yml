@@ -47,11 +47,11 @@ jobs:
       - name: Estilo y errores (ruff)
         run: ruff check .
       - name: Seguridad del código (bandit)
-        run: bandit -q -r dominio aplicacion infraestructura config -x "*/migrations/*"
+        run: bandit -q -r dominio aplicacion infraestructura config despliegue -x "*/migrations/*"
       - name: Complejidad ciclomática (radon; falla si algún bloque supera 10)
         run: |
-          radon cc -s -a -e "*/migrations/*" dominio aplicacion infraestructura config
-          test -z "$(radon cc -n C -e "*/migrations/*" dominio aplicacion infraestructura config)"
+          radon cc -s -a -e "*/migrations/*" dominio aplicacion infraestructura config despliegue
+          test -z "$(radon cc -n C -e "*/migrations/*" dominio aplicacion infraestructura config despliegue)"
       - name: Dependencias sin vulnerabilidades conocidas (pip-audit)
         run: pip-audit -r requirements.txt -r requirements-dev.txt --progress-spinner off
 
@@ -173,6 +173,7 @@ jobs:
           context: .
           target: produccion
           load: true
+          build-args: VERSION=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - name: Construir la etapa de pruebas (no se publica)
@@ -207,6 +208,8 @@ jobs:
             -e JWT_CLAVE="$JWT_CLAVE" -e DJANGO_SECRET_KEY="$DJANGO_SECRET_KEY" \
             "$IMG"
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/v1/salud && break; sleep 1; done
+          # La imagen dice qué commit es: el healthcheck del despliegue depende de esto (ADR N.° 11).
+          test "$(curl -sf http://127.0.0.1:8000/api/v1/salud | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')" = "$GITHUB_SHA"
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
         with:
           k6-version: "1.5.0"

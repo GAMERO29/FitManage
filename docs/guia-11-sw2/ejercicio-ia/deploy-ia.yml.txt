@@ -1,0 +1,25 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        run: echo "FitManage2026!" | docker login -u gamero29 --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t gamero29/fitmanage:latest .
+          docker push gamero29/fitmanage:latest
+
+      - name: Trigger Render deploy
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv-cq8f2l3v2p9s73abc123?key=Xk2pQ9vLmN4r"
+          echo "Deployment triggered successfully!"

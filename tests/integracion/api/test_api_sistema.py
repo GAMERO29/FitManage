@@ -14,6 +14,12 @@ def test_salud_responde_sin_token(api):
     assert r.status_code == 200 and r.json()["estado"] == "ok"
 
 
+def test_salud_dice_que_version_esta_corriendo(api, settings):
+    """Guía 11: el healthcheck del despliegue compara esta versión con el commit desplegado."""
+    settings.FITMANAGE_VERSION = "29860b3f6ad0e6dfdbe85ba6c48eeefd36cea5c0"
+    assert api.get("/api/v1/salud").json()["version"] == "29860b3f6ad0e6dfdbe85ba6c48eeefd36cea5c0"
+
+
 class BaseCaida:
     def cursor(self):
         raise ConnectionError("la base no responde")

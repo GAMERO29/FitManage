@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.1.0
+  version: 1.2.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -59,6 +59,7 @@ paths:
               example:
                 estado: ok
                 hora: '2026-10-07T18:45:00-05:00'
+                version: 29860b3f6ad0e6dfdbe85ba6c48eeefd36cea5c0
         '429':
           $ref: '#/components/responses/DemasiadasSolicitudes'
         '503':
@@ -744,7 +745,7 @@ components:
     Salud:
       type: object
       additionalProperties: false
-      required: [estado, hora]
+      required: [estado, hora, version]
       properties:
         estado:
           type: string
@@ -752,6 +753,10 @@ components:
         hora:
           type: string
           format: date-time
+        version:
+          type: string
+          description: SHA del commit con el que se construyó la imagen, o `desarrollo` fuera de un contenedor. El healthcheck posterior al despliegue lo compara con el commit desplegado (ADR N.° 11).
+          maxLength: 40
 
     Credenciales:
       type: object

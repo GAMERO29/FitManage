@@ -4,7 +4,7 @@ El contrato [`openapi.yaml`](openapi.yaml) se escribió **antes** de los control
 
 | Archivo | Qué es |
 | --- | --- |
-| [`openapi.yaml`](openapi.yaml) | Contrato OpenAPI 3.0.3 (versión 1.1.0): 13 operaciones en 6 contextos, seguridad JWT global y esquemas públicos sin datos sensibles. |
+| [`openapi.yaml`](openapi.yaml) | Contrato OpenAPI 3.0.3 (versión 1.2.0: `/salud` informa la versión desplegada): 13 operaciones en 6 contextos, seguridad JWT global y esquemas públicos sin datos sensibles. |
 | [`FitManage.postman_collection.json`](FitManage.postman_collection.json) | 11 peticiones con 17 aserciones contra el mock de Prism. Contra Django las reemplazan las 75 pruebas de `tests/integracion/api/`. |
 | [`../../vista-movil/pacts/`](../../vista-movil/pacts/) | Pact de la vista móvil (consumidor), verificado contra la API real en `tests/contrato/test_pact_proveedor.py`. |
 | [`evidencia-newman.txt`](evidencia-newman.txt) | Salida de la última corrida local de la colección. |
