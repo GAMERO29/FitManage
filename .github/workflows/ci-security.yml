@@ -1,7 +1,7 @@
 # Seguridad del pipeline (Guía 12, FPI-28, ADR N.° 12): Shift-Left Security.
 #
 #   sast              Semgrep sobre el código propio, el Dockerfile y los workflows.
-#   sca-dependencias  Trivy sobre requirements*.txt y el package-lock.json de la vista móvil.
+#   sca-dependencias  Trivy sobre requirements.txt (puerta) y el package-lock.json de la vista móvil (reporte).
 #   sca-imagen        Trivy sobre la imagen de producción ya construida (paquetes de Debian incluidos).
 #   secretos          Trivy busca claves y tokens en todo el árbol del repositorio.
 #
@@ -76,11 +76,16 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Reporte completo en SARIF
+      # El reporte incluye las dependencias de desarrollo (Pact y las pruebas de la vista móvil), que nunca
+      # llegan a producción. La puerta mira solo las de ejecución: las de desarrollo de Python ya las bloquea
+      # pip-audit en el pipeline CI, y las de npm quedan visibles en el panel Security sin detener la entrega.
+      - name: Reporte completo en SARIF (incluye dependencias de desarrollo)
         run: |
           docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners vuln --ignorefile .trivyignore \
-            --format sarif --output trivy-dependencias.sarif .
-      - name: Puerta - falla ante cualquier CVE CRÍTICO o ALTO sin mitigar
+            --include-dev-deps --format sarif --output trivy-dependencias.sarif .
+          docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners vuln --ignorefile .trivyignore \
+            --include-dev-deps .
+      - name: Puerta - falla ante cualquier CVE CRÍTICO o ALTO sin mitigar en las dependencias de ejecución
         run: |
           docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners vuln --ignorefile .trivyignore \
             --severity CRITICAL,HIGH --exit-code 1 .

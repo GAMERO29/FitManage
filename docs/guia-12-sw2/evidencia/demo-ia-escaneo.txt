@@ -1,0 +1,29 @@
+# Corrida 41581413862, job escaneo, PR de demostración #15 (workflow de la IA sin modificar). Extracto del log.
+Status: Downloaded newer image for aquasec/trivy:0.56.2
+2026-11-03T05:01:30Z	ERROR	[rego] Error occurred while parsing. Trying to fallback to embedded check	file_path="root/.cache/trivy/policy/content/policies/cloud/policies/aws/ec2/specify_ami_owners.rego" err="root/.cache/trivy/policy/content/policies/cloud/polic
+2026-11-03T05:01:31Z	ERROR	[rego] Error occurred while parsing. Trying to fallback to embedded check	file_path="root/.cache/trivy/policy/content/policies/cloud/policies/aws/ec2/specify_ami_owners.rego" err="root/.cache/trivy/policy/content/policies/cloud/polic
+2026-11-03T05:01:31Z	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+    sys.exit(main())
+             ^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/semgrep/console_scripts/pysemgrep.py", line 52, in main
+    sys.exit(semgrep.main.main())
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/semgrep/main.py", line 115, in main
+    from semgrep.cli import cli
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/semgrep/cli.py", line 5, in <module>
+    from semgrep.commands.ci import ci
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/semgrep/commands/ci.py", line 21, in <module>
+    import semgrep.app.auth as auth
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/semgrep/app/auth.py", line 7, in <module>
+    from semgrep import tracing
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/semgrep/tracing.py", line 24, in <module>
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/opentelemetry/instrumentation/requests/__init__.py", line 84, in <module>
+    from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/opentelemetry/instrumentation/instrumentor.py", line 27, in <module>
+    from opentelemetry.instrumentation.dependencies import (
+  File "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/opentelemetry/instrumentation/dependencies.py", line 4, in <module>
+    from pkg_resources import (
+ModuleNotFoundError: No module named 'pkg_resources'
+##[error]Process completed with exit code 1.
+##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
