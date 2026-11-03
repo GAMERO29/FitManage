@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date, datetime
 
@@ -17,6 +18,8 @@ from infraestructura import consultas
 from infraestructura.api import autenticacion, contenedor, presentacion
 from infraestructura.api.http import SolicitudInvalida, leer_json, no_autenticado, problema
 from infraestructura.api.seguridad import SOLO_ADMINISTRADOR, TODO_EL_PERSONAL, endpoint
+from infraestructura.observabilidad import telemetria
+from infraestructura.observabilidad.privacidad import seudonimo
 from infraestructura.persistencia.models import IdempotenciaModelo, PlanModelo
 from infraestructura.persistencia.repositorios import (
     PagoRepositorioORM,
@@ -26,6 +29,8 @@ from infraestructura.persistencia.repositorios import (
 
 COOKIE_RENOVACION = "fm_renovacion"
 RUTA_RENOVACION = "/api/v1/auth/renovacion"
+
+registro = logging.getLogger("fitmanage.recepcion")
 
 
 # --- Sistema -----------------------------------------------------------------------------
@@ -148,14 +153,41 @@ def consultar_estado(
     tipoDocumento: str,  # noqa: N803
     numeroDocumento: str,  # noqa: N803
 ) -> JsonResponse:
-    socio = SocioRepositorioORM().buscar_por_documento(
-        TipoDocumento(tipoDocumento), numeroDocumento
-    )
-    if socio is None:
-        return problema(404, "NO_ENCONTRADO", "No hay ningún socio con ese documento")
-    hoy = contenedor.reloj().hoy()
-    estado, vence = CalculadoraMembresia().estado_de(PagoRepositorioORM().vigentes_de(socio), hoy)
-    return JsonResponse(presentacion.estado_publico(socio, estado, vence, hoy))
+    # Guía 13: el documento nunca entra a la telemetría; solo su seudónimo (ADR N.° 13).
+    with telemetria.tracer.start_as_current_span("consultar_estado") as span:
+        socio = SocioRepositorioORM().buscar_por_documento(
+            TipoDocumento(tipoDocumento), numeroDocumento
+        )
+        if socio is None:
+            resultado, respuesta = (
+                "NO_ENCONTRADO",
+                problema(404, "NO_ENCONTRADO", "No hay ningún socio con ese documento"),
+            )
+        else:
+            hoy = contenedor.reloj().hoy()
+            pagos = PagoRepositorioORM().vigentes_de(socio)
+            estado, vence = CalculadoraMembresia().estado_de(pagos, hoy)
+            resultado = estado.value
+            respuesta = JsonResponse(presentacion.estado_publico(socio, estado, vence, hoy))
+        huella = seudonimo(tipoDocumento, numeroDocumento)
+        span.set_attributes(
+            {
+                "fitmanage.documento.tipo": tipoDocumento,
+                "fitmanage.socio.seudonimo": huella,
+                "fitmanage.resultado": resultado,
+            }
+        )
+        telemetria.consultas_estado.add(1, {"resultado": resultado})
+        registro.info(
+            "consulta de estado",
+            extra={
+                "evento": "consulta_estado",
+                "tipo_documento": tipoDocumento,
+                "seudonimo": huella,
+                "resultado": resultado,
+            },
+        )
+    return respuesta
 
 
 @require_GET

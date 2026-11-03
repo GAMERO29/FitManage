@@ -4,3 +4,8 @@ tzdata==2026.6; sys_platform == "win32"
 PyJWT==2.15.1
 gunicorn==26.2.0
 openapi-core==0.23.1
+opentelemetry-api==1.45.2
+opentelemetry-sdk==1.45.2
+opentelemetry-exporter-otlp-proto-http==1.45.2
+opentelemetry-exporter-prometheus==0.66b2
+prometheus-client==0.26.0
