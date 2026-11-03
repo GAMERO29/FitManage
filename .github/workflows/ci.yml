@@ -105,6 +105,18 @@ jobs:
           args: >
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
+      - name: Si el Quality Gate falla, mostrar por qué (problemas abiertos del código nuevo)
+        if: failure()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          filtro="componentKeys=GAMERO29_FitManage&resolved=false&inNewCodePeriod=true&ps=50"
+          [ -n "$PR" ] && filtro="$filtro&pullRequest=$PR"
+          curl -sf -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/issues/search?$filtro" | python3 -c "
+          import json, sys
+          for i in json.load(sys.stdin)['issues']:
+              print(f\"{i['severity']:9} {i.get('type',''):14} {i['rule']:28} {i['component'].split(':',1)[-1]}:{i.get('line','-')}  {i['message']}\")"
 
   contrato-api:
     name: contrato-api
