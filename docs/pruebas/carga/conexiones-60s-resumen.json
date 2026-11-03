@@ -152,6 +152,6 @@
         }
     },
     "setup_data": {
-        "token": "eyJhbGciOiJIUzI1NiIsImtpZCI6ImsxIiwidHlwIjoiSldUIn0.eyJzdWIiOiIzNjY4OWYyZC03MjExLTRlZDEtYmU2Ni1lODg4MDEyOTFmNzAiLCJyb2wiOiJSRUNFUENJT05JU1RBIiwiaXNzIjoiZml0bWFuYWdlIiwiYXVkIjoiZml0bWFuYWdlLWFwaSIsImlhdCI6MTc5MzY0NDkzOSwiZXhwIjoxNzkzNjQ1ODM5LCJqdGkiOiI2YmM2ZTljNi04NmMyLTRiNTMtOGVjMC00YWEwZDc0YTgxNmEifQ.5YCgfjQIK9zW0lrI9PGqbV3SjIYyHyVYZQ2y-WKn4yw"
+        "token": "[eliminado: token de acceso del entorno de carga, ver ADR N.° 12]"
     }
 }
