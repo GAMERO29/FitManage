@@ -86,10 +86,10 @@ jobs:
           total=$(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=sum(http_server_request_duration_seconds_count)' | jq -r '.data.result[0].value[1]')
           # Jaeger 2.21 ya no tiene la API /api/traces de búsqueda: se usa la API v3.
           echo "Servicios en Jaeger: $(curl -sf http://127.0.0.1:16686/api/v3/services)"
-          curl -sfG http://127.0.0.1:16686/api/v3/traces --data-urlencode query.serviceName=fitmanage \
+          curl -sG --fail-with-body http://127.0.0.1:16686/api/v3/traces --data-urlencode query.serviceName=fitmanage \
             --data-urlencode "query.startTimeMin=$(date -u -d '-1 hour' +%Y-%m-%dT%H:%M:%SZ)" \
             --data-urlencode "query.startTimeMax=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --data-urlencode query.searchDepth=20000 -o trazas.json
+            --data-urlencode query.searchDepth=10000 -o trazas.json   # 10.000 es el máximo de la API v3
           python observabilidad/ci/trazas.py "$total"
       - name: Ley 1581 - ningún documento en logs, métricas ni trazas
         run: |
