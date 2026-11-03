@@ -1,0 +1,2 @@
+En el log aparece socio_hash='daae9166c64b'
+Cédula recuperada: 1093445566  (1.7 s, un solo núcleo)
