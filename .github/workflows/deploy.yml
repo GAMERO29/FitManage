@@ -47,6 +47,7 @@ jobs:
       url: ${{ vars.URL_PRODUCCION }}
     env:
       URL: ${{ vars.URL_PRODUCCION }}
+      URL_PRODUCCION: ${{ vars.URL_PRODUCCION }}
       HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -99,7 +100,7 @@ jobs:
         continue-on-error: true # si falla, el paso de rollback decide y deja la corrida en rojo
         env:
           ESPERADA: ${{ steps.candidata.outputs.version }}
-        run: python3 -m despliegue.verificar "$URL" "$ESPERADA" --espera-max 900
+        run: python3 -m despliegue.verificar "$ESPERADA" --espera-max 900
       - name: Marcar la imagen como estable
         if: steps.salud.outcome == 'success' && github.event_name != 'push'
         env:
@@ -119,7 +120,7 @@ jobs:
             exit 1
           fi
           python3 -m despliegue.render "$IMAGEN:sha-$ESTABLE"
-          if python3 -m despliegue.verificar "$URL" "$ESTABLE" --espera-max 900; then
+          if python3 -m despliegue.verificar "$ESTABLE" --espera-max 900; then
             echo "### Rollback: \`$FALLIDA\` falló; quedó en línea \`sha-$ESTABLE\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::error::El rollback tampoco quedó sano: intervención manual en Render."

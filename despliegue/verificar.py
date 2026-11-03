@@ -1,6 +1,10 @@
 """Healthcheck posterior al despliegue (Guía 11, ADR N.° 11).
 
-Uso:  python -m despliegue.verificar URL_BASE VERSION_ESPERADA [--espera-max 600]
+Uso:  URL_PRODUCCION=https://... python -m despliegue.verificar VERSION_ESPERADA [--espera-max 600]
+
+La URL sale del entorno (la variable URL_PRODUCCION del environment de GitHub) y no de la
+línea de comandos: así nadie puede apuntar el script a otro host pasándole un argumento, y
+además solo se aceptan https://*.onrender.com o esta misma máquina (SonarCloud S8703).
 
 Pasa (código 0) solo si /api/v1/salud responde 200 con estado "ok" y la versión esperada en
 3 consultas seguidas, y si una ruta protegida sigue exigiendo token (401). Si en el tiempo
@@ -14,9 +18,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -30,10 +36,11 @@ class Lectura:
 
 
 def url_permitida(url_base: str) -> bool:
-    """Solo HTTPS, o HTTP contra esta máquina (las pruebas). Nunca file:// ni otro esquema."""
-    return url_base.startswith("https://") or url_base.startswith(
-        ("http://127.0.0.1", "http://localhost")
-    )
+    """https://<servicio>.onrender.com, o HTTP contra esta máquina (pruebas). Nada más."""
+    partes = urllib.parse.urlsplit(url_base)
+    if partes.scheme == "https":
+        return (partes.hostname or "").endswith(".onrender.com")
+    return partes.scheme == "http" and partes.hostname in {"127.0.0.1", "localhost"}
 
 
 def leer_salud(url_base: str, timeout: float = 10) -> Lectura:
@@ -62,7 +69,7 @@ def ruta_protegida_exige_token(url_base: str, timeout: float = 10) -> bool:
 def verificar(url_base: str, esperada: str, espera_max: float, pausa: float = 10) -> bool:
     url_base = url_base.rstrip("/")
     if not url_permitida(url_base):
-        print(f"FALLA: {url_base} no es HTTPS")
+        print(f"FALLA: {url_base} no es https://*.onrender.com")
         return False
     limite = time.monotonic() + espera_max
     seguidas = 0
@@ -87,12 +94,12 @@ def verificar(url_base: str, esperada: str, espera_max: float, pausa: float = 10
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("url_base")
     p.add_argument("version_esperada")
     p.add_argument("--espera-max", type=float, default=600)
     p.add_argument("--pausa", type=float, default=10)
     a = p.parse_args(argv)
-    return 0 if verificar(a.url_base, a.version_esperada, a.espera_max, a.pausa) else 1
+    url_base = os.environ.get("URL_PRODUCCION", "")
+    return 0 if verificar(url_base, a.version_esperada, a.espera_max, a.pausa) else 1
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -47,7 +47,17 @@ def servidor():
 
 
 def correr(servidor, esperada="abc"):
-    return main([servidor.url, esperada, "--espera-max", "0.5", "--pausa", "0.01"])
+    return lanzar(servidor.url, esperada, 0.5)
+
+
+def lanzar(url, esperada="abc", espera=0.3):
+    import os
+
+    os.environ["URL_PRODUCCION"] = url
+    try:
+        return main([esperada, "--espera-max", str(espera), "--pausa", "0.01"])
+    finally:
+        del os.environ["URL_PRODUCCION"]
 
 
 def test_pasa_con_la_version_esperada_y_la_ruta_protegida(servidor):
@@ -71,12 +81,27 @@ def test_falla_si_una_ruta_protegida_responde_sin_token(servidor):
 
 
 def test_falla_si_el_servicio_no_existe():
-    assert main(["http://127.0.0.1:9", "abc", "--espera-max", "0.3", "--pausa", "0.01"]) == 1
+    assert lanzar("http://127.0.0.1:9") == 1
 
 
-def test_rechaza_urls_que_no_son_https():
-    assert main(["file:///etc", "abc", "--espera-max", "0.1"]) == 1
-    assert main(["http://fitmanage.onrender.com", "abc", "--espera-max", "0.1"]) == 1
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc",
+        "http://fitmanage-svol.onrender.com",
+        "https://evil.example.com",
+        "https://onrender.com.evil.example",
+        "",
+    ],
+)
+def test_rechaza_cualquier_destino_que_no_sea_render_por_https(url):
+    assert lanzar(url, espera=0.1) == 1
+
+
+def test_acepta_el_servicio_de_render():
+    from despliegue.verificar import url_permitida
+
+    assert url_permitida("https://fitmanage-svol.onrender.com")
 
 
 def test_si_no_hay_respuesta_la_ruta_protegida_no_cuenta_como_protegida():
