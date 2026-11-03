@@ -24,9 +24,9 @@ extend-exclude = ["docs", "*/migrations/*"]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "DTZ"]
 
 [tool.coverage.run]
-source = ["dominio", "aplicacion", "infraestructura"]
+source = ["dominio", "aplicacion", "infraestructura", "despliegue"]
 omit = ["*/migrations/*"]
 branch = true
 
 [tool.ruff.lint.isort]
-known-first-party = ["dominio", "aplicacion", "infraestructura", "config"]
+known-first-party = ["dominio", "aplicacion", "infraestructura", "config", "despliegue"]

@@ -25,6 +25,8 @@ STATIC_URL = "static/"
 JWT_CLAVE = os.environ.get("JWT_CLAVE") or get_random_secret_key()
 JWT_KID = os.environ.get("JWT_KID", "k1")
 URL_PUBLICA = os.environ.get("FITMANAGE_URL_PUBLICA", "http://localhost:8000")
+# ADR N.° 11: la imagen trae el SHA de su commit y /salud lo publica para el healthcheck.
+FITMANAGE_VERSION = os.environ.get("FITMANAGE_VERSION", "desarrollo")
 
 # Única dependencia externa de la API: el SMTP del hosting (DAD 8.2). Las pruebas usan
 # el backend en memoria de Django; nunca se envía un correo real desde la suite.

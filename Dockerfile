@@ -36,9 +36,14 @@ CMD ["pytest", "-p", "no:cacheprovider"]
 
 # ---------- 3. produccion (la que se publica en GHCR) ----------
 FROM ${PYTHON_IMAGEN} AS produccion
+# El pipeline pasa el SHA del commit; /api/v1/salud lo publica (ADR N.° 11).
+ARG VERSION=desarrollo
+# gunicorn escucha en 0.0.0.0:$PORT cuando PORT existe; Render la cambia por la suya.
 ENV PATH=/opt/venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    FITMANAGE_VERSION=$VERSION \
+    PORT=8000
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage
 WORKDIR /app
 COPY --from=construccion /opt/venv /opt/venv
@@ -53,5 +58,5 @@ COPY docs/api/openapi.yaml docs/api/openapi.yaml
 USER 10001
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/salud', timeout=2)"]
-CMD ["gunicorn", "config.wsgi", "--bind", "0.0.0.0:8000", "--workers", "2", "--access-logfile", "-"]
+    CMD ["python", "-c", "import os, urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ['PORT']}/api/v1/salud\", timeout=2)"]
+CMD ["gunicorn", "config.wsgi", "--workers", "2", "--access-logfile", "-"]

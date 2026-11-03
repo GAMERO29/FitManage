@@ -38,7 +38,13 @@ def salud(request: HttpRequest) -> JsonResponse:
     except Exception:  # noqa: BLE001 - cualquier fallo de la base es «no disponible»
         return problema(503, "SERVICIO_NO_DISPONIBLE", "Servicio no disponible")
     ahora = contenedor.reloj().ahora()
-    return JsonResponse({"estado": "ok", "hora": presentacion.fecha_hora(ahora)})
+    return JsonResponse(
+        {
+            "estado": "ok",
+            "hora": presentacion.fecha_hora(ahora),
+            "version": settings.FITMANAGE_VERSION,
+        }
+    )
 
 
 # --- Acceso del personal -----------------------------------------------------------------

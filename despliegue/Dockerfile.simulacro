@@ -1,0 +1,9 @@
+# Simulacro de la Guía 11: una versión rota a propósito para comprobar el rollback.
+# Parte de una imagen buena y le borra la configuración de Django: el contenedor no arranca.
+ARG BASE
+FROM ${BASE}
+ARG VERSION
+USER 0
+RUN rm -rf /app/config
+USER 10001
+ENV FITMANAGE_VERSION=${VERSION}
