@@ -31,3 +31,7 @@ Los 45 altos eran 8 CVE repetidos en varios paquetes de la misma familia (util-l
 ## Workflow de la IA (Ejercicio 5)
 
 [`demo-ia-escaneo.txt`](demo-ia-escaneo.txt) es un extracto de la corrida 41581413862, en la que el workflow de la IA corrió sin cambios en el PR #15 (cerrado sin fusionar). Semgrep 1.100.0 ni siquiera arranca, Trivy 0.56.2 no entiende las reglas de configuración actuales y GitHub avisa que las acciones apuntan a Node.js 20.
+
+## La puerta bloquea código inseguro (PR #16)
+
+[`demo-inyeccion-sql.txt`](demo-inyeccion-sql.txt): el PR de demostración #16 agregó una búsqueda de socios que arma el SQL con lo que llega en `?q=`. En la corrida 41582151159, `sast` falló con 4 hallazgos bloqueantes sobre esa línea, `bandit` también la marcó en el job `linter` del pipeline `CI` (B608), y GitHub dejó el PR como no fusionable. Se cerró sin fusionar.

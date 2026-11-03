@@ -1,0 +1,55 @@
+# Corrida 41582151159, job sast, PR de demostración #16 (vista con inyección SQL a propósito). Puerta de Semgrep.
+│ 4 Code Findings │
+└─────────────────┘
+    infraestructura/api/vistas.py
+    ❯❱ reglas.python.django.security.injection.sql.sql-injection-db-cursor-execute
+          ❰❰ Blocking ❱❱
+          User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and
+          therefore protected information could be leaked. Instead, use django's QuerySets, which are built
+          with query parameterization and therefore not vulnerable to sql injection. For example, you could
+          use `Entry.objects.filter(date=2006)`.
+          277┆ cursor.execute(
+          278┆     f"SELECT id, nombres FROM socio WHERE nombres ILIKE '%{request.GET.get('q')}%'"
+          279┆ )
+    ❯❱ reglas.python.lang.security.audit.formatted-sql-query
+          ❰❰ Blocking ❱❱
+          Detected possible formatted SQL query. Use parameterized queries instead.
+          277┆ cursor.execute(
+          278┆     f"SELECT id, nombres FROM socio WHERE nombres ILIKE '%{request.GET.get('q')}%'"
+          279┆ )
+   ❯❯❱ reglas.python.sqlalchemy.security.sqlalchemy-execute-raw-query
+          ❰❰ Blocking ❱❱
+          Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL
+          Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy
+          provides TextualSQL to easily used prepared statement with named parameters. For complex SQL
+          composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy
+          ORM will be a better option.
+          277┆ cursor.execute(
+          278┆     f"SELECT id, nombres FROM socio WHERE nombres ILIKE '%{request.GET.get('q')}%'"
+          279┆ )
+   ❯❯❱ reglas.python.django.security.injection.tainted-sql-string
+          ❰❰ Blocking ❱❱
+          Detected user input used to manually construct a SQL string. This is usually bad practice because
+          manual construction could accidentally result in a SQL injection. An attacker could use a SQL
+          injection to steal or modify contents of the database. Instead, use a parameterized query which is
+          available by default in most database engines. Alternatively, consider using the Django object-
+          relational mappers (ORM) instead of raw SQL queries.
+          278┆ f"SELECT id, nombres FROM socio WHERE nombres ILIKE '%{request.GET.get('q')}%'"
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 4 (4 blocking)
+ • Rules run: 392
+ • Targets scanned: 49
+ • Parsed lines: ~100.0%
+ • Scan skipped:
+   ◦ Matching --exclude patterns: 125
+   ◦ Files matching .semgrepignore patterns: 31
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 392 rules on 49 files: 4 findings.
+##[error]Process completed with exit code 1.
+##[error]Process completed with exit code 1.
+
+# Mismo PR: estado de fusión según GitHub = blocked (el ruleset exige sast en verde).
