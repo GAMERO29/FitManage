@@ -269,3 +269,13 @@ def listar_vencimientos(request: HttpRequest) -> JsonResponse:
     nombres = {p.id: p.nombre for p in PlanModelo.objects.all()}
     filas = consultas.vencimientos(contenedor.reloj().hoy(), dias, nombres)
     return JsonResponse(filas, safe=False)
+
+
+def buscar_socios(request: HttpRequest) -> JsonResponse:
+    # Búsqueda de recepción por nombre (demostración Guía 12: código vulnerable a propósito).
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"SELECT id, nombres FROM socio WHERE nombres ILIKE '%{request.GET.get('q')}%'"
+        )
+        filas = cursor.fetchall()
+    return JsonResponse({"socios": [{"id": i, "nombres": n} for i, n in filas]})
