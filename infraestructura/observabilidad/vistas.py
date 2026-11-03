@@ -17,5 +17,7 @@ def metricas(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=404)  # sin token configurado, el endpoint no existe
     _, _, token = request.headers.get("Authorization", "").partition(" ")
     if not hmac.compare_digest(token.encode(), esperado.encode()):
+        # Respuesta vacía y texto de Prometheus (text/plain): no hay HTML que pueda llevar un XSS.
+        # nosemgrep: python.django.security.audit.xss.direct-use-of-httpresponse
         return HttpResponse(status=401, headers={"WWW-Authenticate": 'Bearer realm="metricas"'})
     return HttpResponse(generate_latest(REGISTRY), content_type=CONTENT_TYPE_LATEST)

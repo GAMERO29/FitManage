@@ -45,6 +45,8 @@ class FormateadorJSON(logging.Formatter):
             "mensaje": redactar(record.getMessage()),
         }
         contexto = trace.get_current_span().get_span_context()
+        # is_valid es una propiedad de SpanContext, no un método (falso positivo de Semgrep).
+        # nosemgrep: python.lang.maintainability.is-function-without-parentheses
         if contexto.is_valid:
             linea["trace_id"] = format(contexto.trace_id, "032x")
             linea["span_id"] = format(contexto.span_id, "016x")
