@@ -43,7 +43,8 @@ ENV PATH=/opt/venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FITMANAGE_VERSION=$VERSION \
-    PORT=8000
+    PORT=8000 \
+    HOME=/tmp
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage
 WORKDIR /app
 COPY --from=construccion /opt/venv /opt/venv

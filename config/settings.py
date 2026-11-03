@@ -14,6 +14,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or get_random_secret_key()
 DEBUG = os.environ.get("DJANGO_DEBUG") == "1"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# Render publica el nombre del servicio en RENDER_EXTERNAL_HOSTNAME; su healthcheck interno usa
+# ese nombre. Así el despliegue no depende de copiar a mano el nombre exacto (ADR N.° 11).
+if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
 
 INSTALLED_APPS = [
     "infraestructura.persistencia",
