@@ -230,9 +230,14 @@ jobs:
           docker run -d --name render --network host --read-only --tmpfs /tmp --cap-drop ALL \
             -e DATABASE_URL=postgresql://fitmanage@127.0.0.1:5432/fitmanage_render \
             -e PORT=10000 -e JWT_CLAVE=x -e DJANGO_SECRET_KEY=y \
+            -e RENDER_EXTERNAL_HOSTNAME=fitmanage-prueba.onrender.com \
             "$IMG" /app/arrancar.sh
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:10000/api/v1/salud && break; sleep 1; done
           curl -sf http://127.0.0.1:10000/api/v1/salud > /dev/null || { docker logs render; exit 1; }
+          # El healthcheck interno de Render manda Host: <servicio>.onrender.com:<PORT>.
+          curl -sf -H "Host: fitmanage-prueba.onrender.com:10000" http://127.0.0.1:10000/api/v1/salud > /dev/null \
+            || { echo "::error::Django rechaza el Host del healthcheck de Render"; docker logs render; exit 1; }
+          if docker logs render 2>&1 | grep -q "ERROR"; then docker logs render; exit 1; fi
           docker logs render 2>&1 | head -5
           docker rm -f render
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
