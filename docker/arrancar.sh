@@ -6,4 +6,5 @@ set -eu
 echo "FitManage ${FITMANAGE_VERSION}: aplicando migraciones"
 python manage.py migrate --noinput
 echo "Migraciones listas; gunicorn escucha en 0.0.0.0:${PORT}"
-exec gunicorn config.wsgi --bind "0.0.0.0:${PORT}" --workers 2 --timeout 60 --access-logfile -
+# Un proceso con 4 hilos y sin access log (ADR N.° 13): ver el comentario del CMD en el Dockerfile.
+exec gunicorn config.wsgi --bind "0.0.0.0:${PORT}" --workers 1 --threads 4 --timeout 60

@@ -79,4 +79,7 @@ USER 10001
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import os, urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ['PORT']}/api/v1/salud\", timeout=2)"]
-CMD ["gunicorn", "config.wsgi", "--workers", "2", "--access-logfile", "-"]
+# Un proceso con 4 hilos: las métricas viven en memoria del proceso y con dos workers cada lectura
+# de /metrics mostraría solo la mitad del tráfico. Sin --access-logfile: escribía la URL completa,
+# con la cédula, en los logs de Render; ahora cada petición deja una línea JSON sin datos personales.
+CMD ["gunicorn", "config.wsgi", "--workers", "1", "--threads", "4"]
