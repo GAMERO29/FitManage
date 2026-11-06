@@ -105,12 +105,15 @@ jobs:
                   print(f"  {nombre}: {f(min(t))} -> {f(max(t))}")
               else:
                   print(f"  {nombre}: no se disparó")
-          R = 'http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"'
+          R = 'http_route=~"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion"'
           M = "http_server_request_duration_seconds_count"
           v = lambda q: float(consulta("query", query=q)[0]["value"][1])
           total = v(f"sum({M}{{{R}}})")
           errores = v(f'sum({M}{{{R},http_response_status_code=~"5.."}}) or vector(0)')
-          print(f"Consultas de estado: {total:.0f}; con 5xx: {errores:.0f}; SLI de la corrida: {1 - errores / total:.4f}")
+          print(f"Recorrido de recepción: {total:.0f} peticiones; con 5xx: {errores:.0f}; SLI de la corrida: {1 - errores / total:.4f}")
+          print("Por ruta y código:")
+          for r in consulta("query", query=f"sum by (http_route, http_response_status_code) (round({M}{{{R}}}))"):
+              print(f"  {r['metric']['http_route']}  {r['metric']['http_response_status_code']}: {float(r['value'][1]):.0f}")
           apagon = 30
           print(f"Presupuesto de 14 días con SLO 99,5 %: {0.005 * 14 * 24 * 60:.1f} min; "
                 f"el apagón de {apagon} min consumió el {apagon / (0.005 * 14 * 24 * 60):.1%} (medido en tiempo)")

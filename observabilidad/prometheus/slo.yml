@@ -1,7 +1,10 @@
 # SLO de la consulta de estado de recepción (Guía 14, FPI-30, ADR N.° 14).
 #
-#   SLI de disponibilidad: proporción de consultas que NO terminan en 5xx.
+#   SLI de disponibilidad: proporción de peticiones del recorrido de recepción (iniciar sesión,
+#     renovar la sesión y consultar el estado de un socio) que NO terminan en 5xx.
 #     SLO: 99,5 % en una ventana móvil de 14 días -> presupuesto de error: 0,5 %.
+#     Desde el postmortem del 6/11/2026 incluye las rutas de sesión: con solo la consulta, cuando el
+#     token vencía durante una caída de la base las consultas pasaban a 401 y el SLI se veía sano.
 #   SLI de latencia: proporción de consultas respondidas en menos de 500 ms.
 #     SLO: 99 % en la misma ventana -> presupuesto: 1 %.
 #
@@ -18,20 +21,20 @@ groups:
     rules:
       - record: fitmanage:sli_disponibilidad:error_ratio5m
         expr: |
-          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[5m])) or vector(0))
-            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[5m]))
+          (sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion",http_response_status_code=~"5.."}[5m])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion"}[5m]))
       - record: fitmanage:sli_disponibilidad:error_ratio30m
         expr: |
-          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[30m])) or vector(0))
-            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[30m]))
+          (sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion",http_response_status_code=~"5.."}[30m])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion"}[30m]))
       - record: fitmanage:sli_disponibilidad:error_ratio1h
         expr: |
-          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[1h])) or vector(0))
-            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[1h]))
+          (sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion",http_response_status_code=~"5.."}[1h])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion"}[1h]))
       - record: fitmanage:sli_disponibilidad:error_ratio6h
         expr: |
-          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[6h])) or vector(0))
-            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[6h]))
+          (sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion",http_response_status_code=~"5.."}[6h])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route=~"/api/v1/estados/\\{tipoDocumento\\}/\\{numeroDocumento\\}|/api/v1/auth/token|/api/v1/auth/renovacion"}[6h]))
       - record: fitmanage:sli_latencia:lentas_ratio5m
         expr: |
           1 - sum(rate(http_server_request_duration_seconds_bucket{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",le="0.5"}[5m]))

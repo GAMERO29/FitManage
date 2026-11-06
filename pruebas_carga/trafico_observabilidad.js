@@ -23,28 +23,52 @@ export const options = {
   ],
 };
 
+// El token de acceso dura 15 minutos (ADR N.° 06). Como la app de recepción, cada usuario virtual
+// vuelve a iniciar sesión antes de que venza y, si no puede, no consulta: muestra el error. Sin esto,
+// en el simulacro de la Guía 14 el token venció a mitad del apagón y las consultas pasaron a 401, que
+// el SLI contaba como buenas (postmortem 2026-11-06).
+const RENOVAR_CADA_MS = 12 * 60 * 1000;
+let token = null;
+let obtenido = 0;
+
+function iniciarSesion() {
+  const r = http.post(
+    `${BASE_URL}/api/v1/auth/token`,
+    JSON.stringify({ correo: 'laura@carga.local', contrasena: __ENV.CLAVE_CARGA || 'carga-local-2026' }),
+    { headers: { 'Content-Type': 'application/json' }, tags: { name: 'POST /auth/token' } },
+  );
+  if (r.status === 200) {
+    token = r.json('tokenAcceso');
+    obtenido = Date.now();
+  } else {
+    token = null;
+  }
+  return r.status;
+}
+
 export function setup() {
   const host = (/^https?:\/\/([^/:]+)/.exec(BASE_URL) || [])[1];
   if (!HOSTS_PERMITIDOS.includes(host)) {
     exec.test.abort(`BASE_URL=${BASE_URL} no es un entorno local. Nunca producción.`);
   }
-  const r = http.post(
-    `${BASE_URL}/api/v1/auth/token`,
-    JSON.stringify({ correo: 'laura@carga.local', contrasena: __ENV.CLAVE_CARGA || 'carga-local-2026' }),
-    { headers: { 'Content-Type': 'application/json' } },
-  );
-  if (r.status !== 200) exec.test.abort(`No se pudo iniciar sesión (HTTP ${r.status}).`);
-  return { token: r.json('tokenAcceso') };
+  const estado = iniciarSesion();
+  if (estado !== 200) exec.test.abort(`No se pudo iniciar sesión (HTTP ${estado}).`);
 }
 
-export default function (datos) {
+export default function () {
+  if (token === null || Date.now() - obtenido > RENOVAR_CADA_MS) {
+    if (iniciarSesion() !== 200) {
+      sleep(0.5 + Math.random());
+      return;
+    }
+  }
   const azar = Math.random();
   let ruta;
   if (azar < 0.85) ruta = `CC/${1090000000 + Math.floor(Math.random() * SOCIOS)}`;
   else if (azar < 0.97) ruta = `CC/${1190000000 + Math.floor(Math.random() * 1000)}`; // no existe
   else ruta = `TI/${1090000000 + Math.floor(Math.random() * SOCIOS)}`; // fuera del contrato
   http.get(`${BASE_URL}/api/v1/estados/${ruta}`, {
-    headers: { Authorization: `Bearer ${datos.token}` },
+    headers: { Authorization: `Bearer ${token}` },
     tags: { name: 'GET /estados/{tipo}/{numero}' },
   });
   sleep(0.5 + Math.random());

@@ -521,7 +521,7 @@
     {
       "id": 9,
       "type": "row",
-      "title": "SLO de la consulta de estado (ADR N.° 14) · ventana de 14 días",
+      "title": "SLO del recorrido de recepción (ADR N.° 14) · ventana de 14 días",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -535,7 +535,7 @@
       "id": 10,
       "type": "stat",
       "title": "Disponibilidad · SLO 99,5 %",
-      "description": "Consultas de estado que no terminaron en 5xx en los últimos 14 días.",
+      "description": "Peticiones del recorrido de recepción (sesión y consulta de estado) que no terminaron en 5xx en los últimos 14 días.",
       "datasource": {
         "type": "prometheus",
         "uid": "${fuente}"
@@ -583,7 +583,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "1 - ((sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[14d])) or vector(0)) / sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[14d])))",
+          "expr": "1 - ((sum(increase(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\",http_response_status_code=~\"5..\"}[14d])) or vector(0)) / sum(increase(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\"}[14d])))",
           "instant": true
         }
       ]
@@ -644,7 +644,7 @@
             "type": "prometheus",
             "uid": "${fuente}"
           },
-          "expr": "1 - (((sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[14d])) or vector(0)) / sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[14d]))) / 0.005)",
+          "expr": "1 - (((sum(increase(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\",http_response_status_code=~\"5..\"}[14d])) or vector(0)) / sum(increase(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\"}[14d]))) / 0.005)",
           "instant": true
         }
       ]
@@ -771,7 +771,7 @@
             "uid": "${fuente}"
           },
           "legendFormat": "1 h",
-          "expr": "((sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[1h])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1h]))) / 0.005"
+          "expr": "((sum(rate(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\",http_response_status_code=~\"5..\"}[1h])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\"}[1h]))) / 0.005"
         },
         {
           "refId": "B",
@@ -780,7 +780,7 @@
             "uid": "${fuente}"
           },
           "legendFormat": "6 h",
-          "expr": "((sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[6h])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[6h]))) / 0.005"
+          "expr": "((sum(rate(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\",http_response_status_code=~\"5..\"}[6h])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route=~\"/api/v1/estados/\\\\{tipoDocumento\\\\}/\\\\{numeroDocumento\\\\}|/api/v1/auth/token|/api/v1/auth/renovacion\"}[6h]))) / 0.005"
         }
       ]
     }

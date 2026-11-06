@@ -127,13 +127,33 @@ tests:
   - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
     values: 0+5x120
   promql_expr_test:
-  - expr: round(fitmanage:sli_disponibilidad:error_ratio1h * 100000)  # 0,5 % = 500 en cien milésimas
+  - expr: round(fitmanage:sli_disponibilidad:error_ratio1h * 100000)
     eval_time: 90m
     exp_samples:
     - labels: '{}'
       value: 500
-  - expr: round(fitmanage:sli_disponibilidad:error_ratio5m * 100000)  # 0,5 % = 500 en cien milésimas
+  - expr: round(fitmanage:sli_disponibilidad:error_ratio5m * 100000)
     eval_time: 90m
     exp_samples:
     - labels: '{}'
       value: 500
+- name: 'Caída de la base con el token vencido: las consultas dan 401, pero el inicio de sesión da 500'
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+100x60 6000x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="401"}
+    values: 0x60 0+20x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/auth/token",http_response_status_code="200"}
+    values: 0+1x60 60x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/auth/token",http_response_status_code="500"}
+    values: 0x60 0+20x30
+  alert_rule_test:
+  - eval_time: 70m
+    alertname: PresupuestoQuemaRapida
+    exp_alerts:
+    - exp_labels:
+        severidad: critica
+      exp_annotations:
+        resumen: La consulta de estado consume el presupuesto de error 6,7 veces más rápido de lo sostenible
+        runbook: docs/runbooks/Runbook_base_de_datos.md
