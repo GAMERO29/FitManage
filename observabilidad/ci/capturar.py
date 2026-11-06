@@ -10,11 +10,13 @@ artefactos.
 from __future__ import annotations
 
 import base64
+import os
 import sys
 
 from playwright.sync_api import sync_playwright
 
-GRAFANA = "http://127.0.0.1:3000/d/fitmanage-api/fitmanage-api?orgId=1&from=now-10m&to=now&kiosk"
+DESDE = os.environ.get("GRAFANA_DESDE", "now-10m")  # el simulacro de la Guía 14 usa now-45m
+GRAFANA = f"http://127.0.0.1:3000/d/fitmanage-api/fitmanage-api?orgId=1&from={DESDE}&to=now&kiosk"
 JAEGER = "http://127.0.0.1:16686/trace/{}"
 
 

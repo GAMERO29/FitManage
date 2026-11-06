@@ -12,7 +12,7 @@
     "to": "now"
   },
   "schemaVersion": 41,
-  "version": 1,
+  "version": 2,
   "editable": false,
   "panels": [
     {
@@ -132,7 +132,7 @@
       "id": 3,
       "type": "stat",
       "title": "Errores 5xx",
-      "description": "Rojo: dispara la alerta ErroresDelServidor (más del 5 % durante 1 minuto).",
+      "description": "Proporción de respuestas 5xx en la ventana del tablero. El SLO (ADR N.° 14) se mide abajo, en 14 días.",
       "datasource": {
         "type": "prometheus",
         "uid": "${fuente}"
@@ -193,7 +193,7 @@
       "id": 4,
       "type": "stat",
       "title": "Alertas activas",
-      "description": "Reglas de observabilidad/prometheus/alertas.yml disparadas. Solo con el Prometheus de compose; en Grafana Cloud las alertas se crean en Alerting.",
+      "description": "Reglas de observabilidad/prometheus/slo.yml disparadas. Solo con el Prometheus de compose; en Grafana Cloud las alertas se crean en Alerting.",
       "datasource": {
         "type": "prometheus",
         "uid": "${fuente}"
@@ -515,6 +515,272 @@
           },
           "expr": "sum by (resultado) (rate(fitmanage_consultas_estado_total[$__rate_interval]))",
           "legendFormat": "{{resultado}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "SLO de la consulta de estado (ADR N.° 14) · ventana de 14 días",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Disponibilidad · SLO 99,5 %",
+      "description": "Consultas de estado que no terminaron en 5xx en los últimos 14 días.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fuente}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.995
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fuente}"
+          },
+          "expr": "1 - ((sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[14d])) or vector(0)) / sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[14d])))",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Presupuesto de error restante",
+      "description": "Qué parte del 0,5 % permitido queda. En 0 % o menos, se congelan las funciones nuevas (política del ADR N.° 14).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fuente}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 21,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0.25
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fuente}"
+          },
+          "expr": "1 - (((sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[14d])) or vector(0)) / sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[14d]))) / 0.005)",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Consultas en menos de 500 ms · SLO 99 %",
+      "description": "SLI de latencia: proporción de consultas respondidas en menos de 500 ms en 14 días.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fuente}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fuente}"
+          },
+          "expr": "sum(increase(http_server_request_duration_seconds_bucket{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",le=\"0.5\"}[14d])) / sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[14d]))",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Tasa de consumo del presupuesto",
+      "description": "1 = se gasta justo el presupuesto en 14 días. Líneas: 6,72 (alerta rápida, ventana de 1 h) y 2,8 (alerta lenta, ventana de 6 h).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${fuente}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 21,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 2.8
+              },
+              {
+                "color": "red",
+                "value": 6.72
+              }
+            ]
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fuente}"
+          },
+          "legendFormat": "1 h",
+          "expr": "((sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[1h])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[1h]))) / 0.005"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${fuente}"
+          },
+          "legendFormat": "6 h",
+          "expr": "((sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\",http_response_status_code=~\"5..\"}[6h])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{http_route=\"/api/v1/estados/{tipoDocumento}/{numeroDocumento}\"}[6h]))) / 0.005"
         }
       ]
     }

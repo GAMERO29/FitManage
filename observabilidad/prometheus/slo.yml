@@ -1,0 +1,91 @@
+# SLO de la consulta de estado de recepción (Guía 14, FPI-30, ADR N.° 14).
+#
+#   SLI de disponibilidad: proporción de consultas que NO terminan en 5xx.
+#     SLO: 99,5 % en una ventana móvil de 14 días -> presupuesto de error: 0,5 %.
+#   SLI de latencia: proporción de consultas respondidas en menos de 500 ms.
+#     SLO: 99 % en la misma ventana -> presupuesto: 1 %.
+#
+# La ventana es de 14 días porque es lo que guardan Prometheus en compose (15 d) y el plan gratuito
+# de Grafana Cloud (14 d): no se puede medir un SLO sobre datos que ya se borraron.
+#
+# Alertas por tasa de consumo del presupuesto (multiwindow, multi-burn-rate, SRE Workbook cap. 5),
+# recalculadas para 14 días (336 h):
+#   rápida: el 2 % del presupuesto en 1 hora -> tasa 0,02 * 336 / 1 = 6,72
+#   lenta:  el 5 % del presupuesto en 6 horas -> tasa 0,05 * 336 / 6 = 2,8
+# La ventana corta (5 min / 30 min) hace que la alerta se apague apenas se recupera el servicio.
+groups:
+  - name: fitmanage-sli
+    rules:
+      - record: fitmanage:sli_disponibilidad:error_ratio5m
+        expr: |
+          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[5m])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[5m]))
+      - record: fitmanage:sli_disponibilidad:error_ratio30m
+        expr: |
+          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[30m])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[30m]))
+      - record: fitmanage:sli_disponibilidad:error_ratio1h
+        expr: |
+          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[1h])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[1h]))
+      - record: fitmanage:sli_disponibilidad:error_ratio6h
+        expr: |
+          (sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code=~"5.."}[6h])) or vector(0))
+            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[6h]))
+      - record: fitmanage:sli_latencia:lentas_ratio5m
+        expr: |
+          1 - sum(rate(http_server_request_duration_seconds_bucket{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",le="0.5"}[5m]))
+            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[5m]))
+      - record: fitmanage:sli_latencia:lentas_ratio1h
+        expr: |
+          1 - sum(rate(http_server_request_duration_seconds_bucket{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",le="0.5"}[1h]))
+            / sum(rate(http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"}[1h]))
+
+  - name: fitmanage-slo
+    rules:
+      - alert: PresupuestoQuemaRapida
+        # 6,72 x 0,5 % = 3,36 % de consultas con 5xx en la última hora y en los últimos 5 minutos.
+        expr: |
+          fitmanage:sli_disponibilidad:error_ratio1h > 0.0336
+            and fitmanage:sli_disponibilidad:error_ratio5m > 0.0336
+        for: 1m
+        labels:
+          severidad: critica
+        annotations:
+          resumen: "La consulta de estado consume el presupuesto de error 6,7 veces más rápido de lo sostenible"
+          runbook: "docs/runbooks/Runbook_base_de_datos.md"
+
+      - alert: PresupuestoQuemaLenta
+        # 2,8 x 0,5 % = 1,4 % de consultas con 5xx en las últimas 6 horas y en los últimos 30 minutos.
+        expr: |
+          fitmanage:sli_disponibilidad:error_ratio6h > 0.014
+            and fitmanage:sli_disponibilidad:error_ratio30m > 0.014
+        for: 5m
+        labels:
+          severidad: aviso
+        annotations:
+          resumen: "La consulta de estado agotaría el presupuesto de error antes de terminar la ventana de 14 días"
+          runbook: "docs/runbooks/Runbook_base_de_datos.md"
+
+      - alert: ConsultasLentasQuemaRapida
+        # 6,72 x 1 % = 6,72 % de consultas por encima de 500 ms en la última hora y en los últimos 5 min.
+        expr: |
+          fitmanage:sli_latencia:lentas_ratio1h > 0.0672
+            and fitmanage:sli_latencia:lentas_ratio5m > 0.0672
+        for: 1m
+        labels:
+          severidad: aviso
+        annotations:
+          resumen: "Más del 6,7 % de las consultas de estado tardan más de 500 ms"
+          runbook: "docs/runbooks/Runbook_base_de_datos.md"
+
+      - alert: AppSinResponder
+        # El SLI solo cuenta las peticiones que llegan a la app. Si el proceso está caído no hay
+        # ninguna, y sin esta alerta el SLO se vería perfecto durante una caída total.
+        expr: up{job="fitmanage"} == 0
+        for: 3m
+        labels:
+          severidad: critica
+        annotations:
+          resumen: "Prometheus no puede leer /metrics de la app desde hace 3 minutos"
+          runbook: "docs/runbooks/Runbook_base_de_datos.md"

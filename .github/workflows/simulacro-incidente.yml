@@ -1,0 +1,122 @@
+# Simulacro de incidente (Guía 14, FPI-30, ADR N.° 14).
+#
+# Reproduce en docker compose el escenario que Render advierte para su base gratuita («puede
+# reiniciarla o hacerle mantenimiento en cualquier momento»): la base desaparece durante 30 minutos
+# en plena tarde de recepción. El workflow sigue el Runbook_base_de_datos.md con los mismos comandos
+# que usaría el responsable y deja la línea de tiempo para el postmortem:
+#   min 0    tráfico de recepción con k6 (5 usuarios)
+#   min 5    se apaga la base
+#   min 8    paso 2 del runbook: docs/runbooks/diagnostico_bd.sh compose
+#   min 20   captura del tablero durante el incidente
+#   min 35   paso 4 del runbook: se enciende la base y se verifica /salud tres veces
+#   min 41   fin del tráfico; resumen de alertas, SLI y presupuesto consumido
+# Se lanza empujando una rama simulacro/incidente-AAAAMMDD. No toca producción.
+name: Simulacro de incidente
+
+on:
+  push:
+    branches: ["simulacro/incidente-*"]
+
+permissions:
+  contents: read
+
+jobs:
+  simulacro:
+    name: simulacro
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      APAGAR_EN: 300
+      DURACION_APAGON: 1800
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: .env con claves generadas en la corrida (nunca en el repositorio)
+        run: |
+          for v in POSTGRES_PASSWORD JWT_CLAVE DJANGO_SECRET_KEY FITMANAGE_METRICAS_TOKEN GRAFANA_CLAVE; do
+            # Generada en la corrida y enmascarada antes de escribirla (ADR N.° 12).
+            valor=$(openssl rand -hex 24); echo "::add-mask::$valor"; echo "$v=$valor" >> .env # nosemgrep: yaml.github-actions.security.audit.unsafe-add-mask-workflow-command
+          done
+          {
+            echo "POSTGRES_DB=fitmanage_carga"
+            echo "OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318"
+            echo "OTEL_TRACES_SAMPLER_ARG=0.1"
+          } >> .env
+      - name: docker compose --profile observabilidad up
+        run: |
+          set -a; . ./.env; set +a
+          docker compose --profile observabilidad up -d --build
+          for i in $(seq 1 60); do
+            [ "$(docker compose ps app --format '{{.Health}}')" = "healthy" ] && break; sleep 2
+          done
+          docker compose --profile observabilidad ps -a --format 'table {{.Service}}\t{{.Status}}'
+      - name: Sembrar 2.000 socios y 20.000 pagos (el volumen de QA-01)
+        run: docker compose --profile pruebas run --rm pruebas python pruebas_carga/sembrar.py
+      - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+        with:
+          k6-version: "1.5.0"
+      - name: Chromium para las capturas
+        run: |
+          pip install --quiet playwright==1.64.1
+          python -m playwright install --with-deps chromium > /dev/null
+      - name: Incidente de 30 minutos, atendido con el runbook
+        run: |
+          marca() { echo "$(date -u +%FT%TZ) $1" | tee -a linea_de_tiempo.txt; }
+          (
+            sleep "$APAGAR_EN"; marca "INCIDENTE la base deja de responder (docker compose stop db)"
+            docker compose stop db > /dev/null 2>&1
+            sleep 180; marca "RUNBOOK paso 2: diagnóstico"
+            docs/runbooks/diagnostico_bd.sh compose > diagnostico.txt 2>&1
+            sleep 720; marca "captura del tablero durante el incidente"
+            GRAFANA_DESDE=now-30m python observabilidad/ci/capturar.py tablero-incidente > captura-incidente.txt
+            sleep $((DURACION_APAGON - 900 - 30)); marca "RUNBOOK paso 4: docker compose start db"
+            docker compose start db > /dev/null 2>&1
+            for i in $(seq 1 30); do docker compose exec -T db pg_isready -U fitmanage > /dev/null 2>&1 && break; sleep 2; done
+            marca "RUNBOOK paso 4: pg_isready acepta conexiones"
+            for i in 1 2 3; do
+              marca "RUNBOOK paso 5: /api/v1/salud -> HTTP $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/salud)"
+              sleep 10
+            done
+          ) &
+          marca "INICIO tráfico de recepción"
+          DURACION=40m k6 run --quiet pruebas_carga/trafico_observabilidad.js
+          wait
+          marca "FIN tráfico de recepción"
+          sleep 60
+          echo "----- Línea de tiempo -----"; cat linea_de_tiempo.txt
+          echo "----- Diagnóstico del runbook (paso 2) -----"; cat diagnostico.txt
+          cat captura-incidente.txt
+      - name: Alertas, SLI y presupuesto consumido según Prometheus
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, urllib.parse
+          from datetime import datetime, timezone
+          def consulta(ruta, **p):
+              url = "http://127.0.0.1:9090/api/v1/" + ruta + "?" + urllib.parse.urlencode(p)
+              return json.loads(subprocess.check_output(["curl", "-sf", url]))["data"]["result"]
+          lineas = [l.split(" ", 1) for l in open("linea_de_tiempo.txt", encoding="utf-8")]
+          inicio = datetime.fromisoformat(lineas[0][0].replace("Z", "+00:00")).timestamp() - 60
+          fin = datetime.now(timezone.utc).timestamp()
+          print("Alertas (primer y último minuto en estado firing, UTC):")
+          for nombre in ["PresupuestoQuemaRapida", "PresupuestoQuemaLenta", "ConsultasLentasQuemaRapida", "AppSinResponder"]:
+              r = consulta("query_range", query=f'ALERTS{{alertname="{nombre}",alertstate="firing"}}', start=inicio, end=fin, step=15)
+              if r:
+                  t = [float(v[0]) for v in r[0]["values"]]
+                  f = lambda x: datetime.fromtimestamp(x, timezone.utc).strftime("%H:%M:%S")
+                  print(f"  {nombre}: {f(min(t))} -> {f(max(t))}")
+              else:
+                  print(f"  {nombre}: no se disparó")
+          R = 'http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}"'
+          M = "http_server_request_duration_seconds_count"
+          v = lambda q: float(consulta("query", query=q)[0]["value"][1])
+          total = v(f"sum({M}{{{R}}})")
+          errores = v(f'sum({M}{{{R},http_response_status_code=~"5.."}}) or vector(0)')
+          print(f"Consultas de estado: {total:.0f}; con 5xx: {errores:.0f}; SLI de la corrida: {1 - errores / total:.4f}")
+          apagon = 30
+          print(f"Presupuesto de 14 días con SLO 99,5 %: {0.005 * 14 * 24 * 60:.1f} min; "
+                f"el apagón de {apagon} min consumió el {apagon / (0.005 * 14 * 24 * 60):.1%} (medido en tiempo)")
+          PY
+      - name: Captura final del tablero
+        run: GRAFANA_DESDE=now-45m python observabilidad/ci/capturar.py tablero-final
+      - name: Apagar
+        if: always()
+        run: docker compose --profile observabilidad --profile pruebas down -v
