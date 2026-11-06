@@ -60,8 +60,13 @@ ENV PATH=/opt/venv/bin:$PATH \
 # Endurecimiento del sistema base (ADR N.° 12):
 #   - fuera el pip de Python del sistema: en ejecución nadie instala paquetes;
 #   - ningún ejecutable con setuid/setgid (mount, umount, su, passwd, chfn...): aunque alguien tome
-#     el proceso, no tiene un binario de root con qué escalar. Mitiga los CVE de util-linux.
-RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage \
+#     el proceso, no tiene un binario de root con qué escalar. Mitiga los CVE de util-linux;
+#   - los parches de seguridad de Debian que salen antes que una imagen base nueva (por ejemplo,
+#     apt 3.0.4 el 6/11/2026). El digest de la base sigue fijo; Dependabot lo renueva.
+RUN apt-get update \
+    && apt-get upgrade --yes --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage \
     && python -m pip uninstall --yes --root-user-action=ignore pip \
     && find / -xdev -perm /6000 -type f -exec chmod a-s {} +
 WORKDIR /app

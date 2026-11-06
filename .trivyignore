@@ -35,3 +35,19 @@ CVE-2026-54369 exp:2027-02-01
 # perl-base: denegación de servicio en Archive::Tar con un tar manipulado. Debian aplazó la corrección
 # (fix_deferred). En ejecución no se invoca Perl ni se abren archivos tar.
 CVE-2026-9538 exp:2027-02-01
+
+# Revisión del 6/11/2026: aparecieron en el escaneo de la imagen después del 2/11 y Debian todavía
+# no publica la versión corregida.
+
+# libsqlite3-0: ejecución de código con un índice FTS5 corrupto o con un changeset de sesión
+# manipulado. Igual que CVE-2026-119373: FitManage usa PostgreSQL 16 y SQLite no abre archivos
+# ni recibe datos de nadie en ejecución.
+CVE-2026-119374 exp:2027-02-01
+CVE-2026-119379 exp:2027-02-01
+
+# zlib1g: desbordamiento en gz_vacate(), que pertenece a la API gzFile de escritura (gzopen/gzwrite).
+# Python usa zlib por deflate/inflate y su módulo gzip propio, no la API gzFile, y la app no escribe
+# archivos .gz. CVE-2026-76844 figura en la base de datos de Trivy con la descripción de
+# webpack-dev-middleware (otro producto, que no está en la imagen): falso positivo de datos.
+CVE-2026-85091 exp:2027-02-01
+CVE-2026-76844 exp:2027-02-01
