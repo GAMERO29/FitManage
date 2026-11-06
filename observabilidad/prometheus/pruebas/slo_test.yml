@@ -127,13 +127,13 @@ tests:
   - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
     values: 0+5x120
   promql_expr_test:
-  - expr: fitmanage:sli_disponibilidad:error_ratio1h
+  - expr: round(fitmanage:sli_disponibilidad:error_ratio1h * 100000)  # 0,5 % = 500 en cien milésimas
     eval_time: 90m
     exp_samples:
-    - labels: fitmanage:sli_disponibilidad:error_ratio1h
-      value: 0.005
-  - expr: fitmanage:sli_disponibilidad:error_ratio5m
+    - labels: '{}'
+      value: 500
+  - expr: round(fitmanage:sli_disponibilidad:error_ratio5m * 100000)  # 0,5 % = 500 en cien milésimas
     eval_time: 90m
     exp_samples:
-    - labels: fitmanage:sli_disponibilidad:error_ratio5m
-      value: 0.005
+    - labels: '{}'
+      value: 500
