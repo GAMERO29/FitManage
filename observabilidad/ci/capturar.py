@@ -31,7 +31,7 @@ def main() -> None:
     trace_id = sys.argv[2] if len(sys.argv) > 2 else None
     with sync_playwright() as p:
         navegador = p.chromium.launch()
-        pagina = navegador.new_page(viewport={"width": 1600, "height": 1000})
+        pagina = navegador.new_page(viewport={"width": 1600, "height": 1300})
         pagina.goto(GRAFANA, wait_until="networkidle")
         pagina.wait_for_timeout(8000)  # que terminen de dibujarse los paneles
         imprimir(f"{nombre}.png", pagina.screenshot(full_page=True))
