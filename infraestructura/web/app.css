@@ -1,0 +1,130 @@
+/* Recepción de FitManage (Guía 16, ADR N.° 16). Se usa en el PC de recepción y en el celular,
+   en hora pico: el veredicto tiene que leerse de un vistazo, desde un metro de distancia. */
+:root {
+  --fondo: #f2f4f6;
+  --superficie: #ffffff;
+  --tinta: #18212b;
+  --tinta-suave: #4d5966;
+  --linea: #c9d1d9;
+  --accion: #2b5a86;
+  --accion-tinta: #ffffff;
+  --activo: #0d6e47;
+  --activo-fondo: #e3f3ea;
+  --vencido: #a8261e;
+  --vencido-fondo: #fbe7e5;
+  --sin: #525d69;
+  --sin-fondo: #e9edf1;
+  --error: #a8261e;
+  --radio: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #12171d;
+    --superficie: #1b222a;
+    --tinta: #e8edf2;
+    --tinta-suave: #a7b2bd;
+    --linea: #34404c;
+    --accion: #7fb0de;
+    --accion-tinta: #0d1823;
+    --activo: #6fd3a2;
+    --activo-fondo: #12301f;
+    --vencido: #ff9c92;
+    --vencido-fondo: #3a1714;
+    --sin: #b9c3cd;
+    --sin-fondo: #252e37;
+    --error: #ff9c92;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--tinta);
+  font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--linea);
+}
+.marca { font-weight: 700; letter-spacing: -0.01em; }
+.marca-lugar { font-weight: 400; color: var(--tinta-suave); }
+.sesion { display: flex; gap: 12px; align-items: center; color: var(--tinta-suave); font-size: 15px; }
+
+main { max-width: 600px; margin: 0 auto; padding: 20px 16px 48px; }
+h1 { font-size: 26px; margin: 0 0 16px; }
+h2 { font-size: 20px; margin: 0 0 12px; }
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 20px;
+  margin-top: 16px;
+}
+label { display: block; font-size: 15px; color: var(--tinta-suave); margin-bottom: 12px; }
+input, select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 11px 12px;
+  font: inherit;
+  color: var(--tinta);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+}
+.casilla { display: flex; gap: 10px; align-items: flex-start; color: var(--tinta); }
+.casilla input { width: auto; margin-top: 3px; }
+:focus-visible { outline: 3px solid var(--accion); outline-offset: 2px; }
+
+button { font: inherit; cursor: pointer; border-radius: 8px; padding: 11px 18px; min-height: 44px; }
+.principal { background: var(--accion); color: var(--accion-tinta); border: 0; font-weight: 600; }
+.secundario { background: transparent; color: var(--tinta); border: 1px solid var(--linea); }
+.enlace { background: none; border: 0; padding: 0; min-height: 0; color: var(--accion); text-decoration: underline; }
+button:disabled { opacity: 0.6; cursor: progress; }
+.acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+.consulta { display: grid; grid-template-columns: 7.5rem 1fr auto; gap: 10px; align-items: end; }
+.consulta label { margin: 0; }
+@media (max-width: 480px) {
+  .consulta { grid-template-columns: 6.5rem 1fr; }
+  .consulta button { grid-column: 1 / -1; }
+}
+
+.aviso { color: var(--error); margin: 10px 0 0; min-height: 1em; }
+.aviso:empty { display: none; }
+.nota { font-size: 14px; color: var(--tinta-suave); margin: 4px 0 12px; }
+.nota-pendiente { border-left: 3px solid var(--vencido); padding-left: 10px; }
+
+/* El veredicto: el único elemento grande de la pantalla. */
+.estado {
+  margin-top: 16px;
+  padding: 22px 20px;
+  border-radius: var(--radio);
+  border-left: 10px solid var(--sin);
+  background: var(--sin-fondo);
+}
+.estado[data-estado="ACTIVO"] { border-left-color: var(--activo); background: var(--activo-fondo); }
+.estado[data-estado="VENCIDO"] { border-left-color: var(--vencido); background: var(--vencido-fondo); }
+.estado-veredicto { font-size: clamp(32px, 9vw, 46px); font-weight: 800; line-height: 1.05; margin: 0 0 10px; letter-spacing: -0.02em; }
+.estado[data-estado="ACTIVO"] .estado-veredicto { color: var(--activo); }
+.estado[data-estado="VENCIDO"] .estado-veredicto { color: var(--vencido); }
+.estado-socio { margin: 0; font-size: 20px; }
+.estado-nombre { font-weight: 600; }
+.estado-documento { color: var(--tinta-suave); }
+.estado-detalle { margin: 6px 0 0; }
+.estado .acciones { margin-top: 16px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .estado { animation: aparecer 160ms ease-out; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(4px); } }
+}

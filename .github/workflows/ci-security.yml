@@ -92,6 +92,21 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/src" -w /src "$TRIVY" fs --scanners vuln --ignorefile .trivyignore \
             --severity CRITICAL,HIGH --exit-code 1 .
+      # Guía 16: ninguna guía revisaba las licencias de forma automática. Es una lista de licencias permitidas,
+      # no de prohibidas: una licencia nueva o desconocida detiene el PR hasta que alguien la revise.
+      # LGPL-3.0 entra solo por psycopg, que se usa como librería sin modificar; MPL-2.0, por certifi.
+      # GPL y AGPL no están en la lista, así que fallan.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Puerta - licencias de las dependencias de ejecución
+        run: |
+          python -m venv /tmp/licencias
+          /tmp/licencias/bin/pip install --quiet -r requirements.txt pip-licenses==5.5.5
+          /tmp/licencias/bin/pip-licenses --from=mixed --ignore-packages pip-licenses prettytable wcwidth \
+            --order=license --format=markdown | tee -a "$GITHUB_STEP_SUMMARY"
+          /tmp/licencias/bin/pip-licenses --from=mixed --ignore-packages pip-licenses prettytable wcwidth \
+            --partial-match --allow-only="MIT;BSD;Apache;PSF;Mozilla Public License 2.0;MPL-2.0;LGPL-3.0-only;ISC"
       - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         if: always() && hashFiles('trivy-dependencias.sarif') != ''
         with:

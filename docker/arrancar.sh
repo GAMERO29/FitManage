@@ -5,6 +5,8 @@
 set -eu
 echo "FitManage ${FITMANAGE_VERSION}: aplicando migraciones"
 python manage.py migrate --noinput
+# Guía 16: planes iniciales y primera cuenta de administrador, solo si no existen.
+python manage.py preparar_gimnasio
 echo "Migraciones listas; gunicorn escucha en 0.0.0.0:${PORT}"
 # Un proceso con 4 hilos y sin access log (ADR N.° 13): ver el comentario del CMD en el Dockerfile.
 exec gunicorn config.wsgi --bind "0.0.0.0:${PORT}" --workers 1 --threads 4 --timeout 60

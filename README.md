@@ -9,17 +9,23 @@ Proyecto integrador de Ingeniería de Software I y II · Universidad de Pamplona
 | Carpeta | Qué contiene |
 | --- | --- |
 | `dominio/` | Núcleo de reglas de negocio en Python puro (RN-01 a RN-10): entidades, `CalculadoraMembresia`, servicios y puertos. |
-| `tests/` | 48 pruebas automatizadas con pytest, con repositorios en memoria y reloj fijo. |
+| `aplicacion/` | Casos de uso (registrar socio, consultar estado, registrar y anular pagos). |
+| `tests/` | Suite de pytest: núcleo con dobles en memoria, integración con la base real, contrato OpenAPI y Pact, aceptación (PA-xx). |
 | `prototipo/` | Prototipo funcional navegable del MVP (HTML autónomo, datos de ejemplo). |
-| `infraestructura/` | Adaptadores técnicos que implementan los puertos del dominio (por ahora, `RelojBogota`). |
-| `docs/` | Línea base técnica, inventario de deuda técnica y registros de decisión arquitectónica (ADR). |
+| `infraestructura/` | Adaptadores: API `/api/v1`, persistencia con Django ORM, observabilidad y la pantalla de recepción (`web/`, ADR N.° 16). |
+| `docs/` | ADR N.° 01 a 16, inventario de deuda, roadmap, runbooks, postmortems, evidencia de cada guía y el [Dossier Técnico Final](docs/Dossier_Final.md). |
+
+## En producción
+
+- Pantalla de recepción: https://fitmanage-svol.onrender.com
+- La primera cuenta de administrador se crea al arrancar desde `FITMANAGE_ADMIN_NOMBRE`, `FITMANAGE_ADMIN_CORREO` y `FITMANAGE_ADMIN_CLAVE`, configuradas en el panel de Render (`preparar_gimnasio`).
 
 ## Ejecutar las pruebas
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # En Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-pytest --cov=dominio
+pytest --cov
 ```
 
 ## Con Docker (PostgreSQL 16 + la API con gunicorn, ADR N.° 10)
