@@ -4,7 +4,7 @@ Guía 15 (FPI-31, ADR N.° 15). Cada hito tiene un **disparador**: el hecho que 
 
 | Hito | Tipo de mantenimiento | Disparador | Fecha límite | Esfuerzo | Deuda que paga |
 | --- | --- | --- | --- | --- | --- |
-| **H0. Destrabar las actualizaciones** | Preventivo | Ya ocurrió: 7 PR de Dependabot bloqueados | 13/11/2026 | 1 h | DT-17 |
+| **H0. Destrabar las actualizaciones** | Preventivo | Ya ocurrió: 7 PR de Dependabot bloqueados | 13/11/2026 (**cumplido el 6/11/2026**) | 1 h | DT-17 |
 | **H1. Infraestructura que no se borre** | Adaptativo y preventivo | La base gratuita vence cerca del **2/12/2026** y Render la borra 14 días después | 1/12/2026 | 4 h | DT-18, DT-20 |
 | **H2. Listo para datos reales** | Correctivo de cumplimiento y perfectivo | El gimnasio acepta un piloto con socios reales | Antes del primer socio real (meta: 31/1/2027) | 32 h | DT-10, DT-13, DT-14, DT-15, DT-23 |
 | **H3. Revisión de las excepciones de seguridad** | Preventivo | Las 12 excepciones de `.trivyignore` vencen el **1/2/2027** y la puerta vuelve a fallar sola | 25/1/2027 | 3 h | DT-19 |
@@ -15,6 +15,8 @@ Guía 15 (FPI-31, ADR N.° 15). Cada hito tiene un **disparador**: el hecho que 
 
 - Crear `SONAR_TOKEN` en *Settings → Secrets and variables → Dependabot*. GitHub no les pasa los secretos de Actions a los PR de Dependabot.
 - Volver a correr los PR abiertos. Fusionar los que pasen los nueve checks y cerrar Django 6.1 (#20) y `openapi-spec-validator` 0.9 (#21), que Dependabot ya ignora.
+
+**Cumplido el 6/11/2026:** secreto creado y PR #17, #18, #22, #31, #32 y #33 fusionados.
 
 **Justificación de negocio:** mientras los PR se acumulan, los parches de seguridad no llegan, y el escaneo semanal de la FPI-28 pierde sentido.
 
