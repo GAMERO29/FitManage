@@ -67,6 +67,8 @@ docker compose exec -T db pg_isready -U fitmanage     # debe decir «accepting c
 
 ## Paso 5 · Verificar antes de dar por cerrado
 
+Que la alerta se apague **no** cierra el incidente. En el simulacro del 6/11/2026 la alerta rápida se apagó 14 minutos antes de que volviera la base, porque el token del cliente venció y las consultas pasaron a 401 (postmortem `2026-11-06-base-de-datos-30-minutos.md`). Lo que cierra el incidente son estas tres comprobaciones:
+
 1. `/api/v1/salud` responde **200 tres veces seguidas**, con un minuto entre cada una.
 2. En Grafana, «Errores 5xx» vuelve a 0 % y la alerta pasa a *Normal* (la rápida se apaga unos 5 minutos después, porque mira los últimos 5 minutos).
 3. Desde recepción, consultar el estado de un socio conocido.
