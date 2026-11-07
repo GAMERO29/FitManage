@@ -1,0 +1,159 @@
+# Pruebas unitarias de las reglas del SLO (ADR N.° 14). Las corre el workflow Observabilidad:
+#   promtool test rules observabilidad/prometheus/pruebas/slo_test.yml
+rule_files:
+- ../slo.yml
+evaluation_interval: 1m
+tests:
+- name: 'Apagón de la base: 100 consultas por minuto y, desde el minuto 60, todas con 500'
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+100x60 6000x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
+    values: 0x60 100+100x30
+  - series: http_server_request_duration_seconds_bucket{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200",le="0.5"}
+    values: 0+100x60 6000x30
+  alert_rule_test:
+  - eval_time: 50m
+    alertname: PresupuestoQuemaRapida
+    exp_alerts: []
+  - eval_time: 50m
+    alertname: PresupuestoQuemaLenta
+    exp_alerts: []
+  - eval_time: 65m
+    alertname: PresupuestoQuemaRapida
+    exp_alerts:
+    - exp_labels:
+        severidad: critica
+      exp_annotations: &id001
+        resumen: La consulta de estado consume el presupuesto de error 6,7 veces más rápido de lo sostenible
+        runbook: docs/runbooks/Runbook_base_de_datos.md
+  - eval_time: 75m
+    alertname: PresupuestoQuemaLenta
+    exp_alerts:
+    - exp_labels:
+        severidad: aviso
+      exp_annotations: &id002
+        resumen: La consulta de estado agotaría el presupuesto de error antes de terminar la ventana de 14 días
+        runbook: docs/runbooks/Runbook_base_de_datos.md
+- name: 'Recuperación: la alerta rápida se apaga 5 minutos después de que vuelven los 200'
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+100x60 6000x10 6100+100x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
+    values: 0x60 100+100x10 1100x30
+  alert_rule_test:
+  - eval_time: 68m
+    alertname: PresupuestoQuemaRapida
+    exp_alerts:
+    - exp_labels:
+        severidad: critica
+      exp_annotations: *id001
+  - eval_time: 80m
+    alertname: PresupuestoQuemaRapida
+    exp_alerts: []
+- name: 'Errores bajos pero constantes (2 %): solo la alerta lenta'
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+98x480
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
+    values: 0+2x480
+  alert_rule_test:
+  - eval_time: 7h
+    alertname: PresupuestoQuemaLenta
+    exp_alerts:
+    - exp_labels:
+        severidad: aviso
+      exp_annotations: *id002
+  - eval_time: 7h
+    alertname: PresupuestoQuemaRapida
+    exp_alerts: []
+- name: 'Errores de 0,3 %, dentro del presupuesto: ninguna alerta'
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+997x480
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
+    values: 0+3x480
+  alert_rule_test:
+  - eval_time: 7h
+    alertname: PresupuestoQuemaLenta
+    exp_alerts: []
+  - eval_time: 7h
+    alertname: PresupuestoQuemaRapida
+    exp_alerts: []
+- name: El 20 % de las consultas tarda más de 500 ms
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+100x60
+  - series: http_server_request_duration_seconds_bucket{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200",le="0.5"}
+    values: 0+80x60
+  alert_rule_test:
+  - eval_time: 30m
+    alertname: ConsultasLentasQuemaRapida
+    exp_alerts:
+    - exp_labels:
+        severidad: aviso
+      exp_annotations:
+        resumen: Más del 6,7 % de las consultas de estado tardan más de 500 ms
+        runbook: docs/runbooks/Runbook_base_de_datos.md
+- name: 'La app no responde: no hay peticiones, pero up vale 0'
+  interval: 1m
+  input_series:
+  - series: up{job="fitmanage",instance="app:8000"}
+    values: 1x10 0x10
+  alert_rule_test:
+  - eval_time: 12m
+    alertname: AppSinResponder
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: AppSinResponder
+    exp_alerts:
+    - exp_labels:
+        severidad: critica
+        job: fitmanage
+        instance: app:8000
+      exp_annotations:
+        resumen: Prometheus no puede leer /metrics de la app desde hace 3 minutos
+        runbook: docs/runbooks/Runbook_base_de_datos.md
+- name: El SLI de disponibilidad da el valor esperado
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+995x120
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="500"}
+    values: 0+5x120
+  promql_expr_test:
+  - expr: round(fitmanage:sli_disponibilidad:error_ratio1h * 100000)
+    eval_time: 90m
+    exp_samples:
+    - labels: '{}'
+      value: 500
+  - expr: round(fitmanage:sli_disponibilidad:error_ratio5m * 100000)
+    eval_time: 90m
+    exp_samples:
+    - labels: '{}'
+      value: 500
+- name: 'Caída de la base con el token vencido: las consultas dan 401, pero el inicio de sesión da 500'
+  interval: 1m
+  input_series:
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="200"}
+    values: 0+100x60 6000x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/estados/{tipoDocumento}/{numeroDocumento}",http_response_status_code="401"}
+    values: 0x60 0+20x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/auth/token",http_response_status_code="200"}
+    values: 0+1x60 60x30
+  - series: http_server_request_duration_seconds_count{http_route="/api/v1/auth/token",http_response_status_code="500"}
+    values: 0x60 0+20x30
+  alert_rule_test:
+  - eval_time: 80m
+    alertname: PresupuestoQuemaRapida
+    exp_alerts:
+    - exp_labels:
+        severidad: critica
+      exp_annotations:
+        resumen: La consulta de estado consume el presupuesto de error 6,7 veces más rápido de lo sostenible
+        runbook: docs/runbooks/Runbook_base_de_datos.md

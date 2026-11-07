@@ -14,3 +14,7 @@ Render no puede correr Prometheus, así que en producción lo hace Grafana Cloud
 Efecto en Render: una lectura por minuto mantiene despierta la instancia gratuita, que deja de dormirse a los 15 minutos. Render da 750 horas gratis al mes por workspace y un mes despierto son unas 744, así que alcanza para este único servicio.
 
 Trazas (opcional): Grafana Cloud recibe OTLP. Con `OTEL_EXPORTER_OTLP_ENDPOINT` y `OTEL_EXPORTER_OTLP_HEADERS` (los valores salen de *Connections* → *OpenTelemetry (OTLP)* del stack) en Render, el 10 % muestreado de las trazas va a Tempo.
+
+## SLO (Guía 14, ADR N.° 14)
+
+En compose, las alertas de umbral se reemplazaron por las de consumo del presupuesto de `observabilidad/prometheus/slo.yml`. En Grafana Cloud siguen las dos de umbral, creadas a mano; para pasarlas al SLO hay que crear `PresupuestoQuemaRapida` y `PresupuestoQuemaLenta` con las expresiones de `slo.yml` (sin las reglas de registro, escribiendo la proporción completa) y ventanas de al menos `[5m]`. La fila «SLO del recorrido de recepción» del tablero ya funciona allá si se vuelve a importar `fitmanage.json`.
