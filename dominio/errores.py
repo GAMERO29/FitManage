@@ -17,6 +17,10 @@ class SocioNoEncontrado(ErrorDeDominio):
     """No existe un socio con el tipo y número de documento indicados."""
 
 
+class DocumentoDuplicado(ErrorDeDominio):
+    """Ya hay un socio con ese tipo y número de documento (CU-02)."""
+
+
 class PlanNoDisponible(ErrorDeDominio):
     """El plan no existe o está desactivado (RN-09)."""
 

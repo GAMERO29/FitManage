@@ -40,3 +40,14 @@ def test_el_nucleo_no_importa_infraestructura(paquete):
         if nombre.split(".")[0] in PROHIBIDOS[paquete]
     ]
     assert fugas == []
+
+
+# Guía 15 (DT-16): los controladores traducen HTTP y llaman a un caso de uso. No calculan estados ni
+# usan repositorios directamente; para eso están `aplicacion/` y la raíz de composición.
+PROHIBIDOS_EN_CONTROLADORES = ("dominio.calculadora", "infraestructura.persistencia.repositorios")
+
+
+def test_los_controladores_no_hacen_el_trabajo_de_los_casos_de_uso():
+    vistas = RAIZ / "infraestructura" / "api" / "vistas.py"
+    fugas = sorted(n for n in _importaciones(vistas) if n in PROHIBIDOS_EN_CONTROLADORES)
+    assert fugas == []

@@ -92,6 +92,22 @@ def test_sin_idempotency_key_es_400(recepcion):
     assert recepcion.post(PAGOS, pago_de()).status_code == 400
 
 
+def test_idempotency_key_que_no_es_uuid_es_400_no_500(recepcion):
+    """Guía 15, ejercicio 5: la IA dijo que daba 500; el contrato lo rechaza antes de la vista."""
+    r = recepcion.post(PAGOS, pago_de(), {"Idempotency-Key": "abc"})
+    assert r.status_code == 400 and r.json()["codigo"] == "SOLICITUD_INVALIDA"
+    assert not IdempotenciaModelo.objects.exists()
+
+
+@pytest.mark.xfail(strict=True, reason="DT-23: la clave de idempotencia es global, no por usuario")
+def test_la_misma_clave_de_otra_persona_no_repite_su_pago(api):
+    misma = clave()
+    api.como("laura@gimnasio-demo.co").post(PAGOS, pago_de(), misma)
+    otro = pago_de("1093445566", "EFECTIVO", None)
+    r = api.como("carlos@gimnasio-demo.co").post(PAGOS, otro, misma)
+    assert r.status_code == 201 and r.json()["registradoPor"] == "Carlos"
+
+
 def test_doble_clic_con_la_misma_clave_crea_un_solo_pago(recepcion):
     """PA-11: el segundo envío devuelve la misma respuesta y no crea otro pago."""
     misma = clave()

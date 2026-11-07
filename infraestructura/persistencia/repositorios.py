@@ -6,7 +6,7 @@ from uuid import UUID
 
 from django.db import IntegrityError, transaction
 
-from dominio.errores import ReferenciaDuplicada
+from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada
 from dominio.modelos import (
     ZONA_HORARIA,
     EstadoPago,
@@ -21,6 +21,7 @@ from dominio.modelos import (
 from infraestructura.persistencia.models import PagoModelo, PlanModelo, SocioModelo, UsuarioModelo
 
 RESTRICCION_REFERENCIA = "referencia_vigente_unica"
+RESTRICCION_DOCUMENTO = "socio_documento_unico"  # RN-01
 
 
 def _a_socio(m: SocioModelo) -> Socio:
@@ -84,17 +85,24 @@ class SocioRepositorioORM:
         return _a_socio(m) if m else None
 
     def guardar(self, socio: Socio) -> None:
-        SocioModelo.objects.update_or_create(
-            id=socio.id,
-            defaults={
-                "tipo_documento": socio.tipo_documento.value,
-                "numero_documento": socio.numero_documento,
-                "nombres": socio.nombres,
-                "apellidos": socio.apellidos,
-                "telefono": socio.telefono,
-                "autorizacion_datos": socio.autorizacion_datos,
-            },
-        )
+        try:
+            with transaction.atomic():  # punto de guardado: la transacción de afuera sigue sana
+                SocioModelo.objects.update_or_create(
+                    id=socio.id,
+                    defaults={
+                        "tipo_documento": socio.tipo_documento.value,
+                        "numero_documento": socio.numero_documento,
+                        "nombres": socio.nombres,
+                        "apellidos": socio.apellidos,
+                        "telefono": socio.telefono,
+                        "autorizacion_datos": socio.autorizacion_datos,
+                    },
+                )
+        except IntegrityError as error:
+            # PostgreSQL nombra la restricción; SQLite nombra las columnas.
+            if RESTRICCION_DOCUMENTO in str(error) or "socios.numero_documento" in str(error):
+                raise DocumentoDuplicado() from error
+            raise
 
 
 class PlanRepositorioORM:
