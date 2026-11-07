@@ -66,7 +66,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 
 ## 6. Auditoría ética de IA
 
-Consolidada en [`docs/guia-16-sw2/bitacora-ia.md`](guia-16-sw2/bitacora-ia.md): 27 de 31 fichas, 15 alucinaciones comprobadas en 13 fichas, 30 dependencias o herramientas rechazadas, 0 licencias restrictivas, 6 propuestas con secretos en claro y 2 fugas de datos personales prevenidas. FitManage se construyó además con un asistente de IA en modo de programación en pareja; cada cambio pasó por PR con los checks requeridos, y las decisiones quedaron en los ADR.
+Consolidada en [`docs/guia-16-sw2/bitacora-ia.md`](guia-16-sw2/bitacora-ia.md): las 31 fichas, 16 alucinaciones comprobadas en 14 fichas, 30 dependencias o herramientas rechazadas, 0 licencias restrictivas, 7 propuestas con secretos en claro y 2 fugas de datos personales prevenidas. FitManage se construyó además con un asistente de IA en modo de programación en pareja; cada cambio pasó por PR con los checks requeridos, y las decisiones quedaron en los ADR.
 
 ## 7. Deuda residual aceptada
 
