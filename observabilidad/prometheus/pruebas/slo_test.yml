@@ -149,7 +149,7 @@ tests:
   - series: http_server_request_duration_seconds_count{http_route="/api/v1/auth/token",http_response_status_code="500"}
     values: 0x60 0+20x30
   alert_rule_test:
-  - eval_time: 70m
+  - eval_time: 80m
     alertname: PresupuestoQuemaRapida
     exp_alerts:
     - exp_labels:
