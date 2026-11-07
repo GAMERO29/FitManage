@@ -1,0 +1,51 @@
+Answer only from your own knowledge. Do not use any tools, do not read or write files, do not search. Reply in Spanish, exactly as you would to a student who asked this in a chat:
+
+"Tengo este fragmento 'legacy' de mi backend Django (FitManage, gestión de gimnasios). Hazle ingeniería inversa: explícame qué hace y qué reglas de negocio implementa. Después propón una refactorización más limpia (dame el código completo refactorizado) y recomiéndame una herramienta para medir la deuda técnica del proyecto.
+
+```python
+class IdempotenciaModelo(models.Model):
+    clave = models.UUIDField(primary_key=True)
+    usuario = models.ForeignKey(UsuarioModelo, on_delete=models.CASCADE)
+    estado_http = models.PositiveSmallIntegerField(default=0)
+    cuerpo = models.JSONField(default=dict)
+    creada = models.DateTimeField(auto_now_add=True)
+
+
+def _respuesta_guardada(clave: uuid.UUID) -> JsonResponse:
+    previa = IdempotenciaModelo.objects.get(clave=clave)
+    respuesta = JsonResponse(previa.cuerpo, status=previa.estado_http)
+    respuesta["Location"] = f"/api/v1/pagos/{previa.cuerpo['id']}"
+    respuesta["Idempotent-Replayed"] = "true"
+    return respuesta
+
+
+@require_POST
+@endpoint(roles=TODO_EL_PERSONAL)
+def registrar_pago(request: HttpRequest) -> JsonResponse:
+    clave = uuid.UUID(request.headers["Idempotency-Key"])
+    datos = leer_json(request)
+    solicitud = SolicitudPago(
+        tipo_documento=TipoDocumento(datos["tipoDocumento"]),
+        numero_documento=datos["numeroDocumento"],
+        plan_id=uuid.UUID(datos["planId"]),
+        medio=datos["medio"],
+        referencia=datos.get("referencia"),
+    )
+    with transaction.atomic():
+        try:
+            with transaction.atomic():
+                registro = IdempotenciaModelo.objects.create(
+                    clave=clave, usuario_id=request.usuario.id
+                )
+        except IntegrityError:
+            return _respuesta_guardada(clave)
+        pago = contenedor.registro_pago().registrar_pago(solicitud, request.usuario)
+        cuerpo = presentacion.pago(pago, _nombre_plan(pago.plan_id))
+        registro.estado_http, registro.cuerpo = 201, cuerpo
+        registro.save(update_fields=["estado_http", "cuerpo"])
+    respuesta = JsonResponse(cuerpo, status=201)
+    respuesta["Location"] = f"/api/v1/pagos/{pago.id}"
+    return respuesta
+```"
+
+Give the full refactored code.

@@ -1,0 +1,15 @@
+# Acoplamiento de infraestructura/api/vistas.py
+## Antes (main)
+15:from dominio.calculadora import CalculadoraMembresia
+16:from dominio.modelos import Socio, SolicitudPago, TipoDocumento
+24:from infraestructura.persistencia.repositorios import (
+## Después (rama)
+16:from dominio.modelos import SolicitudPago, TipoDocumento
+
+# radon cc, vistas.py (después de pagar DT-16)
+    F 144:0 consultar_estado - A (3)
+    F 121:0 registrar_socio - A (2)
+
+# radon cc, vistas.py (antes, main)
+    F 126:0 registrar_socio - A (2)
+    F 151:0 consultar_estado - A (2)
