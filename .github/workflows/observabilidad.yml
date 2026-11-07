@@ -4,7 +4,7 @@
 # 6 minutos de tráfico de recepción con k6 y, a mitad de la corrida, apaga la base 2 minutos y medio
 # para simular un incidente. Después comprueba con las APIs de Prometheus y Jaeger que:
 #   - el tablero tiene tasa de peticiones, latencia p95 y porcentaje de errores;
-#   - la alerta ErroresDelServidor se disparó durante el apagón;
+#   - la alerta PresupuestoQuemaRapida (SLO, ADR N.° 14) se disparó durante el apagón;
 #   - se trazó cerca del 10 % de las peticiones (muestreo);
 #   - ningún documento de socio aparece en los logs, en las métricas ni en las trazas (Ley 1581).
 # Falla si cualquiera de esas cosas no se cumple. No es un check requerido: tarda unos 10 minutos.
@@ -29,6 +29,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  reglas:
+    name: reglas-slo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: promtool check rules y test rules (SLI, SLO y alertas por consumo del presupuesto)
+        run: |
+          docker run --rm --entrypoint promtool -v "$PWD/observabilidad/prometheus:/reglas:ro" -w /reglas \
+            prom/prometheus:v3.15.1 check rules slo.yml
+          docker run --rm --entrypoint promtool -v "$PWD/observabilidad/prometheus:/reglas:ro" -w /reglas/pruebas \
+            prom/prometheus:v3.15.1 test rules slo_test.yml
+
   informe:
     name: informe
     runs-on: ubuntu-latest
@@ -85,8 +98,8 @@ jobs:
           echo "Respuestas por código:"
           curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode "query=sum by (http_response_status_code) (round(increase($M"'_count[7m])))' \
             | jq -r '.data.result[] | "  \(.metric.http_response_status_code): \(.value[1])"'
-          disparos=$(q 'max_over_time(ALERTS{alertname="ErroresDelServidor",alertstate="firing"}[10m])')
-          echo "ErroresDelServidor disparada durante el apagón: $disparos"
+          disparos=$(q 'max_over_time(ALERTS{alertname="PresupuestoQuemaRapida",alertstate="firing"}[10m])')
+          echo "PresupuestoQuemaRapida disparada durante el apagón: $disparos"
           [ "$disparos" = "1" ] || { echo "::error::la alerta no se disparó durante el apagón"; exit 1; }
       - name: Muestreo de trazas en Jaeger (se espera cerca del 10 %)
         run: |

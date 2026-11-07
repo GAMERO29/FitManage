@@ -10,11 +10,13 @@ artefactos.
 from __future__ import annotations
 
 import base64
+import os
 import sys
 
 from playwright.sync_api import sync_playwright
 
-GRAFANA = "http://127.0.0.1:3000/d/fitmanage-api/fitmanage-api?orgId=1&from=now-10m&to=now&kiosk"
+DESDE = os.environ.get("GRAFANA_DESDE", "now-10m")  # el simulacro de la Guía 14 usa now-45m
+GRAFANA = f"http://127.0.0.1:3000/d/fitmanage-api/fitmanage-api?orgId=1&from={DESDE}&to=now&kiosk"
 JAEGER = "http://127.0.0.1:16686/trace/{}"
 
 
@@ -29,7 +31,7 @@ def main() -> None:
     trace_id = sys.argv[2] if len(sys.argv) > 2 else None
     with sync_playwright() as p:
         navegador = p.chromium.launch()
-        pagina = navegador.new_page(viewport={"width": 1600, "height": 1000})
+        pagina = navegador.new_page(viewport={"width": 1600, "height": 1300})
         pagina.goto(GRAFANA, wait_until="networkidle")
         pagina.wait_for_timeout(8000)  # que terminen de dibujarse los paneles
         imprimir(f"{nombre}.png", pagina.screenshot(full_page=True))

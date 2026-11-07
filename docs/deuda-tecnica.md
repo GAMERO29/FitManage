@@ -46,3 +46,38 @@ Cada refactorización futura debe citar en su Pull Request el ítem que paga (po
 | DT-02 | 4 | Adaptadores `SocioRepositorioORM`, `PlanRepositorioORM` y `PagoRepositorioORM`; las mismas pruebas de contrato corren contra los dobles en memoria y contra Django ORM, con SQLite en el trabajo de pruebas y con PostgreSQL 16 en el trabajo de contenedores. | PR #1 (`e59244c`) |
 | DT-01 | 4 | Índice único parcial `referencia_vigente_unica` en la tabla `pagos`; el adaptador traduce la violación a `ReferenciaDuplicada`. QA-05 corre 100 pares de registros simultáneos contra PostgreSQL 16 y en los 100 la base rechaza el segundo. | PR #1 (`e59244c`) |
 | DT-11 | 5 | Puerto `UsuarioRepositorio` y adaptador `UsuarioRepositorioORM`, único dueño de la tabla `usuarios`; el repositorio de pagos solo los referencia. | PR #2 (`fdb1b2c`) |
+
+## Revisión de la Guía 15 (FPI-31, 6/11/2026)
+
+Comparación del inventario contra el sistema al cerrar el semestre. «Empeoró» significa que el ítem sigue igual pero su riesgo subió porque cambió el entorno. Cada pendiente tiene un disparador en el roadmap ([`docs/roadmap.md`](roadmap.md)) o la decisión de convivir con él (ADR N.° 15).
+
+| ID | Estado | Por qué | Cuadrante de Fowler | Acción |
+| --- | --- | --- | --- | --- |
+| DT-01 | Pagada | Índice único parcial y QA-05 (100 pares concurrentes). | Deliberada y prudente | — |
+| DT-02 | Pagada | Pruebas de contrato contra los dobles y contra Django ORM; PostgreSQL 16 en CI. | Deliberada y prudente | — |
+| DT-03 | Pagada | `Telefono` y `NumeroDocumento` validados al crear un `Socio`. | Deliberada y prudente | — |
+| DT-04 | Pendiente, se convive | El prototipo sigue en `prototipo/` con reglas propias. Ya no es la base de ninguna interfaz: la vista móvil consume la API y su contrato Pact se verifica en cada PR. | Deliberada e imprudente | Convivir: el prototipo queda como evidencia de la Guía 4 y está fuera de la imagen, del análisis y del despliegue. Se borra si alguien propone reutilizarlo. |
+| DT-05 | Pagada | JWT en cada endpoint y rol leído de la base; 403 probado. Ya no hay plantillas que proteger: la interfaz es la API. | Deliberada e imprudente | — |
+| DT-06 | Pendiente, se convive | Vive en el prototipo (DT-04). En el código real, radon y SonarCloud no dejan pasar complejidad mayor que 10. | Inadvertida e imprudente | Igual que DT-04. |
+| DT-07 | Pagada | `RelojBogota` y fechas con zona obligatoria. | Inadvertida y prudente | — |
+| DT-08 | Pagada | Repositorio, CI con 9 checks requeridos, contenedores y CD a Render (ADR N.° 09 a 11). | Inadvertida e imprudente | — |
+| DT-09 | Pagada | Cobertura de 100 % hasta la Guía 13; 99 % hoy (una línea del exportador OTLP). | Inadvertida y prudente | — |
+| DT-10 | **Empeoró** | Sigue sin texto de autorización, y desde la Guía 11 la app está publicada en internet. | Deliberada y prudente | Hito H2: antes del piloto con datos reales. |
+| DT-11 | Pagada | `UsuarioRepositorioORM` es el único dueño de `usuarios`. | Deliberada y prudente | — |
+| DT-12 | Pendiente, se convive | `Pago` sigue guardando el `Socio` y el `Usuario`. No molesta mientras todo sea un monolito (ADR N.° 05). | Deliberada y prudente | Convivir: se paga solo si se separa un contexto. |
+| DT-13 | **Empeoró** | Sigue sin límite de tasa, y ahora `/auth/token` está expuesto en internet. El bloqueo por cuenta frena adivinar una clave, no probar muchos correos. | Deliberada y prudente | Hito H2. |
+| DT-14 | Pendiente | Los eventos de auditoría siguen sin guardarse. | Deliberada y prudente | Hito H2. |
+| DT-15 | Pendiente | Sigue PBKDF2 en lugar de bcrypt. Riesgo bajo; es una diferencia con la ERS. | Inadvertida y prudente | Hito H2: decidir con el dueño del requisito. |
+
+### Ítems nuevos del semestre
+
+| ID | Ítem de deuda | Categoría | Ubicación | Impacto en calidad | Cuadrante de Fowler | Estado y acción |
+| --- | --- | --- | --- | --- | --- | --- |
+| DT-16 | `registrar_socio` y `consultar_estado` hacían el caso de uso dentro del controlador: creaban la entidad, usaban los repositorios de Django y la calculadora. El docstring del módulo decía lo contrario. | Diseño (arquitectónica) | `infraestructura/api/vistas.py` | Medio: CU-02 y CU-03 solo se podían probar con una petición HTTP completa, y la regla RN-05 tenía un segundo punto de entrada. | Inadvertida y prudente | **Pagada en la Guía 15**: `aplicacion/socios.py`, `DocumentoDuplicado` en el dominio y una prueba de arquitectura que impide volver a importar la calculadora o los repositorios desde las vistas. |
+| DT-17 | Los PR de Dependabot no pueden pasar el check `analisis`: GitHub no les da los secretos de Actions y falta `SONAR_TOKEN` entre los secretos de Dependabot. | Infraestructura (proceso) | `Settings → Secrets → Dependabot` | Alto y creciente: 7 PR de actualizaciones acumulados desde el 2/11, entre ellos el de la acción que sube los reportes de seguridad al panel Security. Es interés compuesto en estado puro: cada lunes llegan más. | Inadvertida y prudente | Pendiente, la acción la hace el dueño del repositorio: crear `SONAR_TOKEN` como secreto de Dependabot. |
+| DT-18 | La base de Render es la gratuita: vence a los 30 días (cerca del 2/12/2026), no tiene copias y Render la puede reiniciar sin aviso. | Infraestructura | Render | Alto: si se pasa el plazo de gracia, Render borra los datos. | Deliberada y prudente | Hito H1. |
+| DT-19 | 12 CVE de la imagen base aceptados en `.trivyignore`, con razón y vencimiento el 1/2/2027. | Seguridad | `.trivyignore` | Bajo hoy: ninguno es explotable en el contenedor. Sube si cambia el entorno. | Deliberada y prudente | Hito H3: revisarlos antes de que venzan. |
+| DT-20 | Las alertas de Grafana Cloud son de umbral y se crearon a mano; no siguen el SLO del recorrido de recepción de `slo.yml`. | Infraestructura (observabilidad) | Grafana Cloud | Medio: producción y compose miden distinto. | Deliberada y prudente | Hito H1. |
+| DT-21 | `openapi-core` 0.23.1 impide subir `openapi-spec-validator` a 0.9 (PR #21). | Dependencias | `requirements-dev.txt` | Bajo: es una herramienta de pruebas. | Deliberada y prudente | Ignorada en Dependabot hasta que `openapi-core` publique una versión compatible. |
+| DT-22 | Django 5.2 LTS. Dependabot propone 6.1, que no es LTS. | Dependencias (adaptativo) | `requirements.txt` | Bajo: 5.2 recibe parches de seguridad hasta abril de 2028. | Deliberada y prudente | Hito H5: migrar a 6.2 LTS (abril de 2027). Dependabot ignora `django >= 6.0` hasta entonces. |
+| DT-23 | La clave de idempotencia de `POST /pagos` es global: si otra persona del personal reenvía una clave ya usada, recibe la respuesta del pago anterior y su pago no se registra. Tampoco se compara el cuerpo: la misma clave con otro socio devuelve el pago viejo. | Diseño (seguridad) | `infraestructura/api/vistas.py`, tabla `idempotencia` | Bajo: las claves son UUID v4 generados por la app y solo el personal autenticado llega aquí. Lo encontró la ingeniería inversa con IA del ejercicio 5 y se confirmó con una prueba. | Inadvertida y prudente | Hito H2. La prueba `test_la_misma_clave_de_otra_persona_no_repite_su_pago` está marcada `xfail(strict=True)`: cuando se corrija, la prueba pasa y obliga a quitar la marca. La corrección cambia el contrato (respuesta nueva para «clave usada con otro cuerpo»), así que va con su ADR y su versión del `openapi.yaml`. |

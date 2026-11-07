@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from uuid import UUID
 
-from dominio.errores import CorreoNoDisponible
+from dominio.errores import CorreoNoDisponible, DocumentoDuplicado
 from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
@@ -18,7 +18,11 @@ class SociosEnMemoria:
         return self._socios.get((tipo, numero))
 
     def guardar(self, socio: Socio) -> None:
-        self._socios[(socio.tipo_documento, socio.numero_documento)] = socio
+        clave = (socio.tipo_documento, socio.numero_documento)
+        previo = self._socios.get(clave)
+        if previo is not None and previo.id != socio.id:
+            raise DocumentoDuplicado()  # igual que la restricción única de la base
+        self._socios[clave] = socio
 
 
 class PlanesEnMemoria:

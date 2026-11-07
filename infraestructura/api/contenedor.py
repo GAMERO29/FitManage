@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from aplicacion.acceso import RestablecimientoClaveService
 from aplicacion.pagos import AnulacionPagoService, RegistroPagoService
+from aplicacion.socios import ConsultaEstadoService, RegistroSocioService
 from dominio.puertos import CorreoSaliente, Reloj
 from infraestructura.correo import CorreoDjango
 from infraestructura.persistencia.repositorios import (
@@ -30,6 +31,18 @@ def registro_pago() -> RegistroPagoService:
     return RegistroPagoService(
         SocioRepositorioORM(), PlanRepositorioORM(), PagoRepositorioORM(), reloj()
     )
+
+
+def registro_socio() -> RegistroSocioService:
+    return RegistroSocioService(SocioRepositorioORM(), reloj())
+
+
+def consulta_estado() -> ConsultaEstadoService:
+    return ConsultaEstadoService(SocioRepositorioORM(), PagoRepositorioORM(), reloj())
+
+
+def nombre_plan(plan_id) -> str:
+    return PlanRepositorioORM().obtener(plan_id).nombre
 
 
 def anulacion_pago() -> AnulacionPagoService:
