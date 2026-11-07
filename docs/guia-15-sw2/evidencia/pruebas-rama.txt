@@ -1,0 +1,5 @@
+aplicacion/socios.py                              34      0      2      0   100%
+infraestructura/api/vistas.py                    151      0      2      0   100%
+infraestructura/persistencia/repositorios.py      60      0      6      0   100%
+TOTAL                                           1236      1    174      1    99%
+276 passed, 1 skipped, 1 xfailed, 4 warnings in 8.64s

@@ -9,6 +9,16 @@ updates:
     groups:
       parches-python:
         update-types: [patch]
+    ignore:
+      # Guía 15 (ADR N.° 15): FitManage se queda en Django 5.2 LTS, con parches de seguridad hasta
+      # abril de 2028, y salta a 6.2 LTS (abril de 2027) en el hito H5 del roadmap. 6.0 y 6.1 no son
+      # LTS: subir a una de ellas obliga a volver a migrar en meses. Los parches 5.2.x siguen llegando.
+      - dependency-name: django
+        versions: [">=6.0"]
+      # openapi-core 0.23.1 exige openapi-spec-validator < 0.9 (PR #21: ResolutionImpossible).
+      # Quitar cuando openapi-core publique una versión compatible.
+      - dependency-name: openapi-spec-validator
+        versions: [">=0.9"]
   - package-ecosystem: docker
     directory: "/"
     schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Bogota }

@@ -22,7 +22,31 @@ if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
 INSTALLED_APPS = [
     "infraestructura.persistencia",
 ]
+# Guía 13 (ADR N.° 13): una traza, una métrica y un log JSON por petición, sin datos personales.
+# FITMANAGE_TELEMETRIA=0 la apaga sin tocar el código (por ejemplo, para medir cuánto cuesta).
+TELEMETRIA = os.environ.get("FITMANAGE_TELEMETRIA", "1") != "0"
+MIDDLEWARE = (
+    ["infraestructura.observabilidad.middleware.MiddlewareTelemetria"] if TELEMETRIA else []
+)
 ROOT_URLCONF = "config.urls"
+
+# Una línea JSON por evento en la salida estándar (Render la guarda y la muestra en su panel).
+# El filtro redacta documentos y teléfonos también en los mensajes de Django y de las librerías.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"pii": {"()": "infraestructura.observabilidad.logs.FiltroPII"}},
+    "formatters": {"json": {"()": "infraestructura.observabilidad.logs.FormateadorJSON"}},
+    "handlers": {
+        "json": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "json",
+            "filters": ["pii"],
+        }
+    },
+    "root": {"handlers": ["json"], "level": os.environ.get("FITMANAGE_NIVEL_LOG", "INFO")},
+}
 STATIC_URL = "static/"
 
 # ADR N.° 06: clave propia para firmar los JWT, distinta de SECRET_KEY y rotable con `kid`.

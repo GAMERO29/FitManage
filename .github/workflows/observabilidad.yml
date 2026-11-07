@@ -1,0 +1,146 @@
+# Informe de observabilidad (Guía 13, FPI-29, ADR N.° 13).
+#
+# Levanta FitManage con Prometheus, Grafana y Jaeger (docker compose, perfil observabilidad), le manda
+# 6 minutos de tráfico de recepción con k6 y, a mitad de la corrida, apaga la base 2 minutos y medio
+# para simular un incidente. Después comprueba con las APIs de Prometheus y Jaeger que:
+#   - el tablero tiene tasa de peticiones, latencia p95 y porcentaje de errores;
+#   - la alerta PresupuestoQuemaRapida (SLO, ADR N.° 14) se disparó durante el apagón;
+#   - se trazó cerca del 10 % de las peticiones (muestreo);
+#   - ningún documento de socio aparece en los logs, en las métricas ni en las trazas (Ley 1581).
+# Falla si cualquiera de esas cosas no se cumple. No es un check requerido: tarda unos 10 minutos.
+name: Observabilidad
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "infraestructura/observabilidad/**"
+      - "observabilidad/**"
+      - "docker-compose.yml"
+      - "Dockerfile"
+      - "pruebas_carga/trafico_observabilidad.js"
+      - ".github/workflows/observabilidad.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observabilidad-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reglas:
+    name: reglas-slo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: promtool check rules y test rules (SLI, SLO y alertas por consumo del presupuesto)
+        run: |
+          docker run --rm --entrypoint promtool -v "$PWD/observabilidad/prometheus:/reglas:ro" -w /reglas \
+            prom/prometheus:v3.15.1 check rules slo.yml
+          docker run --rm --entrypoint promtool -v "$PWD/observabilidad/prometheus:/reglas:ro" -w /reglas/pruebas \
+            prom/prometheus:v3.15.1 test rules slo_test.yml
+
+  informe:
+    name: informe
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: .env con claves generadas en la corrida (nunca en el repositorio)
+        run: |
+          for v in POSTGRES_PASSWORD JWT_CLAVE DJANGO_SECRET_KEY FITMANAGE_METRICAS_TOKEN GRAFANA_CLAVE; do
+            # Generada en la corrida y enmascarada antes de escribirla (ADR N.° 12).
+            valor=$(openssl rand -hex 24); echo "::add-mask::$valor"; echo "$v=$valor" >> .env # nosemgrep: yaml.github-actions.security.audit.unsafe-add-mask-workflow-command
+          done
+          {
+            echo "POSTGRES_DB=fitmanage_carga"
+            echo "OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318"
+            echo "OTEL_TRACES_SAMPLER_ARG=0.1"
+          } >> .env
+      - name: docker compose --profile observabilidad up
+        run: |
+          set -a; . ./.env; set +a
+          docker compose --profile observabilidad up -d --build
+          for i in $(seq 1 60); do
+            [ "$(docker compose ps app --format '{{.Health}}')" = "healthy" ] && break; sleep 2
+          done
+          docker compose --profile observabilidad ps -a --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'
+      - name: Sembrar 2.000 socios y 20.000 pagos (el volumen de QA-01)
+        run: docker compose --profile pruebas run --rm pruebas python pruebas_carga/sembrar.py
+      - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+        with:
+          k6-version: "1.5.0"
+      - name: Chromium para las capturas
+        run: |
+          pip install --quiet playwright==1.64.1
+          python -m playwright install --with-deps chromium > /dev/null
+      - name: 6 minutos de tráfico, con un apagón de la base de 2 min 30 s a partir del minuto 2
+        run: |
+          (sleep 120; echo "::notice::$(date -u +%T) apagando la base"; docker compose stop db
+           sleep 150; echo "::notice::$(date -u +%T) encendiendo la base"; docker compose start db) &
+          (sleep 250; echo "::notice::$(date -u +%T) captura del tablero durante el apagón"
+           python observabilidad/ci/capturar.py grafana-apagon > captura-apagon.txt) &
+          k6 run --quiet pruebas_carga/trafico_observabilidad.js
+          wait
+          cat captura-apagon.txt
+          sleep 45 # un par de lecturas más de Prometheus con la base ya recuperada
+      - name: Las tres señales del tablero y la alerta, según Prometheus
+        run: |
+          q() { curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode "query=$1" | jq -r '.data.result[0].value[1] // "sin datos"'; }
+          M=http_server_request_duration_seconds
+          R='/api/v1/estados/{tipoDocumento}/{numeroDocumento}'
+          echo "Peticiones atendidas (total):        $(q "sum($M"'_count)')"
+          echo "Tasa promedio (peticiones/s, 7 min): $(q "sum(rate($M"'_count[7m]))')"
+          echo "Latencia p95 de la consulta (s):     $(q "histogram_quantile(0.95, sum by (le) (rate($M"'_bucket{http_route="'"$R"'"}[7m])))')"
+          echo "Errores 5xx (proporción, 7 min):     $(q "sum(increase($M"'_count{http_response_status_code=~"5.."}[7m])) / sum(increase('"$M"'_count[7m]))')"
+          echo "Respuestas por código:"
+          curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode "query=sum by (http_response_status_code) (round(increase($M"'_count[7m])))' \
+            | jq -r '.data.result[] | "  \(.metric.http_response_status_code): \(.value[1])"'
+          disparos=$(q 'max_over_time(ALERTS{alertname="PresupuestoQuemaRapida",alertstate="firing"}[10m])')
+          echo "PresupuestoQuemaRapida disparada durante el apagón: $disparos"
+          [ "$disparos" = "1" ] || { echo "::error::la alerta no se disparó durante el apagón"; exit 1; }
+      - name: Muestreo de trazas en Jaeger (se espera cerca del 10 %)
+        run: |
+          total=$(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=sum(http_server_request_duration_seconds_count)' | jq -r '.data.result[0].value[1]')
+          # Jaeger 2.21 ya no tiene la API /api/traces de búsqueda: se usa la API v3.
+          echo "Servicios en Jaeger: $(curl -sf http://127.0.0.1:16686/api/v3/services)"
+          curl -sG --fail-with-body http://127.0.0.1:16686/api/v3/traces --data-urlencode query.serviceName=fitmanage \
+            --data-urlencode "query.startTimeMin=$(date -u -d '-1 hour' +%Y-%m-%dT%H:%M:%SZ)" \
+            --data-urlencode "query.startTimeMax=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --data-urlencode query.searchDepth=10000 -o trazas.json   # 10.000 es el máximo de la API v3
+          python observabilidad/ci/trazas.py "$total"
+      - name: Ley 1581 - ningún documento en logs, métricas ni trazas
+        run: |
+          set -a; . ./.env; set +a
+          docker compose logs --no-color app > logs-app.txt
+          curl -sf -H "Authorization: Bearer $FITMANAGE_METRICAS_TOKEN" http://127.0.0.1:8000/metrics > metricas.txt
+          echo "Líneas de log de la app: $(wc -l < logs-app.txt)  ·  líneas JSON: $(grep -c '{"momento"' logs-app.txt)"
+          echo "Ejemplos (una consulta, una petición y un error de la base):"
+          grep -m1 '"evento": "consulta_estado"' logs-app.txt | cut -d'|' -f2- || true
+          grep -m1 '"evento": "peticion"' logs-app.txt | cut -d'|' -f2- || true
+          grep -m1 '"nivel": "ERROR"' logs-app.txt | cut -d'|' -f2- | cut -c1-400 || true
+          # k6 consulta documentos 1090000000-1090001999 y 1190000000-1190000999.
+          fugas=0
+          for archivo in logs-app.txt metricas.txt trazas.json; do
+            n=$(grep -cE '1[01]900[0-9]{5}' "$archivo" || true)
+            echo "$archivo: $n apariciones de un documento"
+            fugas=$((fugas + n))
+          done
+          [ "$fugas" -eq 0 ] || { echo "::error::hay documentos de socios en la telemetría"; exit 1; }
+      - name: Costo de almacenamiento de la telemetría
+        run: |
+          total=$(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=sum(http_server_request_duration_seconds_count)' | jq -r '.data.result[0].value[1]')
+          total=${total%.*}
+          bytes_log=$(grep -h '{"momento"' logs-app.txt | cut -d'|' -f2- | wc -c)
+          echo "Peticiones: $total"
+          echo "Logs JSON de la app: $bytes_log bytes ($((bytes_log / total)) bytes por petición)"
+          echo "Trazas exportadas a Jaeger (JSON de la API): $(wc -c < trazas.json) bytes"
+          echo "Series en Prometheus: $(curl -sfG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=count({job="fitmanage"})' | jq -r '.data.result[0].value[1]')"
+          echo "Disco de Prometheus: $(docker compose exec -T prometheus du -sk /prometheus | cut -f1) KB"
+      - name: Capturas del tablero de Grafana y de una traza en Jaeger
+        run: python observabilidad/ci/capturar.py grafana "$(cat trace_id.txt)"
+      - name: Apagar
+        if: always()
+        run: docker compose --profile observabilidad --profile pruebas down -v
