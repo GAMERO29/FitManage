@@ -4,16 +4,16 @@ Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Ca
 
 ## Alcance y método
 
-- **Fichas cubiertas: 27 de 31.** FPI-01 a FPI-12 (Ingeniería de Software I, documentos del proyecto) y FPI-17 a FPI-31 (Ingeniería de Software II, carpetas `docs/guia-XX-sw2/ejercicio-ia/`). Las fichas FPI-13 a FPI-16 de Software I no están entre los documentos disponibles, así que no se cuentan.
-- **Herramienta:** Claude (Anthropic) en todas las fichas. En la FPI-28 y la FPI-31 fue Claude Haiku.
-- **Cómo se auditó.** En Software I la auditoría fue de lectura: se comparó la respuesta con el enunciado y con las fuentes. En Software II, desde la FPI-17, cada afirmación se ejecutó: pruebas que pasan solo si el defecto existe, linters (ruff, bandit, actionlint, Redocly, Spectral), el código de la IA corrido en CI o en una copia aparte, y sondas contra la API real.
+- **Fichas cubiertas: las 31.** FPI-01 a FPI-12 (Ingeniería de Software I, documentos del proyecto), FPI-13 a FPI-16 (Software I, diligenciadas el 6/11/2026, carpetas `docs/sw1/guia-XX/ejercicio-ia/`) y FPI-17 a FPI-31 (Ingeniería de Software II, carpetas `docs/guia-XX-sw2/ejercicio-ia/`).
+- **Herramienta:** Claude (Anthropic) en todas las fichas. En la FPI-13 a FPI-16, la FPI-28 y la FPI-31 fue Claude Haiku.
+- **Cómo se auditó.** En las FPI-01 a FPI-12 la auditoría fue de lectura: se comparó la respuesta con el enunciado y con las fuentes. En Software II, desde la FPI-17, cada afirmación se ejecutó: pruebas que pasan solo si el defecto existe, linters (ruff, bandit, actionlint, Redocly, Spectral), el código de la IA corrido en CI o en una copia aparte, y sondas contra la API real.
 - **Datos enviados a la IA:** ninguna ficha envió datos de socios. Se mandó código ficticio de la guía, el código o el contrato de FitManage sin datos, o una descripción genérica («un gimnasio pequeño»).
 
 **Lo que propuso la IA no es lo que se hizo.** Las columnas de riesgo describen lo que la IA *propuso*. Ninguna de esas propuestas se adoptó: el código de la IA se corrió en una copia aparte, en un PR de demostración o como archivo `.txt` de evidencia. Los secretos que aparecen en sus respuestas (FPI-25 y FPI-27) los inventé para la prueba, y así lo dice cada `prompt-y-respuesta.md`. Ningún secreto real pasó por una conversación ni quedó en el repositorio; el check `secretos` lo revisa en cada PR.
 
 **Qué cuenta como alucinación.** Una afirmación falsa que la IA presenta como un hecho y que se puede comprobar: un dato histórico, una ruta o una propiedad que no existe, un costo, una garantía de seguridad o un resultado. Una mala decisión de diseño (sobrediseño, un requisito vago, una práctica insegura) **no** cuenta como alucinación: se cuenta aparte, porque se discute, no se refuta.
 
-## Ingeniería de Software I (FPI-01 a FPI-12)
+## Ingeniería de Software I (FPI-01 a FPI-16)
 
 | Ficha | Qué se pidió | Alucinaciones (afirmaciones falsas) | Otros hallazgos | Dependencias o herramientas rechazadas |
 | --- | --- | --- | --- | --- |
@@ -29,6 +29,10 @@ Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Ca
 | FPI-10 | Diagrama de clases detallado | 0 | BDUF: 14 clases y más de 60 getters y setters para un formulario. | — |
 | FPI-11 | Refactorizar con SOLID | 0 | 13 elementos, abstracciones de una sola implementación. | — |
 | FPI-12 | Refactorizar código con malos nombres | 0 | Solo reorganizó: `paso1`, `paso2`, números mágicos intactos. | — |
+| FPI-13 | Resolver un conflicto de mezcla real | 0 | Eligió la rama «más reciente» por su nombre, sin mirar las reglas del negocio, y aplicó desde hoy un precio previsto para 2027. | — |
+| FPI-14 | Pruebas unitarias de `CalculadoraMembresia` | **1**: importó un módulo que no existe (`dominio.calculos`); la suite no arrancaba. | Con el import corregido, sus 23 pruebas detectaron los 4 mutantes. Usó un doble simple, sin mocks innecesarios. | — |
+| FPI-15 | YAML de CI | 0 | **Riesgo:** con variables que el proyecto no lee, el job de «PostgreSQL» habría probado SQLite. Una contraseña y una clave de prueba en claro. | — |
+| FPI-16 | Autoevaluación del equipo | 0 | Plantilla genérica con 52 marcadores; supuso un equipo de varias personas en un proyecto individual. | — |
 
 ## Ingeniería de Software II (FPI-17 a FPI-31)
 
@@ -50,16 +54,16 @@ Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Ca
 | FPI-30 | Runbook | **1**: comandos y rutas que no existen en este entorno (`fitmanage.wsgi`, `/api/health/`, la Shell del plan gratuito, recuperación a un punto en el tiempo). | Supuso un equipo de soporte que no existe. | — | `guia-14-sw2/ejercicio-ia/` |
 | FPI-31 | Ingeniería inversa de `registrar_pago` | **1**: «las entradas inválidas producen 500»; el contrato las rechaza con 400. | Su refactorización, aplicada en una copia aparte, rompía los 14 flujos de pago, y su migración borraba la tabla de idempotencia. No se adoptó. | — | `guia-15-sw2/ejercicio-ia/` |
 
-## Totales (27 fichas)
+## Totales (31 fichas)
 
 | Indicador | Software I | Software II | Total |
 | --- | --- | --- | --- |
-| Fichas con ejercicio de IA auditado | 12 | 15 | **27** |
-| Alucinaciones detectadas (afirmaciones falsas comprobadas) | 3 | 12 | **15** |
-| Fichas con al menos una alucinación | 3 | 10 | **13** |
+| Fichas con ejercicio de IA auditado | 16 | 15 | **31** |
+| Alucinaciones detectadas (afirmaciones falsas comprobadas) | 4 | 12 | **16** |
+| Fichas con al menos una alucinación | 4 | 10 | **14** |
 | Dependencias o herramientas propuestas y rechazadas | 4 | 26 | **30** |
 | Licencias rechazadas por ser restrictivas | 0 | 0 | **0** |
-| Propuestas con secretos o credenciales en claro | 0 | 6 (FPI-17, 23, 24, 25, 26, 27) | **6** |
+| Propuestas con secretos o credenciales en claro | 1 (FPI-15) | 6 (FPI-17, 23, 24, 25, 26, 27) | **7** |
 | Fugas de datos personales propuestas y prevenidas | 0 | 2 (FPI-22, FPI-29) | **2** |
 | Fichas en las que la IA recibió datos reales de socios | 0 | 0 | **0** |
 
@@ -74,5 +78,5 @@ Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Ca
 ## Lo que la bitácora no esconde
 
 - **La IA también construyó el proyecto.** Además de los ejercicios auditados, FitManage se desarrolló con un asistente de IA (Claude) en todas las guías de Software II, en modo de programación en pareja. Cada cambio entró por un PR con los nueve checks requeridos, y las decisiones de alcance, de costo y de riesgo quedaron en los ADR con su justificación. La responsabilidad de lo que se entregó es de quien firmó cada entrega.
-- **En Software I, la auditoría fue de lectura.** Nada se ejecutó, así que es posible que alguna alucinación de esas fichas se haya pasado por alto. En Software II cada hallazgo tiene una prueba, una corrida o un archivo que lo reproduce.
+- **En las FPI-01 a FPI-12, la auditoría fue de lectura.** Nada se ejecutó, así que es posible que alguna alucinación de esas fichas se haya pasado por alto. En Software II cada hallazgo tiene una prueba, una corrida o un archivo que lo reproduce.
 - **La IA auditada y la que ayudó a corregir son de la misma familia de modelos.** Es un conflicto de interés y por eso el criterio final siempre fue una prueba o una corrida, no la opinión de otra IA. El Ejercicio 5 de la Guía 16 pone a prueba justamente eso.

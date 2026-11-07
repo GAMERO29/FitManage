@@ -1,7 +1,7 @@
 # Ejercicio 5 · Una IA audita la bitácora de IA del programa, y yo audito a la IA auditora
 
 - **Asistente:** Claude Haiku (`claude-haiku-5-5`), sin herramientas de búsqueda ni acceso al repositorio.
-- **Prompt:** [`prompt.txt`](prompt.txt). Le pasé las dos tablas de la bitácora (Software I y Software II), sin los totales, sin los tres hallazgos que elegí yo y sin la sección «Lo que la bitácora no esconde». Así podía comprobar si llegaba sola a las mismas conclusiones.
+- **Prompt:** [`prompt.txt`](prompt.txt). Le pasé las dos tablas de la bitácora (Software I y Software II) en su versión de 27 fichas, antes de sumar las FPI-13 a FPI-16, sin los totales, sin los tres hallazgos que elegí yo y sin la sección «Lo que la bitácora no esconde». Así podía comprobar si llegaba sola a las mismas conclusiones.
 - **Respuesta:** [`respuesta-ia.md`](respuesta-ia.md), sin editar.
 
 ## Qué hizo bien
@@ -27,7 +27,7 @@ Su sesgo no fue la autoevaluación positiva que advierte la guía. Fue el contra
 
 ## Parte del error era mío
 
-Los cinco «falsos» tienen la misma raíz: la tabla decía, por ejemplo, «contraseña de Docker Hub y deploy hook de Render en claro, en un repositorio público», sin aclarar que **la IA propuso** eso y que los valores eran inventados. Una lectura apurada lo entiende como un hecho. Corregí la bitácora: ahora tiene un párrafo que separa lo propuesto de lo hecho, y cada fila de riesgo dice «propuso» o «se aplicó en una copia aparte». Una bitácora forense tiene que entenderse bien también con una lectura apurada.
+Los cinco errores tienen la misma raíz: la tabla decía, por ejemplo, «contraseña de Docker Hub y deploy hook de Render en claro, en un repositorio público», sin aclarar que **la IA propuso** eso y que los valores eran inventados. Una lectura apurada lo entiende como un hecho. Corregí la bitácora: ahora tiene un párrafo que separa lo propuesto de lo hecho, y cada fila de riesgo dice «propuso» o «se aplicó en una copia aparte». Una bitácora forense tiene que entenderse bien también con una lectura apurada.
 
 ## Evaluación final
 
