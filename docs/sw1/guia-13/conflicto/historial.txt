@@ -1,0 +1,6 @@
+*   2917a8f Resuelve el conflicto del plan Mensual: 30 días y 75.000
+|\  
+| * 66863f5 Sube el plan Mensual a 80.000 (precio aprobado por el dueño para 2027)
+* | 6077ad6 El plan Mensual dura 31 días para cubrir los meses largos
+|/  
+* 0b3722c planes iniciales

@@ -1,0 +1,10 @@
+PLANES_INICIALES = (
+    ("Diario", 1, 8000),
+    ("Quincenal", 15, 45000),
+<<<<<<< HEAD
+    ("Mensual", 31, 75000),
+=======
+    ("Mensual", 30, 80000),
+>>>>>>> precio-mensual-2027
+    ("Trimestral", 90, 200000),
+)

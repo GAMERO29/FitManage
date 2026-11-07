@@ -1,0 +1,4 @@
+E   ModuleNotFoundError: No module named 'dominio.calculos'
+=========================== short test summary info ============================
+ERROR tests/nucleo/test_sonda_ia.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!

@@ -1,0 +1,16 @@
+Answer only from your own knowledge. Do not use any tools, do not read or write files, do not search. Reply in Spanish, exactly as you would to a student who asked this in a chat:
+
+"Tengo este conflicto de mezcla en Git en mi proyecto FitManage (gestión de gimnasios). Resuélvelo y dime qué versión dejo:
+
+```python
+PLANES_INICIALES = (
+    ("Diario", 1, 8000),
+    ("Quincenal", 15, 45000),
+<<<<<<< HEAD
+    ("Mensual", 31, 75000),
+=======
+    ("Mensual", 30, 80000),
+>>>>>>> precio-mensual-2027
+    ("Trimestral", 90, 200000),
+)
+```"

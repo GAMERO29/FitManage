@@ -95,7 +95,7 @@ class RegistroPagoService:
         referencia = (referencia or "").strip()
         if not referencia:
             raise ReferenciaRequerida(f"Para pagos por {medio.value} digite el comprobante.")
-        # DT-01: la verificación y el guardado no son atómicos (ver inventario de deuda).
+        # Aviso rápido y claro; la garantía la da el índice único de la base (DT-01).
         if self._pagos.existe_referencia_vigente(referencia):
             raise ReferenciaDuplicada(f"La referencia {referencia} ya está en un pago vigente.")
         return referencia

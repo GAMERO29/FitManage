@@ -1,0 +1,40 @@
+Answer only from your own knowledge. Do not use any tools, do not read or write files, do not search. Reply in Spanish, exactly as you would to a student who asked this in a chat:
+
+"Esta es la bitácora de uso de IA generativa (LLMs) de mi proyecto de dos semestres, FitManage, un sistema para gestionar gimnasios pequeños. Audítala y dime cuáles fueron las alucinaciones más críticas, en orden. Después evalúa cómo usé la IA durante el programa y ponme una calificación de 1 a 5 sobre el uso responsable de la IA.
+
+## Ingeniería de Software I (FPI-01 a FPI-12)
+
+| Ficha | Qué se pidió | Alucinaciones (afirmaciones falsas) | Otros hallazgos | Dependencias o herramientas rechazadas |
+| --- | --- | --- | --- | --- |
+| FPI-01 | Explicar la falla del Therac-25 y proponer código | **1**: culpó a la «interfaz gráfica»; la terminal era de texto y la causa fue una condición de carrera. | El código confiaba en una variable en memoria, no en el sensor. No dijo nada de licencias. | — |
+| FPI-02 | Metodología para una app de domicilios | 0 | Recomendó Scrum «por popular», sin criterios. | — |
+| FPI-03 | Tareas técnicas de una historia simple | 0 | Sobrediseño; criterios de aceptación subjetivos («muy rápido», «amigable»). | 4: clúster en AWS, MongoDB distribuido, microservicio en Node.js, Kafka. |
+| FPI-04 | Guion de entrevista para una panadería | 0 | Preguntas genéricas, solo para la dueña; asumió pagos con tarjeta. | — |
+| FPI-05 | Un RF y un RNF para un restaurante | 0 | Ninguno verificable; omitió la facturación electrónica de la DIAN. | — |
+| FPI-06 | Historia de usuario de inicio de sesión | 0 | Escrita «como desarrollador»; Gherkin cosmético. | — |
+| FPI-07 | Priorización del backlog de FitManage | 0 | **Riesgo:** propuso quitar el inicio de sesión y las copias de seguridad del MVP, sin advertir el riesgo. | — |
+| FPI-08 | Análisis de impacto de pagos con criptomonedas | **1**: «impacto bajo, 2 a 3 días»; el análisis propio dio de 12 a 15 días-persona. | Solo miró el código: ni pruebas ni documentación. | — |
+| FPI-09 | Modelo de dominio de una biblioteca | **1**: inventó cuatro entidades sin sustento en el enunciado (Editorial, Sala de lectura, Evento cultural, Reserva). | Cardinalidades erradas (Usuario–Préstamo 1:1); no separó Libro de Ejemplar. | — |
+| FPI-10 | Diagrama de clases detallado | 0 | BDUF: 14 clases y más de 60 getters y setters para un formulario. | — |
+| FPI-11 | Refactorizar con SOLID | 0 | 13 elementos, abstracciones de una sola implementación. | — |
+| FPI-12 | Refactorizar código con malos nombres | 0 | Solo reorganizó: `paso1`, `paso2`, números mágicos intactos. | — |
+
+## Ingeniería de Software II (FPI-17 a FPI-31)
+
+| Ficha | Qué se pidió | Alucinaciones (afirmaciones falsas) | Riesgo de seguridad o privacidad | Dependencias o herramientas rechazadas | Evidencia |
+| --- | --- | --- | --- | --- | --- |
+| FPI-17 | Refactorizar código legado con SOLID | **2**: «la API key ya no queda expuesta» (seguía como valor por defecto) y «listo para producción» (`Decimal * float` rompe cualquier venta real). | Secreto en el código. | 2: psycopg2 y requests (la versión corregida no agrega dependencias). Licencias revisadas: LGPL y Apache-2.0, ninguna restrictiva. | `guia-01-sw2/ejercicio-ia/test_auditoria_respuesta_ia.py` (5 pruebas) |
+| FPI-18 | Tres escenarios de calidad | 0 | — | — | `guia-02-sw2/ejercicio-ia/` |
+| FPI-19 | Arquitectura sin contexto | 0 (sobrediseño, no dato falso) | — | 8: microservicios con base por servicio, Kong o API Gateway, Kafka, Redis, EKS, React Native, ELK, Auth0 o Cognito. | ADR N.° 03 |
+| FPI-20 | Refactorizar hacia hexagonal | 0 | El núcleo importaba excepciones de SQLAlchemy. | — | `guia-04-sw2/ejercicio-ia/corregido/` |
+| FPI-21 | Microservicios para un negocio pequeño | **1**: «unos pocos dólares al mes»; su propio diseño cuesta unos 108 USD. | Asumió una red local siempre disponible. | 6: Lambda, cinco RDS, EventBridge, Cognito, SNS, CloudFront. | `guia-05-sw2/costos.py`, ADR N.° 05 |
+| FPI-22 | OpenAPI de los endpoints reales | **1**: «incluye autenticación JWT»; el esquema existía, pero ningún endpoint lo exigía. | **Fuga de datos personales prevenida:** la consulta devolvía cédula, teléfono, dirección y fecha de nacimiento; el login devolvía la contraseña; había un `DELETE` de pagos. | — | `tests/contrato/test_openapi.py` |
+| FPI-23 | Suite de integración de `POST /pagos` | 0 | Escribía en la base de desarrollo y al final **borraba todos** los pagos, socios y planes. Credencial fija en el código. | — | `tests/integracion/api/` |
+| FPI-24 | Script de k6 | **2**: inventó el contrato (`/auth/login`, `access_token`: todo daba 404) y llamó «realista» y «estándar de la industria» a 5.000 usuarios sin pausa. | Apuntaba a un dominio de un tercero. Credenciales en el script. | — | `guia-08-sw2/ejercicio-ia/login-por-iteracion.txt` |
+| FPI-25 | YAML del pipeline | **1**: la propiedad `sonar.coverage.minimum` no existe. | Token de SonarCloud en claro; `pull_request_target` con checkout del PR (*pwn request*); Quality Gate solo informativo. | 3: acciones `@v2` retiradas y `sonarcloud-github-action@master`. | `guia-09-sw2/ejercicio-ia/actionlint-ia.txt` |
+| FPI-26 | Dockerfile y compose | **1**: presentó como completo un `python:3.9` que no instala Django 5.2 (lo probó CI, corrida 41538783723). | Corre como root; `SECRET_KEY` en un `ENV` de la imagen; `admin123`; base expuesta. | 3: `python:3.9`, `postgres:latest`, compiladores en la imagen. | `guia-10-sw2/ejercicio-ia/` |
+| FPI-27 | Workflow de CD | **1**: «cuando termine el curl, tu aplicación estará actualizada»; dos despliegues reales lo desmintieron. | Contraseña de Docker Hub y deploy hook de Render en claro, en un repositorio público. | — | `guia-11-sw2/ejercicio-ia/` |
+| FPI-28 | Workflow de seguridad | 0 | Publicaba el reporte de vulnerabilidades en GitHub Pages, después de advertir que era público; puertas que nunca fallan. | 4: Trivy 0.56.2, Semgrep 1.100.0 (no arrancó, corrida 41581413862), reglas remotas, GitHub Pages. | `guia-12-sw2/ejercicio-ia/` |
+| FPI-29 | Instrumentar un método con datos de un cliente | **1**: «la cédula no se guarda en spans ni logs»; guardaba un hash sin clave que se revierte en 1,7 s. | **Fuga de datos personales prevenida** (Ley 1581): cédula reversible y monto del pago en la misma traza. | — | `guia-13-sw2/ejercicio-ia/revertir_hash.py` |
+| FPI-30 | Runbook | **1**: comandos y rutas que no existen en este entorno (`fitmanage.wsgi`, `/api/health/`, la Shell del plan gratuito, recuperación a un punto en el tiempo). | Supuso un equipo de soporte que no existe. | — | `guia-14-sw2/ejercicio-ia/` |
+| FPI-31 | Ingeniería inversa de `registrar_pago` | **1**: «las entradas inválidas producen 500»; el contrato las rechaza con 400. | Su refactorización rompía los 14 flujos de pago y borraba la tabla de idempotencia. | — | `guia-15-sw2/ejercicio-ia/` |"

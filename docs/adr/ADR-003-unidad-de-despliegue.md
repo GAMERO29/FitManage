@@ -2,7 +2,7 @@
 
 | Campo | Contenido |
 | --- | --- |
-| Estado | Aceptado (30/10/2026) |
+| Estado | Aceptado (30/10/2026). La parte de las plantillas como interfaz principal fue reemplazada por el ADR N.° 16 (6/11/2026). |
 | Contexto | El DAD ya proponía un monolito modular, pero esa decisión nunca se registró con alternativas. Antes de escoger el estilo interno (siguiente guía) hay que fijar cómo se divide y se despliega el sistema. Fuerzas: los drivers del ADR N.° 02 (fiabilidad de pagos y fechas, consulta disponible en recepción, seguridad), un solo desarrollador, costo cero (R-01), navegador sin apps nativas (R-02), internet inestable (R-03) y la regla de que un pago y su evento de auditoría se guardan en la misma transacción. |
 | Alternativas consideradas | **A. Una aplicación Django:** plantillas en el servidor, Bootstrap, Service Worker con caché de solo lectura y un único endpoint JSON `/api/v1/estados/` para llenar esa caché. **B. API REST en Django + SPA en React:** dos proyectos, dos despliegues y la autorización repartida entre la API y el cliente. **C. Microservicios:** socios, membresías, pagos y notificaciones por separado, con una base de datos por servicio y mensajería entre ellos. |
 | Matriz (alto/medio/bajo) | Fiabilidad de pagos y fechas: A alto, B alto, C bajo. Disponibilidad de la consulta sin conexión: A alto, B alto, C medio. Seguridad del acceso y los datos: A alto, B medio, C medio. Costo y esfuerzo para un desarrollador (desempate): A alto, B medio, C bajo. |

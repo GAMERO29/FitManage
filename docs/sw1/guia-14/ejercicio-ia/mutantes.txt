@@ -1,0 +1,5 @@
+Mutante | suite de la IA (23 pruebas) | suite del proyecto (sin la de la IA)
+M1 RN-03 sin el −1 | lo detecta | lo detecta
+M2 RN-04 vence hoy no es anticipada | lo detecta | lo detecta
+M3 RN-05 el último día ya es vencido | lo detecta | lo detecta
+M4 cuenta pagos anulados | lo detecta | lo detecta
