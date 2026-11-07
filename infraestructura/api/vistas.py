@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date, datetime
 
@@ -11,21 +12,20 @@ from django.db import IntegrityError, connection, transaction
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from dominio.calculadora import CalculadoraMembresia
-from dominio.modelos import Socio, SolicitudPago, TipoDocumento
+from dominio.errores import DocumentoDuplicado, SocioNoEncontrado
+from dominio.modelos import SolicitudPago, TipoDocumento
 from infraestructura import consultas
 from infraestructura.api import autenticacion, contenedor, presentacion
 from infraestructura.api.http import SolicitudInvalida, leer_json, no_autenticado, problema
 from infraestructura.api.seguridad import SOLO_ADMINISTRADOR, TODO_EL_PERSONAL, endpoint
+from infraestructura.observabilidad import telemetria
+from infraestructura.observabilidad.privacidad import seudonimo
 from infraestructura.persistencia.models import IdempotenciaModelo, PlanModelo
-from infraestructura.persistencia.repositorios import (
-    PagoRepositorioORM,
-    PlanRepositorioORM,
-    SocioRepositorioORM,
-)
 
 COOKIE_RENOVACION = "fm_renovacion"
 RUTA_RENOVACION = "/api/v1/auth/renovacion"
+
+registro = logging.getLogger("fitmanage.recepcion")
 
 
 # --- Sistema -----------------------------------------------------------------------------
@@ -120,22 +120,20 @@ def restablecer_clave(request: HttpRequest, usuarioId: str) -> JsonResponse:  # 
 @endpoint(roles=TODO_EL_PERSONAL)
 def registrar_socio(request: HttpRequest) -> JsonResponse:
     datos = leer_json(request)
-    ahora = contenedor.reloj().ahora()
-    socios = SocioRepositorioORM()
-    socio = Socio(
-        tipo_documento=TipoDocumento(datos["tipoDocumento"]),
-        numero_documento=datos["numeroDocumento"],
-        nombres=datos["nombres"].strip(),
-        apellidos=datos["apellidos"].strip(),
-        telefono=datos["telefono"],
-        autorizacion_datos=ahora,
-    )
     try:
         with transaction.atomic():
-            socios.guardar(socio)
-    except IntegrityError:
+            socio = contenedor.registro_socio().registrar(
+                TipoDocumento(datos["tipoDocumento"]),
+                datos["numeroDocumento"],
+                datos["nombres"],
+                datos["apellidos"],
+                datos["telefono"],
+            )
+    except DocumentoDuplicado:
         return problema(409, "DOCUMENTO_DUPLICADO", "Documento ya registrado")
-    respuesta = JsonResponse(presentacion.socio_registrado(socio, ahora), status=201)
+    respuesta = JsonResponse(
+        presentacion.socio_registrado(socio, socio.autorizacion_datos), status=201
+    )
     respuesta["Location"] = f"/api/v1/estados/{socio.tipo_documento.value}/{socio.numero_documento}"
     return respuesta
 
@@ -148,14 +146,39 @@ def consultar_estado(
     tipoDocumento: str,  # noqa: N803
     numeroDocumento: str,  # noqa: N803
 ) -> JsonResponse:
-    socio = SocioRepositorioORM().buscar_por_documento(
-        TipoDocumento(tipoDocumento), numeroDocumento
-    )
-    if socio is None:
-        return problema(404, "NO_ENCONTRADO", "No hay ningún socio con ese documento")
-    hoy = contenedor.reloj().hoy()
-    estado, vence = CalculadoraMembresia().estado_de(PagoRepositorioORM().vigentes_de(socio), hoy)
-    return JsonResponse(presentacion.estado_publico(socio, estado, vence, hoy))
+    # Guía 13: el documento nunca entra a la telemetría; solo su seudónimo (ADR N.° 13).
+    with telemetria.tracer.start_as_current_span("consultar_estado") as span:
+        try:
+            r = contenedor.consulta_estado().consultar(
+                TipoDocumento(tipoDocumento), numeroDocumento
+            )
+        except SocioNoEncontrado:
+            resultado, respuesta = (
+                "NO_ENCONTRADO",
+                problema(404, "NO_ENCONTRADO", "No hay ningún socio con ese documento"),
+            )
+        else:
+            resultado = r.estado.value
+            respuesta = JsonResponse(presentacion.estado_publico(r.socio, r.estado, r.vence, r.hoy))
+        huella = seudonimo(tipoDocumento, numeroDocumento)
+        span.set_attributes(
+            {
+                "fitmanage.documento.tipo": tipoDocumento,
+                "fitmanage.socio.seudonimo": huella,
+                "fitmanage.resultado": resultado,
+            }
+        )
+        telemetria.consultas_estado.add(1, {"resultado": resultado})
+        registro.info(
+            "consulta de estado",
+            extra={
+                "evento": "consulta_estado",
+                "tipo_documento": tipoDocumento,
+                "seudonimo": huella,
+                "resultado": resultado,
+            },
+        )
+    return respuesta
 
 
 @require_GET
@@ -193,7 +216,7 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
 
 
 def _nombre_plan(plan_id: uuid.UUID) -> str:
-    return PlanRepositorioORM().obtener(plan_id).nombre
+    return contenedor.nombre_plan(plan_id)
 
 
 def _respuesta_guardada(clave: uuid.UUID) -> JsonResponse:

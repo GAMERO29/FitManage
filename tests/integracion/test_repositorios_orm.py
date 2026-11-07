@@ -11,7 +11,7 @@ from dobles import PagosEnMemoria, PlanesEnMemoria, RelojFijo, SociosEnMemoria, 
 from fechas import bogota
 
 from aplicacion.pagos import RegistroPagoService
-from dominio.errores import ReferenciaDuplicada
+from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada
 from dominio.modelos import MedioPago, Socio, SolicitudPago, TipoDocumento
 from infraestructura.persistencia.repositorios import (
     PagoRepositorioORM,
@@ -118,16 +118,6 @@ def test_la_base_rechaza_dos_pagos_vigentes_con_la_misma_referencia(
 
 
 @pytest.mark.django_db
-def test_la_base_rechaza_dos_socios_con_el_mismo_documento(ana):
-    SocioRepositorioORM().guardar(ana)
-    gemelo = Socio(
-        TipoDocumento.CC, "1090123456", "Otra", "Persona", "3000000001", bogota(2026, 6, 8, 9, 0)
-    )
-    with pytest.raises(IntegrityError):
-        SocioRepositorioORM().guardar(gemelo)
-
-
-@pytest.mark.django_db
 def test_plan_inexistente_devuelve_none():
     from uuid import uuid4
 
@@ -180,3 +170,26 @@ def test_el_repositorio_de_pagos_ya_no_crea_usuarios(ana, mensual, laura, fabric
             fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
         )
     assert UsuarioRepositorioORM().obtener(laura.id) is None
+
+
+def test_otro_socio_con_el_mismo_documento_es_documento_duplicado(repos):
+    """Paga DT-16: el adaptador traduce la restricción única; la vista no ve un IntegrityError."""
+    socios, _, _ = repos
+    gemelo = Socio(
+        TipoDocumento.CC, "1090123456", "Otra", "Persona", "3000000009", bogota(2026, 1, 1, 8)
+    )
+    with pytest.raises(DocumentoDuplicado):
+        socios.guardar(gemelo)
+    assert socios.buscar_por_documento(TipoDocumento.CC, "1090123456").nombres == "Ana"
+
+
+@pytest.mark.django_db
+def test_otro_error_de_integridad_no_se_disfraza_de_documento_duplicado(ana, monkeypatch):
+    from infraestructura.persistencia import repositorios
+
+    def falla(**_):
+        raise IntegrityError("NOT NULL constraint failed: socios.telefono")
+
+    monkeypatch.setattr(repositorios.SocioModelo.objects, "update_or_create", falla)
+    with pytest.raises(IntegrityError):
+        SocioRepositorioORM().guardar(ana)

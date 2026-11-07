@@ -1,0 +1,46 @@
+----- Línea de tiempo -----
+2026-11-06T22:43:59Z INICIO tráfico de recepción
+2026-11-06T22:48:59Z INCIDENTE la base deja de responder (docker compose stop db)
+2026-11-06T22:51:59Z RUNBOOK paso 2: diagnóstico
+2026-11-06T23:03:59Z captura del tablero durante el incidente
+2026-11-06T23:18:40Z RUNBOOK paso 4: docker compose start db
+2026-11-06T23:18:40Z RUNBOOK paso 4: pg_isready acepta conexiones
+2026-11-06T23:18:40Z RUNBOOK paso 5: /api/v1/salud -> HTTP 200
+2026-11-06T23:18:50Z RUNBOOK paso 5: /api/v1/salud -> HTTP 200
+2026-11-06T23:19:00Z RUNBOOK paso 5: /api/v1/salud -> HTTP 200
+2026-11-06T23:24:59Z FIN tráfico de recepción
+----- Diagnóstico del runbook (paso 2) -----
+== 1. ¿La app responde y ve la base? (/api/v1/salud)
+HTTP 503: {"type": "https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#servicio-no-disponible", "title": "Servicio no disponible", "status": 503, "codigo": "SERVICIO_NO_DISPONIBLE"}
+=> La app está viva pero NO llega a la base (SERVICIO_NO_DISPONIBLE). Seguir con el paso 3.
+== 2. Estado del contenedor de la base
+SERVICE   STATE     STATUS
+db        exited    Exited (0) 3 minutes ago
+== 3. ¿PostgreSQL acepta conexiones?
+service "db" is not running
+== 4. Últimas líneas de la base
+db-1  | 2026-11-06 22:48:51.528 UTC [63] LOG:  checkpoint starting: time
+db-1  | 2026-11-06 22:48:52.177 UTC [3658] FATAL:  database "fitmanage" does not exist
+db-1  | 2026-11-06 22:48:53.334 UTC [63] LOG:  checkpoint complete: wrote 19 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.804 s, sync=0.001 s, total=1.807 s; sync files=12, long
+db-1  | 2026-11-06 22:48:54.221 UTC [3666] FATAL:  database "fitmanage" does not exist
+db-1  | 2026-11-06 22:48:56.265 UTC [3674] FATAL:  database "fitmanage" does not exist
+db-1  | 2026-11-06 22:48:58.309 UTC [3682] FATAL:  database "fitmanage" does not exist
+db-1  | 2026-11-06 22:48:59.152 UTC [1] LOG:  received fast shutdown request
+db-1  | 2026-11-06 22:48:59.152 UTC [1] LOG:  aborting any active transactions
+db-1  | 2026-11-06 22:48:59.152 UTC [3495] FATAL:  terminating connection due to administrator command
+db-1  | 2026-11-06 22:48:59.152 UTC [3537] FATAL:  terminating connection due to administrator command
+db-1  | 2026-11-06 22:48:59.155 UTC [1] LOG:  background worker "logical replication launcher" (PID 68) exited with exit code 1
+db-1  | 2026-11-06 22:48:59.157 UTC [63] LOG:  shutting down
+db-1  | 2026-11-06 22:48:59.158 UTC [63] LOG:  checkpoint starting: shutdown immediate
+db-1  | 2026-11-06 22:48:59.159 UTC [63] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longes
+db-1  | 2026-11-06 22:48:59.166 UTC [1] LOG:  database system is shut down
+== 5. Último error de la app (log JSON)
+2026-11-06T22:51:59.522+00:00 Internal Server Error: /api/v1/estados/{tipoDocumento}/{numeroDocumento}
+    django.db.utils.OperationalError: failed to resolve host 'db': [Errno -2] Name or service not known
+Alertas (primer y último minuto en estado firing, UTC):
+  PresupuestoQuemaRapida: 22:50:44 -> 23:04:14
+  PresupuestoQuemaLenta: 22:54:44 -> 23:25:59
+  ConsultasLentasQuemaRapida: no se disparó
+  AppSinResponder: no se disparó
+Consultas de estado: 12071; con 5xx: 3061; SLI de la corrida: 0.7464
+Presupuesto de 14 días con SLO 99,5 %: 100.8 min; el apagón de 30 min consumió el 29.8% (medido en tiempo)

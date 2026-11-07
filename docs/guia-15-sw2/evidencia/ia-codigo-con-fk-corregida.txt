@@ -1,0 +1,5 @@
+Corrida de la suite completa con el código de la IA y un solo cambio: usuario_id=usuario.id en lugar de usuario=usuario.
+Resultado: 0 pruebas fallidas (la suite pasa completa).
+Ojo: pasa porque ninguna prueba ejercita los caminos nuevos (422 y 409 con {"error": ...}).
+Sonda manual, misma clave y otro cuerpo:
+E   openapi_core.templating.responses.exceptions.ResponseNotFound: Unknown response http status: 422

@@ -21,7 +21,8 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
-HOSTS_PERMITIDOS = {"127.0.0.1", "localhost"}
+# "db" es el nombre del servicio de PostgreSQL dentro de docker compose (Guía 13): nunca producción.
+HOSTS_PERMITIDOS = {"127.0.0.1", "localhost", "db"}
 SOCIOS = 2_000
 PAGOS = 20_000
 HOY = date(2026, 11, 2)
