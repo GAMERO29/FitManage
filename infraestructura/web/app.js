@@ -144,7 +144,7 @@ const enCurso = new Set();
 function una(clave, cargar) {
   if (enCurso.has(clave)) return;
   enCurso.add(clave);
-  cargar().finally(() => enCurso.delete(clave));
+  void cargar().finally(() => enCurso.delete(clave));
 }
 async function cargarPlanes() {
   const r = await llamar("/planes");
@@ -331,7 +331,7 @@ function pRecepcion() {
     h("div", { class: "cabecera" }, h("div", {}, h("h1", {}, "Recepción"), h("div", { class: "sub" }, `${mayuscula(hoy)} · hora de Colombia`))),
     h("div", { class: "dos" },
       h("section", { class: "pila", "aria-label": "Consulta de estado" },
-        h("form", { class: "hoja consulta", novalidate: true, onsubmit: (e) => { e.preventDefault(); consultar(); } },
+        h("form", { class: "hoja consulta", novalidate: true, onsubmit: (e) => { e.preventDefault(); void consultar(); } },
           h("label", { class: "et", for: "doc" }, "Documento del socio"),
           h("div", { class: "buscador" },
             selectTipo("tipo", c.tipo, (v) => { c.tipo = v; }, true),
@@ -370,7 +370,7 @@ function pSocio() {
         campo("tipo-s", "Tipo de documento", selectTipo("tipo-s", X.tipo, (v) => { X.tipo = v; })),
         h("div", { class: "campo" }, h("label", { class: "et", for: "num" }, "Número de documento"),
           h("input", { id: "num", type: "text", inputmode: "numeric", autocomplete: "off", value: X.numero, class: "tab-num" + (dup ? " error-campo" : ""), oninput: (e) => { X.numero = e.target.value; } }),
-          dup ? h("div", { class: "msg-error", role: "alert" }, ico("alerta", 18), h("span", {}, "Ese documento ya está registrado. ", h("a", { href: "#recepcion", onclick: () => { Object.assign(S.consulta, { tipo: X.tipo, numero: X.numero.trim() }); consultar(); } }, "Ver su estado"))) : null),
+          dup ? h("div", { class: "msg-error", role: "alert" }, ico("alerta", 18), h("span", {}, "Ese documento ya está registrado. ", h("a", { href: "#recepcion", onclick: () => { Object.assign(S.consulta, { tipo: X.tipo, numero: X.numero.trim() }); void consultar(); } }, "Ver su estado"))) : null),
         campo("nom", "Nombres", nombres), campo("ape", "Apellidos", apellidos),
         campo("tel", "Celular (10 dígitos)", telefono, "Se usa para el recordatorio por WhatsApp.")),
       h("div", { class: "autorizacion" + (X.falta ? " falta" : "") },
@@ -434,7 +434,7 @@ function pPago() {
   const segs = pv ? (renov ? [{ v: quedanHoy, color: COLOR.ok }, { v: duracion, color: COLOR.plan }] : [{ v: duracion, color: COLOR.plan }]) : [];
   const deshabilitado = !!P.ok;
   const boton = h("button", { type: "button", class: "btn btn-confirmar", disabled: deshabilitado || !pv, onclick: (ev) => confirmarPago(ev.currentTarget) }, P.ok ? "Pago registrado" : pv ? `Registrar pago de ${pesos(pv.valor)}` : "Registrar pago");
-  const elegirPlan = (id) => { if (P.ok) return; P.planId = id; P.error = null; P.previa = null; render(); cargarPrevia(); };
+  const elegirPlan = (id) => { if (P.ok) return; P.planId = id; P.error = null; P.previa = null; render(); void cargarPrevia(); };
   return marco(
     h("div", {}, volver(), h("h1", {}, "Registrar pago")),
     h("div", { class: "hoja socio-cab" },
@@ -506,7 +506,7 @@ async function anularUltimo(pago) {
 function pHistorial() {
   const H = S.hist;
   if (H.numero && !H.datos && !H.error) una("hist", cargarHistorial);
-  const buscar = buscadorDoc(H, () => { H.datos = null; H.error = null; H.aviso = null; cargarHistorial(); }, "Ver historial");
+  const buscar = buscadorDoc(H, () => { H.datos = null; H.error = null; H.aviso = null; void cargarHistorial(); }, "Ver historial");
   if (!H.datos) return marco(h("div", {}, h("h1", {}, "Socios e historial"), h("div", { class: "sub mt-6" }, "Pagos vigentes y anulados de un socio. Solo el administrador lo ve.")), buscar, H.error ? aviso("mal", H.error) : null);
   const d = H.datos, e = d.estado;
   const vigentes = d.pagos.filter((p) => p.estado === "VIGENTE");
@@ -568,7 +568,7 @@ function pReportes() {
   }
   return marco(
     h("div", { class: "cabecera" }, h("div", {}, h("h1", {}, "Reporte de ingresos"), h("div", { class: "sub" }, "Solo el administrador lo ve. Los pagos anulados no suman.")),
-      h("form", { class: "fila fila-abajo", novalidate: true, onsubmit: (e) => { e.preventDefault(); R.desde = desde.value; R.hasta = hasta.value; R.datos = null; R.error = null; render(); cargarReporte(); } },
+      h("form", { class: "fila fila-abajo", novalidate: true, onsubmit: (e) => { e.preventDefault(); R.desde = desde.value; R.hasta = hasta.value; R.datos = null; R.error = null; render(); void cargarReporte(); } },
         campo("desde", "Desde", desde), campo("hasta", "Hasta", hasta), h("button", { class: "btn", type: "submit" }, "Ver reporte"))),
     h("section", { class: "hoja", "aria-label": "Totales del periodo" }, contenido),
     h("section", { class: "hoja", "aria-labelledby": "t-v" }, h("div", { class: "cabecera hoja-centro" }, h("h2", { id: "t-v" }, "Próximos vencimientos")), vencimientosTabla()));
