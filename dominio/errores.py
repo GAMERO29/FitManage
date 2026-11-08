@@ -63,3 +63,11 @@ class CorreoNoDisponible(ErrorDeDominio):
 
 class CorreoDuplicado(ErrorDeDominio):
     """Ya hay una cuenta del personal con ese correo."""
+
+
+class PlanDuplicado(ErrorDeDominio):
+    """Ya hay un plan con ese nombre."""
+
+
+class UltimoPlanActivo(ErrorDeDominio):
+    """No se puede desactivar el único plan activo: no habría con qué cobrar."""

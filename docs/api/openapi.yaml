@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.3.0
+  version: 1.4.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -484,8 +484,20 @@ paths:
     get:
       tags: [Membresías y cobros]
       operationId: listarPlanes
-      summary: Listar los planes vigentes
-      description: Lo usa el formulario de pago para mostrar duración y precio. El precio que vale es el del servidor al registrar el pago.
+      summary: Listar los planes
+      description: |
+        Sin parámetros, los planes activos: lo usa el formulario de pago para mostrar duración y precio
+        (el precio que vale es el del servidor al registrar el pago). Con `todos=true`, también los
+        desactivados; eso solo lo puede pedir el administrador (CU-05).
+      parameters:
+        - name: todos
+          in: query
+          required: false
+          description: Incluir los planes desactivados (solo administrador).
+          schema:
+            type: boolean
+            default: false
+          example: true
       responses:
         '200':
           description: Planes con su duración y precio actual.
@@ -504,17 +516,66 @@ paths:
                   nombre: Mensual
                   duracionDias: 30
                   precio: 75000
+                  activo: true
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
+    post:
+      tags: [Membresías y cobros]
+      operationId: crearPlan
+      summary: Crear un plan
+      description: Solo administrador (CU-05, RF-02). La duración y el precio deben ser mayores que cero y el nombre no puede repetirse.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanNuevo'
+            example:
+              nombre: Semestral
+              duracionDias: 180
+              precio: 380000
+      responses:
+        '201':
+          description: Plan creado y activo.
+          headers:
+            Location:
+              description: Ruta del plan.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '409':
+          description: Ya hay un plan con ese nombre.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#plan-duplicado
+                title: Ya hay un plan con ese nombre
+                status: 409
+                codigo: PLAN_DUPLICADO
 
   /planes/{planId}:
     patch:
       tags: [Membresías y cobros]
-      operationId: cambiarPrecio
-      summary: Cambiar el precio de un plan
-      description: Solo administrador (CU-05, RF-02). El precio nuevo vale para los pagos que se registren después; los ya registrados guardan su valor (RN-08).
+      operationId: cambiarPlan
+      summary: Cambiar el precio de un plan, o activarlo y desactivarlo
+      description: |
+        Solo administrador (CU-05, RF-02). El precio nuevo vale para los pagos que se registren
+        después; los ya registrados guardan su valor (RN-08). Un plan no se borra: se desactiva
+        (RN-09) y deja de ofrecerse en el formulario de pago. No se puede desactivar el único plan
+        activo.
       parameters:
         - name: planId
           in: path
@@ -529,12 +590,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PrecioNuevo'
-            example:
-              precio: 80000
+              $ref: '#/components/schemas/PlanCambios'
+            examples:
+              precio:
+                summary: Cambiar el precio
+                value:
+                  precio: 80000
+              desactivar:
+                summary: Desactivar el plan
+                value:
+                  activo: false
       responses:
         '200':
-          description: Plan con el precio nuevo.
+          description: Plan con los cambios.
           content:
             application/json:
               schema:
@@ -547,6 +615,17 @@ paths:
           $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: Es el único plan activo y no se puede desactivar.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#ultimo-plan-activo
+                title: Debe quedar al menos un plan activo
+                status: 409
+                codigo: ULTIMO_PLAN_ACTIVO
 
   /pagos/vista-previa:
     get:
@@ -1147,6 +1226,9 @@ components:
           type: integer
           minimum: 0
           description: Pesos colombianos.
+        activo:
+          type: boolean
+          description: Falso si el administrador lo desactivó (RN-09).
 
     PagoNuevo:
       type: object
@@ -1334,16 +1416,38 @@ components:
           maxLength: 128
           writeOnly: true
 
-    PrecioNuevo:
+    PlanNuevo:
       type: object
       additionalProperties: false
-      required: [precio]
+      required: [nombre, duracionDias, precio]
+      properties:
+        nombre:
+          type: string
+          minLength: 2
+          maxLength: 40
+        duracionDias:
+          type: integer
+          minimum: 1
+          maximum: 730
+        precio:
+          type: integer
+          minimum: 1
+          maximum: 10000000
+          description: Pesos colombianos, sin decimales.
+
+    PlanCambios:
+      type: object
+      additionalProperties: false
+      minProperties: 1
       properties:
         precio:
           type: integer
           minimum: 1
           maximum: 10000000
           description: Pesos colombianos, sin decimales.
+        activo:
+          type: boolean
+          description: Falso desactiva el plan; verdadero lo vuelve a ofrecer.
 
     VistaPreviaPago:
       type: object

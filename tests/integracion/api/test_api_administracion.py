@@ -1,13 +1,14 @@
 """Lo que el aplicativo necesita además de recepción (Guía 16, ADR N.° 17).
 
-Vista previa del pago, historial del socio, precio de los planes y cuentas del personal. Cada
+Vista previa del pago, historial del socio, gestión de planes y cuentas del personal. Cada
 respuesta se valida contra el contrato con `ClienteAPI`.
 """
 
 import uuid
 
 import pytest
-from apoyo_api import ID_MENSUAL
+from apoyo_api import ID_MENSUAL, ClienteAPI
+from django.test import Client
 
 from infraestructura import cuentas
 from infraestructura.persistencia.models import PagoModelo
@@ -23,7 +24,8 @@ def administracion(api):
 
 @pytest.fixture
 def recepcion(api):
-    return api.como("laura@gimnasio-demo.co")
+    """Cliente propio: `api.como` cambia el token del mismo objeto que usa `administracion`."""
+    return ClienteAPI(Client()).como("laura@gimnasio-demo.co")  # api ya sembró los datos
 
 
 # --- Vista previa del pago ---------------------------------------------------------------
@@ -120,6 +122,60 @@ def test_la_recepcionista_no_cambia_precios(recepcion):
 def test_cambiar_el_precio_de_un_plan_que_no_existe(administracion):
     r = administracion.patch(f"/api/v1/planes/{uuid.uuid4()}", {"precio": 1000})
     assert r.status_code == 404
+
+
+def test_crear_un_plan_y_ofrecerlo_en_el_formulario_de_pago(administracion, recepcion):
+    r = administracion.post(
+        "/api/v1/planes", {"nombre": "Semestral", "duracionDias": 180, "precio": 380000}
+    )
+    assert r.status_code == 201
+    assert r.json()["activo"] is True
+    assert "Semestral" in [p["nombre"] for p in recepcion.get("/api/v1/planes").json()]
+
+
+def test_no_se_crean_dos_planes_con_el_mismo_nombre(administracion):
+    r = administracion.post(
+        "/api/v1/planes", {"nombre": "mensual", "duracionDias": 31, "precio": 70000}
+    )
+    assert (r.status_code, r.json()["codigo"]) == (409, "PLAN_DUPLICADO")
+
+
+def test_la_recepcionista_no_crea_planes_ni_ve_los_inactivos(recepcion):
+    r = recepcion.post("/api/v1/planes", {"nombre": "Pirata", "duracionDias": 1, "precio": 1})
+    assert r.status_code == 403
+    assert recepcion.get("/api/v1/planes", {"todos": "true"}).status_code == 403
+
+
+def test_un_plan_desactivado_no_se_ofrece_ni_se_puede_cobrar(administracion, recepcion):
+    r = administracion.patch(f"/api/v1/planes/{ID_MENSUAL}", {"activo": False})
+    assert r.json()["activo"] is False
+    assert "Mensual" not in [p["nombre"] for p in recepcion.get("/api/v1/planes").json()]
+    todos = administracion.get("/api/v1/planes", {"todos": "true"}).json()
+    assert {p["nombre"]: p["activo"] for p in todos}["Mensual"] is False
+    pago = recepcion.post(
+        "/api/v1/pagos",
+        {
+            "tipoDocumento": "PPT",
+            "numeroDocumento": "25789456",
+            "planId": str(ID_MENSUAL),
+            "medio": "EFECTIVO",
+        },
+        {"Idempotency-Key": str(uuid.uuid4())},
+    )
+    assert pago.status_code == 404
+    assert administracion.patch(f"/api/v1/planes/{ID_MENSUAL}", {"activo": True}).status_code == 200
+
+
+def test_no_se_desactiva_el_ultimo_plan_activo(administracion):
+    planes = administracion.get("/api/v1/planes").json()
+    for plan in planes[:-1]:
+        administracion.patch(f"/api/v1/planes/{plan['id']}", {"activo": False})
+    r = administracion.patch(f"/api/v1/planes/{planes[-1]['id']}", {"activo": False})
+    assert (r.status_code, r.json()["codigo"]) == (409, "ULTIMO_PLAN_ACTIVO")
+
+
+def test_un_cambio_de_plan_vacio_es_invalido(administracion):
+    assert administracion.patch(f"/api/v1/planes/{ID_MENSUAL}", {}).status_code == 400
 
 
 # --- Cuentas del personal ----------------------------------------------------------------

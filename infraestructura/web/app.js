@@ -19,7 +19,7 @@ const ESTADO = () => ({
   hist: { tipo: "CC", numero: "", datos: null, error: null, confirmando: false, motivo: "", falta: false, aviso: null },
   reporte: { desde: null, hasta: null, datos: null, error: null },
   venc: { dias: 3, filas: null, error: null },
-  planes: { aviso: null, error: null },
+  planes: { todos: null, aviso: null, error: null, creando: false },
   personal: { cuentas: null, error: null, aviso: null, creando: false },
   pagoBusqueda: { tipo: "CC", numero: "" },
 });
@@ -252,7 +252,7 @@ function pLogin(motivo) {
     await cargarPlanes();
     ir("recepcion");
   } },
-    h("div", {}, h("h1", {}, "Iniciar sesión"), h("div", { class: "sub mt-6" }, "Cada persona del personal entra con su propia cuenta.")),
+    h("h1", {}, "Iniciar sesión"),
     campo("correo", "Correo", correo),
     campo("clave", "Contraseña", clave, "Después de 5 intentos fallidos la cuenta se bloquea 15 minutos."),
     boton, error,
@@ -575,35 +575,78 @@ function pReportes() {
 }
 function leyendaPunto(color) { const i = h("span", { class: "punto" }); i.style.setProperty("background", color); return i; }
 
-/* --- Planes (CU-05, RN-08) ------------------------------------------------------------------------ */
+/* --- Planes (CU-05, RN-08, RN-09) ------------------------------------------------------------------------ */
+async function cargarTodosLosPlanes() {
+  const G = S.planes;
+  const r = await llamar("/planes?todos=true");
+  G.todos = r.estado === 200 ? r.datos : null;
+  G.error = r.estado === 200 ? null : mensajeDe(r);
+  render();
+}
+async function trasCambiarPlanes() { S.planes.todos = null; await cargarPlanes(); await cargarTodosLosPlanes(); }
+async function activarPlan(plan, activo) {
+  const G = S.planes;
+  G.aviso = null; G.error = null;
+  const r = await llamar(`/planes/${encodeURIComponent(plan.id)}`, { metodo: "PATCH", cuerpo: { activo } });
+  if (r.estado === 200) G.aviso = activo ? `${plan.nombre} vuelve a ofrecerse en Registrar pago.` : `${plan.nombre} quedó desactivado: ya no se ofrece en Registrar pago. Las membresías que ya lo pagaron no cambian.`;
+  else G.error = r.datos && r.datos.codigo === "ULTIMO_PLAN_ACTIVO" ? "No se puede desactivar el único plan activo: sin planes activos no se puede cobrar." : `${plan.nombre}: ${mensajeDe(r)}`;
+  await trasCambiarPlanes();
+}
+function formPlan() {
+  const G = S.planes;
+  const nombre = h("input", { id: "p-nombre", type: "text", maxlength: "40", autocomplete: "off", placeholder: "Semestral" });
+  const dias = h("input", { id: "p-dias", type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "180", class: "tab-num" });
+  const precio = h("input", { id: "p-precio", type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "380.000", class: "tab-num" });
+  const boton = h("button", { class: "btn", type: "submit" }, "Crear plan");
+  return h("form", { class: "hoja pila form-cuenta", novalidate: true, onsubmit: async (e) => {
+    e.preventDefault();
+    const duracionDias = Number(dias.value.replace(/\D/g, "")), valor = Number(precio.value.replace(/\D/g, ""));
+    if (nombre.value.trim().length < 2 || !duracionDias || !valor) { G.error = "Escriba el nombre, la duración en días y el precio. La duración y el precio deben ser mayores que cero."; return render(); }
+    ocupado(boton, true);
+    const r = await llamar("/planes", { metodo: "POST", cuerpo: { nombre: nombre.value.trim(), duracionDias, precio: valor } });
+    if (r.estado === 201) { G.creando = false; G.error = null; G.aviso = `Se creó el plan ${r.datos.nombre} y ya se ofrece en Registrar pago.`; await trasCambiarPlanes(); }
+    else { G.error = r.estado === 409 ? "Ya hay un plan con ese nombre." : mensajeDe(r); render(); }
+  } },
+    h("h2", {}, "Plan nuevo"),
+    h("div", { class: "rejilla r3" }, campo("p-nombre", "Nombre", nombre), campo("p-dias", "Duración (días)", dias), campo("p-precio", "Precio", precio)),
+    h("div", { class: "fila" }, boton, h("button", { type: "button", class: "btn-sec", onclick: () => { G.creando = false; G.error = null; render(); } }, "Cancelar")));
+}
 function pPlanes() {
   const G = S.planes;
-  const entradas = planes.map((p) => h("input", { type: "text", inputmode: "numeric", "aria-label": `Precio del plan ${p.nombre}`, value: Number(p.precio).toLocaleString("es-CO"), "data-plan": p.id }));
+  if (!G.todos && !G.error) una("planes", cargarTodosLosPlanes);
+  const lista = G.todos || [];
+  const entradas = lista.map((p) => h("input", { type: "text", inputmode: "numeric", "aria-label": `Precio del plan ${p.nombre}`, value: Number(p.precio).toLocaleString("es-CO"), "data-plan": p.id }));
   const boton = h("button", { class: "btn", type: "submit" }, "Guardar precios");
   const guardar = async (e) => {
     e.preventDefault();
     ocupado(boton, true); G.aviso = null; G.error = null;
     let cambiados = 0;
     for (const entrada of entradas) {
-      const plan = planes.find((p) => p.id === entrada.dataset.plan);
+      const plan = lista.find((p) => p.id === entrada.dataset.plan);
       const precio = Number(entrada.value.replace(/\D/g, ""));
       if (!precio || precio === plan.precio) continue;
       const r = await llamar(`/planes/${encodeURIComponent(plan.id)}`, { metodo: "PATCH", cuerpo: { precio } });
       if (r.estado !== 200) { G.error = `${plan.nombre}: ${mensajeDe(r)}`; break; }
       cambiados += 1;
     }
-    await cargarPlanes();
     if (!G.error) G.aviso = cambiados === 1 ? "Se guardó 1 precio." : cambiados ? `Se guardaron ${cambiados} precios.` : "No había precios distintos para guardar.";
-    render();
+    await trasCambiarPlanes();
   };
+  const filas = lista.map((p, i) => h("tr", { class: p.activo ? null : "anulada" },
+    h("td", {}, h("b", {}, p.nombre)), h("td", {}, `${p.duracionDias} ${p.duracionDias === 1 ? "día" : "días"}`),
+    h("td", {}, h("div", { class: "precio-celda" }, h("span", { class: "sub" }, "$"), entradas[i])),
+    h("td", {}, p.activo ? pastilla("ok", "Activo") : pastilla("neutro", "Desactivado")),
+    h("td", { class: "der" }, h("button", { type: "button", class: "btn-sec" + (p.activo ? " peligro" : ""), onclick: () => activarPlan(p, !p.activo) }, p.activo ? "Desactivar" : "Activar"))));
   return marco(
-    h("div", { class: "cabecera" }, h("div", {}, h("h1", {}, "Planes"), h("div", { class: "sub" }, "Cambiar un precio solo afecta los pagos nuevos; las membresías ya pagadas no cambian (RN-08)."))),
+    h("div", { class: "cabecera" }, h("div", {}, h("h1", {}, "Planes"), h("div", { class: "sub" }, "Los cambios solo afectan los pagos nuevos; las membresías ya pagadas no cambian (RN-08).")),
+      G.creando ? null : h("button", { type: "button", class: "btn", onclick: () => { G.creando = true; G.aviso = null; G.error = null; render(); const i = document.getElementById("p-nombre"); if (i) i.focus(); } }, "Crear plan")),
+    G.creando ? formPlan() : null,
     h("form", { class: "hoja", novalidate: true, onsubmit: guardar },
-      tabla(["Plan", "Duración", "Precio"], planes.map((p, i) => h("tr", {}, h("td", {}, h("b", {}, p.nombre)), h("td", {}, `${p.duracionDias} ${p.duracionDias === 1 ? "día" : "días"}`),
-        h("td", {}, h("div", { class: "precio-celda" }, h("span", { class: "sub" }, "$"), entradas[i])))), "tabla-600"),
-      h("div", { class: "fila mt-16" }, boton, G.aviso ? pastilla("ok", G.aviso) : null),
+      G.todos ? tabla(["Plan", "Duración", "Precio", "Estado", ">Acciones"], filas, "tabla-600") : h("p", { class: "vacio" }, "Cargando…"),
+      h("div", { class: "fila mt-16" }, boton),
+      G.aviso ? h("div", { class: "mt-12" }, aviso("ok", G.aviso)) : null,
       G.error ? h("div", { class: "mt-12" }, aviso("mal", G.error)) : null),
-    h("p", { class: "sub peq sin-margen" }, "Crear o desactivar planes todavía se hace con el comando preparar_gimnasio (DT-24)."));
+    h("p", { class: "sub peq sin-margen" }, "Un plan no se borra: se desactiva (RN-09). Deja de ofrecerse en Registrar pago y se puede volver a activar. Siempre debe quedar al menos un plan activo."));
 }
 
 /* --- Personal (CU-06, RF-09) ---------------------------------------------------------------------- */
@@ -683,7 +726,9 @@ function cerrarSesion(motivo) {
   history.replaceState(null, "", location.pathname);
   render();
 }
-window.addEventListener("hashchange", () => { mensajeLogin = ""; render(); window.scrollTo(0, 0); const m = document.getElementById("contenido"); if (m) m.focus({ preventScroll: true }); });
+window.addEventListener("hashchange", () => {
+  if (rutaActual() === "pago" && S.pago.ok) S.pago = ESTADO().pago; // un pago terminado no se queda en pantalla
+  mensajeLogin = ""; render(); window.scrollTo(0, 0); const m = document.getElementById("contenido"); if (m) m.focus({ preventScroll: true }); });
 window.addEventListener("online", render);
 window.addEventListener("offline", render);
 render();

@@ -16,7 +16,7 @@ urlpatterns = [
     path("estados", vistas.listar_estados),
     path("estados/<str:tipoDocumento>/<str:numeroDocumento>", vistas.consultar_estado),
     path("planes", vistas.listar_planes),
-    path("planes/<str:planId>", vistas.cambiar_precio_plan),
+    path("planes/<str:planId>", vistas.cambiar_plan),
     path("pagos", vistas.registrar_pago),
     path("pagos/vista-previa", vistas.vista_previa_pago),
     path("pagos/<str:pagoId>", vistas.anular_pago),

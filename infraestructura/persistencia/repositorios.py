@@ -112,6 +112,12 @@ class PlanRepositorioORM:
             return None
         return Plan(m.nombre, m.duracion_dias, m.precio, m.activo, id=m.id)
 
+    def todos(self) -> list[Plan]:
+        return [
+            Plan(m.nombre, m.duracion_dias, m.precio, m.activo, id=m.id)
+            for m in PlanModelo.objects.order_by("duracion_dias", "nombre")
+        ]
+
     def guardar(self, plan: Plan) -> None:
         PlanModelo.objects.update_or_create(
             id=plan.id,

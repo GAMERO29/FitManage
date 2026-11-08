@@ -34,7 +34,7 @@ Guía 15 (FPI-31, ADR N.° 15). Cada hito tiene un **disparador**: el hecho que 
 - **DT-14:** tabla `auditoria` de solo inserción, escrita en la misma transacción de cada pago, anulación y bloqueo de cuenta; completar PA-08.
 - **DT-13:** límite de 60 intentos por minuto en `/auth/token` y `/salud`, con su prueba del 429 que ya documenta el contrato.
 - **DT-15:** decidir con el dueño del requisito entre configurar bcrypt o actualizar el RNF-04, y medir el inicio de sesión con k6.
-- **DT-24 (resto) y DT-26:** crear y desactivar planes desde el aplicativo; restablecer contraseñas con un servidor de correo y la página que recibe el enlace. Precios, cuentas nuevas y desbloqueo ya están desde el 7/11/2026 (ADR N.° 17).
+- **DT-26:** restablecer contraseñas con un servidor de correo y la página que recibe el enlace. La gestión de planes y de cuentas (DT-24) ya está desde el 7/11/2026 (ADR N.° 17).
 - **DT-23:** la clave de idempotencia pasa a ser por usuario y se rechaza la misma clave con otro cuerpo. Primero el contrato (`openapi.yaml`, con el código de error nuevo en formato problem+json), después el código.
 
 **Justificación de negocio:** sin aviso de privacidad, la autorización de los socios no es válida; sin auditoría, una anulación de pago no deja rastro. Las dos cosas las puede pedir la SIC.
