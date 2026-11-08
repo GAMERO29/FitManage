@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from django.http import Http404, HttpRequest, HttpResponse
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_safe
 
 CARPETA = Path(__file__).resolve().parent
 ARCHIVOS = {
@@ -35,12 +35,13 @@ def _archivo(nombre: str) -> HttpResponse:
     return respuesta
 
 
-@require_GET
+# GET y HEAD: los monitores de disponibilidad preguntan con HEAD (antes respondía 405).
+@require_safe
 def recepcion(request: HttpRequest) -> HttpResponse:
     return _archivo("recepcion.html")
 
 
-@require_GET
+@require_safe
 def recurso(request: HttpRequest, nombre: str) -> HttpResponse:
     if nombre not in ("app.js", "app.css"):
         raise Http404

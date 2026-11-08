@@ -23,3 +23,9 @@ La primera corrida encontró un defecto real: el `pattern` del comprobante no er
 ## Ejercicio 5
 
 [`../ejercicio-ia/README.md`](../ejercicio-ia/README.md): la IA auditora reconoció las 15 alucinaciones, pero convirtió en hechos cinco cosas que solo fueron propuestas.
+
+## Producción en Grafana Cloud (7/11/2026)
+
+`grafana-produccion-24h.png`: el tablero de producción en las últimas 24 horas, con el tráfico de la prueba de la pantalla de recepción. 0,1 peticiones por segundo, **p95 de la consulta de estado: 108 ms**, **0,0 % de errores 5xx** y 0 alertas activas. La latencia es mayor que los 13,5 ms de QA-01 porque incluye la red y el plan gratuito de Render, y sigue lejos de los 2 s del RNF-01 y de los 500 ms del SLO.
+
+El tablero mostró algo que ninguna prueba había visto: la mayor parte del tráfico eran respuestas **405**. `grafana-explore-405.png` lo aisló en Explore: eran peticiones `HEAD` a la raíz, etiquetadas `sin_ruta`. La pantalla de recepción solo aceptaba `GET`, y los monitores de disponibilidad preguntan con `HEAD`. Se corrigió (`require_safe`) y la raíz ahora se etiqueta como `/`; las dos cosas tienen su prueba.

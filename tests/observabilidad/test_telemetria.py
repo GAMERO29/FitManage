@@ -104,6 +104,11 @@ def test_una_ruta_que_no_existe_no_crea_una_serie_por_url(client, spans):
     assert 'http_route="sin_ruta"' in _metricas()
 
 
+def test_la_pantalla_de_recepcion_se_etiqueta_como_la_raiz(client, spans):
+    client.get("/")
+    assert 'http_route="/"' in _metricas()
+
+
 def test_la_salud_y_las_metricas_no_cuentan_como_trafico(client, spans):
     client.get("/api/v1/salud")
     assert not [s for s in spans.get_finished_spans() if "salud" in s.name]
