@@ -1,0 +1,54 @@
+# Resumen de alertas de Dependabot (Guía 16, FPI-32).
+#
+# Lista las alertas abiertas de Dependabot con su severidad, el paquete y el archivo donde se declara,
+# y las deja en el resumen de la corrida y en el log. Sirve para revisar las alertas sin abrir la
+# pestaña Security, con el token de la propia corrida y permiso solo de lectura.
+#
+# Es informativo: no bloquea nada. Lo que bloquea a `main` son los checks `sca-dependencias` y
+# `sca-imagen` de ci-security.yml.
+name: Resumen Dependabot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 13 * * 1" # lunes, 8:17 a. m. en Colombia
+  pull_request:
+    paths:
+      - ".github/workflows/resumen-dependabot.yml"
+
+permissions:
+  contents: read
+  security-events: read
+
+concurrency:
+  group: resumen-dependabot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  resumen:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Listar alertas abiertas
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/${REPO}/dependabot/alerts?state=open&per_page=100" > alertas.json
+          total=$(jq -s 'add | length' alertas.json)
+          {
+            echo "## Alertas abiertas de Dependabot: ${total}"
+            echo
+            if [ "${total}" -gt 0 ]; then
+              echo "| N.° | Severidad | Paquete | Archivo | Corregida en | Resumen |"
+              echo "| --- | --- | --- | --- | --- | --- |"
+              jq -s -r 'add | sort_by(.security_advisory.severity) | .[] |
+                "| \(.number) | \(.security_advisory.severity) | \(.dependency.package.name) | \(.dependency.manifest_path) | \(.security_vulnerability.first_patched_version.identifier // "sin versión") | \(.security_advisory.summary | gsub("\\|"; "/")) |"' alertas.json
+              echo
+              echo "Por severidad:"
+              jq -s -r 'add | group_by(.security_advisory.severity) | .[] | "- \(.[0].security_advisory.severity): \(length)"' alertas.json
+            else
+              echo "Ninguna alerta abierta."
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
