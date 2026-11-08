@@ -1,6 +1,6 @@
 # Guion del video demo (máximo 5 minutos)
 
-Guía 16 de Software II (FPI-32, sección B) y Guía 16 de Software I (FPI-16, sección C). Un solo video sirve para las dos. Todo lo que se muestra existe en el repositorio o en producción.
+Guía 16 de Ingeniería de Software II (FPI-32, sección B). Todo lo que se muestra existe en el repositorio o en producción.
 
 ## Antes de grabar
 
@@ -28,7 +28,7 @@ El texto entre comillas es para decirlo con tus palabras; no hace falta leerlo l
 
 **En pantalla:** el inicio de sesión de FitManage en producción.
 
-> «Soy Juan Sebastián Cárdenas y este es FitManage, el proyecto integrador de Ingeniería de Software I y II. El problema salió de observar la recepción de un gimnasio de barrio: en hora pico, la recepcionista no sabe si quien llega pagó, y la fila crece. FitManage responde eso por documento, en segundos. Todo lo que van a ver está en producción.»
+> «Soy Juan Sebastián Cárdenas y este es FitManage, el proyecto integrador de Ingeniería de Software II. El problema salió de observar la recepción de un gimnasio de barrio: en hora pico, la recepcionista no sabe si quien llega pagó, y la fila crece. FitManage responde eso por documento, en segundos. Todo lo que van a ver está en producción.»
 
 ### 0:25–1:45 · El flujo crítico en vivo
 
@@ -80,4 +80,4 @@ Cierra las herramientas con F12 antes de seguir.
 
 1. Revisa que dure 5:00 o menos y que se oiga bien.
 2. Súbelo a YouTube como **No listado** (o a Google Drive con «Cualquier persona con el enlace»). Abre el enlace en una ventana de incógnito para comprobar que se ve.
-3. Ese enlace va en la FPI-32 (sección B), en la FPI-16 (sección C) y en el README.
+3. Ese enlace va en la FPI-32 (sección B) y en el README.

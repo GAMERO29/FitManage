@@ -2,7 +2,7 @@
 
 Sistema integrado para el manejo y la gestión de gimnasios MiPyme de Cúcuta: membresías, pagos y consulta de acceso en recepción.
 
-Proyecto integrador de Ingeniería de Software I y II · Universidad de Pamplona · Juan Sebastián Cárdenas Acevedo.
+Proyecto integrador de Ingeniería de Software II · Universidad de Pamplona · Juan Sebastián Cárdenas Acevedo.
 
 ## Contenido
 

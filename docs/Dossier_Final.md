@@ -1,6 +1,6 @@
 # Dossier Técnico Final · FitManage
 
-Ingeniería de Software I y II · Universidad de Pamplona · Juan Sebastián Cárdenas Acevedo · Cierre: 6/11/2026 (FPI-32).
+Ingeniería de Software II · Universidad de Pamplona · Juan Sebastián Cárdenas Acevedo · Cierre: 6/11/2026 (FPI-32).
 
 Regla de este documento: cada afirmación lleva al lugar donde se puede comprobar. Lo que no se pudo comprobar se dice.
 

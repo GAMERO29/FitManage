@@ -1,10 +1,10 @@
-# Bitácora forense de auditoría de IA · Ingeniería de Software I y II
+# Bitácora forense de auditoría de IA · FitManage (FPI-01 a FPI-31)
 
 Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Cada fila remite a su evidencia, y cada número de este archivo sale de contar las filas de abajo, no de un estimado.
 
 ## Alcance y método
 
-- **Fichas cubiertas: las 31.** FPI-01 a FPI-12 (Ingeniería de Software I, documentos del proyecto), FPI-13 a FPI-16 (Software I, diligenciadas el 6/11/2026, carpetas `docs/sw1/guia-XX/ejercicio-ia/`) y FPI-17 a FPI-31 (Ingeniería de Software II, carpetas `docs/guia-XX-sw2/ejercicio-ia/`).
+- **Fichas cubiertas: las 31.** FPI-01 a FPI-12 (guías de Software I, usadas como guía del proyecto; documentos del proyecto), FPI-13 a FPI-16 (guías de Software I, diligenciadas el 6/11/2026, carpetas `docs/sw1/guia-XX/ejercicio-ia/`) y FPI-17 a FPI-31 (guías de Ingeniería de Software II, carpetas `docs/guia-XX-sw2/ejercicio-ia/`).
 - **Herramienta:** Claude (Anthropic) en todas las fichas. En la FPI-13 a FPI-16, la FPI-28 y la FPI-31 fue Claude Haiku.
 - **Cómo se auditó.** En las FPI-01 a FPI-12 la auditoría fue de lectura: se comparó la respuesta con el enunciado y con las fuentes. En Software II, desde la FPI-17, cada afirmación se ejecutó: pruebas que pasan solo si el defecto existe, linters (ruff, bandit, actionlint, Redocly, Spectral), el código de la IA corrido en CI o en una copia aparte, y sondas contra la API real.
 - **Datos enviados a la IA:** ninguna ficha envió datos de socios. Se mandó código ficticio de la guía, el código o el contrato de FitManage sin datos, o una descripción genérica («un gimnasio pequeño»).
@@ -13,7 +13,7 @@ Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Ca
 
 **Qué cuenta como alucinación.** Una afirmación falsa que la IA presenta como un hecho y que se puede comprobar: un dato histórico, una ruta o una propiedad que no existe, un costo, una garantía de seguridad o un resultado. Una mala decisión de diseño (sobrediseño, un requisito vago, una práctica insegura) **no** cuenta como alucinación: se cuenta aparte, porque se discute, no se refuta.
 
-## Ingeniería de Software I (FPI-01 a FPI-16)
+## Guías de Software I (FPI-01 a FPI-16)
 
 | Ficha | Qué se pidió | Alucinaciones (afirmaciones falsas) | Otros hallazgos | Dependencias o herramientas rechazadas |
 | --- | --- | --- | --- | --- |
@@ -34,7 +34,7 @@ Guía 16 (FPI-32). Consolida los ejercicios de IA de las fichas del programa. Ca
 | FPI-15 | YAML de CI | 0 | **Riesgo:** con variables que el proyecto no lee, el job de «PostgreSQL» habría probado SQLite. Una contraseña y una clave de prueba en claro. | — |
 | FPI-16 | Autoevaluación del equipo | 0 | Plantilla genérica con 52 marcadores; supuso un equipo de varias personas en un proyecto individual. | — |
 
-## Ingeniería de Software II (FPI-17 a FPI-31)
+## Guías de Software II (FPI-17 a FPI-31)
 
 | Ficha | Qué se pidió | Alucinaciones (afirmaciones falsas) | Riesgo de seguridad o privacidad | Dependencias o herramientas rechazadas | Evidencia |
 | --- | --- | --- | --- | --- | --- |
