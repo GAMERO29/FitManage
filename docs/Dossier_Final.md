@@ -62,7 +62,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 | Quality Gate de SonarCloud | Aprobado en `main`; 0 *hotspots*; 1 issue nueva abierta. | Check «SonarCloud Code Analysis». |
 | Vulnerabilidades críticas o altas sin mitigar | 0: si hubiera una, los checks `sca-*` fallarían. | Checks requeridos de cada PR. |
 | Licencias | 49 dependencias de ejecución: MIT, BSD, Apache-2.0, PSF, LGPL-3.0 (psycopg) y MPL-2.0 (certifi). Ninguna GPL ni AGPL. | `docs/guia-16-sw2/evidencia/licencias-dependencias.md` y el check `sca-dependencias`. |
-| SLO de producción | No verificado desde aquí: Grafana Cloud no es accesible desde este entorno. | Captura del tablero (FPI-32, sección E). |
+| SLO de producción | Grafana Cloud, últimas 24 h al 7/11/2026: 0,0 % de errores 5xx, p95 de la consulta de 108 ms, 0 alertas. Mostró respuestas 405 a peticiones `HEAD` en la pantalla de recepción, corregidas en el PR #42. El tráfico es el de las pruebas, no el de un gimnasio. | `docs/guia-16-sw2/evidencia/grafana-produccion-24h.png` y `grafana-explore-405.png`. |
 
 ## 6. Auditoría ética de IA
 
