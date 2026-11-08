@@ -29,7 +29,10 @@ def test_no_sirve_otros_archivos_de_la_carpeta(client):
     assert client.get("/recepcion/recepcion.html").status_code == 404
 
 
-def test_solo_acepta_get(client):
+def test_acepta_get_y_head_y_rechaza_post(client):
+    # Producción, 7/11/2026: los HEAD de un monitor a la raíz respondían 405 (Grafana Cloud).
+    assert client.head("/").status_code == 200
+    assert client.head("/recepcion/app.js").status_code == 200
     assert client.post("/").status_code == 405
 
 

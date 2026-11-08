@@ -19,8 +19,10 @@ _SIN_TELEMETRIA = ("/api/v1/salud", "/metrics")
 def ruta_de(request) -> str:
     """La plantilla de la ruta, nunca la URL: así ningún documento entra a una etiqueta."""
     coincidencia = getattr(request, "resolver_match", None)
-    if coincidencia is None or not coincidencia.route:
+    if coincidencia is None:
         return "sin_ruta"
+    if not coincidencia.route:  # la raíz (pantalla de recepción) tiene la plantilla vacía
+        return "/"
     return "/" + _PARAMETRO.sub(r"{\1}", coincidencia.route)
 
 
