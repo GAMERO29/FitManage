@@ -35,6 +35,9 @@ class PlanesEnMemoria:
     def guardar(self, plan: Plan) -> None:
         self._planes[plan.id] = plan
 
+    def todos(self) -> list[Plan]:
+        return list(self._planes.values())
+
 
 class PagosEnMemoria:
     def __init__(self, *pagos: Pago) -> None:

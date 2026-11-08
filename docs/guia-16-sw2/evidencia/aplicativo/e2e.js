@@ -87,9 +87,25 @@ const DOC = '1090000011';
   await p.click('a:has-text("Planes")');
   await p.fill('input[aria-label="Precio del plan Diario"]', '9.000');
   await p.click('button:has-text("Guardar precios")');
-  await p.waitForSelector('.pastilla.p-ok');
-  console.log('9 planes:', (await texto('.pastilla.p-ok')).trim());
+  await p.waitForSelector('.aviso.a-ok');
+  console.log('9 planes:', (await texto('.aviso.a-ok')).trim());
+  await p.click('button:has-text("Crear plan")');
+  await p.fill('#p-nombre', 'Semestral');
+  await p.fill('#p-dias', '180');
+  await p.fill('#p-precio', '380.000');
+  await p.click('form button[type=submit]:has-text("Crear plan")');
+  await p.waitForSelector('.aviso.a-ok:has-text("Semestral")');
+  console.log('9b plan nuevo:', (await texto('.aviso.a-ok')).trim());
+  await p.click('tr:has-text("Diario") button:has-text("Desactivar")');
+  await p.waitForSelector('tr.anulada:has-text("Diario")');
+  console.log('9c desactivado:', (await texto('.aviso.a-ok')).trim());
   await foto('12-planes');
+  await p.click('a:has-text("Registrar pago")');
+  await p.waitForSelector('.opcion, #doc-b');
+  if (await p.$('#doc-b')) { await p.fill('#doc-b', DOC); await p.press('#doc-b', 'Enter'); }
+  await p.waitForSelector('.opcion');
+  const ofrecidos = await p.$$eval('.opcion b', (bs) => bs.map((b) => b.textContent));
+  console.log('9d planes en Registrar pago:', ofrecidos.join(', '));
 
   await p.click('a:has-text("Personal")');
   await p.click('button:has-text("Crear cuenta")');

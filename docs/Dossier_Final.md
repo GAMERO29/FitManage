@@ -76,5 +76,5 @@ Inventario completo en [`docs/deuda-tecnica.md`](deuda-tecnica.md) y plan en [`d
 | --- | --- | --- |
 | Base de Render gratuita (DT-18) | Infraestructura | Costo 0 mientras no hay datos reales. Vence cerca del 2/12/2026: plan de US$6 o exportación, hito H1. |
 | Aviso de privacidad (DT-10) y auditoría (DT-14) | Cumplimiento | Sin datos reales todavía. Se paga antes del primer socio real, hito H2. |
-| Crear planes y restablecer contraseñas (DT-24, DT-26) | Funcionalidad | Precios, cuentas nuevas y desbloqueo ya funcionan (ADR 17). Crear o desactivar planes y el restablecimiento por correo quedan para H2. |
+| Restablecer contraseñas (DT-26) | Funcionalidad | Planes y cuentas del personal ya se gestionan desde el aplicativo (DT-24 pagada, ADR 17). El restablecimiento por correo necesita un servidor SMTP: hito H2. |
 | JavaScript del aplicativo sin pruebas propias en CI (DT-25) | Pruebas | Lo cubren la prueba de extremo a extremo y las pruebas de la API; llevar `e2e.js` al pipeline. |

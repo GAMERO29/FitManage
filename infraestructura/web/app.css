@@ -66,7 +66,7 @@ main:focus{outline:none}
 .fila{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .dos{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .rejilla{display:grid;gap:14px}
-.r2{grid-template-columns:repeat(2,minmax(0,1fr))} .r4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.r2{grid-template-columns:repeat(2,minmax(0,1fr))} .r3{grid-template-columns:repeat(3,minmax(0,1fr))} .r4{grid-template-columns:repeat(4,minmax(0,1fr))}
 
 /* Campos y botones */
 label.et{font-size:15px;font-weight:700;color:var(--tinta)}
@@ -238,6 +238,7 @@ td.der,th.der{text-align:right}
   .panel-marca .grande{display:none}
   .app{background:none}
   .r4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .r3{grid-template-columns:1fr}
 }
 @media (max-width:640px){
   main{padding:20px 16px 36px;gap:20px}

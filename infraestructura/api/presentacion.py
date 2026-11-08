@@ -91,6 +91,7 @@ def plan(p: Plan) -> dict:
         "nombre": p.nombre,
         "duracionDias": p.duracion_dias,
         "precio": int(p.precio),
+        "activo": p.activo,
     }
 
 

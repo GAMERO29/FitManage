@@ -14,7 +14,7 @@
 | `08-renovacion-vista-previa.png` | Renovación anticipada Trimestral: empieza el 07/12/2026, el día siguiente al vencimiento, y suma 120 días (RN-04). No se registró. |
 | `09-historial.png` · `10-anulado.png` | Historial del socio y anulación del último pago con motivo; la membresía se recalcula. |
 | `11-reportes.png` | Ingresos del mes: el pago anulado no suma. |
-| `12-planes.png` | Precio del plan Diario cambiado a $ 9.000. |
+| `12-planes.png` | Precio del plan Diario cambiado a $ 9.000, plan Semestral creado (180 días, $ 380.000) y Diario desactivado. Después, Registrar pago ofrece Quincenal, Mensual, Trimestral y Semestral, sin Diario. |
 | `13-personal.png` | Cuenta nueva creada con contraseña inicial. |
 | `14-vencimientos.png` | Vencimientos de los próximos 3 días. |
 | `15-celular-recepcionista.png` · `16-recepcionista-sin-permiso.png` | La recepcionista en un celular (412 px) no ve el menú de administración, y si escribe `#reportes` recibe «Esta sección es solo para el administrador»; el servidor responde 403 de todos modos. |

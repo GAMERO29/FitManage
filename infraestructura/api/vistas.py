@@ -13,7 +13,7 @@ from django.db import IntegrityError, connection, transaction
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from dominio.errores import DocumentoDuplicado, SocioNoEncontrado
+from dominio.errores import DocumentoDuplicado, PermisoDenegado, SocioNoEncontrado
 from dominio.modelos import Rol, SolicitudPago, TipoDocumento
 from infraestructura import consultas, cuentas
 from infraestructura.api import autenticacion, contenedor, presentacion
@@ -242,10 +242,27 @@ def listar_estados(request: HttpRequest) -> JsonResponse:
 
 
 # --- Membresías y cobros -----------------------------------------------------------------
-@require_GET
+@require_http_methods(["GET", "POST"])
 @endpoint(roles=TODO_EL_PERSONAL)
 def listar_planes(request: HttpRequest) -> JsonResponse:
-    planes = PlanModelo.objects.filter(activo=True).order_by("duracion_dias")
+    """GET: los planes activos (formulario de pago), o todos con `?todos=true` (administrador).
+
+    POST: crear un plan (CU-05, solo administrador; el servicio lo exige).
+    """
+    if request.method == "POST":
+        datos = leer_json(request)
+        plan = contenedor.gestion_planes().crear(
+            datos["nombre"], datos["duracionDias"], Decimal(datos["precio"]), request.usuario
+        )
+        respuesta = JsonResponse(presentacion.plan(plan), status=201)
+        respuesta["Location"] = f"/api/v1/planes/{plan.id}"
+        return respuesta
+    todos = request.GET.get("todos") == "true"
+    if todos and not request.usuario.es_administrador():
+        raise PermisoDenegado("Solo el administrador ve los planes desactivados.")
+    planes = PlanModelo.objects.order_by("duracion_dias", "nombre")
+    if not todos:
+        planes = planes.filter(activo=True)
     return JsonResponse(
         [
             {
@@ -253,6 +270,7 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
                 "nombre": p.nombre,
                 "duracionDias": p.duracion_dias,
                 "precio": int(p.precio),
+                "activo": p.activo,
             }
             for p in planes
         ],
@@ -262,10 +280,13 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
 
 @require_http_methods(["PATCH"])
 @endpoint(roles=SOLO_ADMINISTRADOR)
-def cambiar_precio_plan(request: HttpRequest, planId: str) -> JsonResponse:  # noqa: N803
+def cambiar_plan(request: HttpRequest, planId: str) -> JsonResponse:  # noqa: N803
     datos = leer_json(request)
-    plan = contenedor.cambio_precio().cambiar_precio(
-        uuid.UUID(planId), Decimal(datos["precio"]), request.usuario
+    plan = contenedor.gestion_planes().cambiar(
+        uuid.UUID(planId),
+        request.usuario,
+        precio=Decimal(datos["precio"]) if "precio" in datos else None,
+        activo=datos.get("activo"),
     )
     return JsonResponse(presentacion.plan(plan))
 

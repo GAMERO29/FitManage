@@ -44,7 +44,7 @@ El texto entre comillas es para decirlo con tus palabras; no hace falta leerlo l
 
 **En pantalla:** «Ver historial» → «Anular último pago» con un motivo → Reportes → Planes → Personal.
 
-> «Como administrador veo el historial y puedo anular el último pago: no se borra, queda con motivo y nombre, y la membresía se recalcula. El reporte ya no cuenta ese pago. Aquí cambio un precio, que solo vale para los pagos nuevos, y aquí creo la cuenta de una recepcionista. Antes este prototipo calculaba todo en el navegador con datos de ejemplo; ahora cada pantalla lee y escribe en la API, y el servidor decide los permisos: es el ADR 17.»
+> «Como administrador veo el historial y puedo anular el último pago: no se borra, queda con motivo y nombre, y la membresía se recalcula. El reporte ya no cuenta ese pago. Aquí creo o desactivo un plan y cambio un precio, que solo vale para los pagos nuevos, y aquí creo la cuenta de una recepcionista. Antes este prototipo calculaba todo en el navegador con datos de ejemplo; ahora cada pantalla lee y escribe en la API, y el servidor decide los permisos: es el ADR 17.»
 
 ### 2:20–3:05 · La puerta de calidad (ADR 09 y ADR 12)
 
@@ -72,7 +72,7 @@ El texto entre comillas es para decirlo con tus palabras; no hace falta leerlo l
 
 **En pantalla:** `deuda-tecnica.md` y `roadmap.md`.
 
-> «Lo pendiente, sin rodeos: la base gratuita de Render vence cerca del 2 de diciembre; falta aprobar el aviso de privacidad antes del primer socio real; todavía no se pueden crear planes nuevos ni restablecer una contraseña por correo, y la consulta sin internet es el hito H4. Lo más importante: ningún usuario real ha usado el sistema todavía. La verificación es fuerte; validar con una recepcionista real es el primer pendiente del roadmap. Gracias.»
+> «Lo pendiente, sin rodeos: la base gratuita de Render vence cerca del 2 de diciembre; falta aprobar el aviso de privacidad antes del primer socio real; todavía no se puede restablecer una contraseña por correo, y la consulta sin internet es el hito H4. Lo más importante: ningún usuario real ha usado el sistema todavía. La verificación es fuerte; validar con una recepcionista real es el primer pendiente del roadmap. Gracias.»
 
 ## Después de grabar
 
