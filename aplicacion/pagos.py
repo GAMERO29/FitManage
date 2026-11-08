@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import date
 from uuid import UUID
 
 from dominio.calculadora import CalculadoraMembresia
@@ -27,6 +29,15 @@ from dominio.modelos import (
 from dominio.puertos import PagoRepositorio, PlanRepositorio, Reloj, SocioRepositorio
 
 
+@dataclass(frozen=True)
+class VistaPreviaPago:
+    """Lo que quedaría si se registra el pago ahora: el cliente lo muestra, no lo calcula."""
+
+    plan: Plan
+    inicia: date
+    vence: date
+
+
 class RegistroPagoService:
     """CU-01 Registrar pago de membresía."""
 
@@ -49,10 +60,7 @@ class RegistroPagoService:
         plan = self._buscar_plan(solicitud.plan_id)
         medio = self._convertir_medio(solicitud.medio)
         referencia = self._validar_referencia(medio, solicitud.referencia)
-
-        fecha_inicio = self._calculadora.calcular_fecha_inicio(
-            self._pagos.vigentes_de(socio), self._reloj.hoy()
-        )
+        fecha_inicio, fecha_vencimiento = self._periodo(socio, plan)
         pago = Pago(
             socio=socio,
             plan_id=plan.id,
@@ -61,14 +69,25 @@ class RegistroPagoService:
             medio=medio,
             referencia=referencia,
             fecha_inicio=fecha_inicio,
-            fecha_vencimiento=self._calculadora.calcular_vencimiento(
-                fecha_inicio, plan.duracion_dias
-            ),
+            fecha_vencimiento=fecha_vencimiento,
             registrado_por=usuario,
             registrado_en=self._reloj.ahora(),
         )
         self._pagos.guardar(pago)
         return pago
+
+    def vista_previa(self, tipo: TipoDocumento, numero: str, plan_id: UUID) -> VistaPreviaPago:
+        """Las mismas reglas del registro (RN-03, RN-04, RN-08), sin guardar nada."""
+        socio = self._buscar_socio(tipo, numero)
+        plan = self._buscar_plan(plan_id)
+        inicia, vence = self._periodo(socio, plan)
+        return VistaPreviaPago(plan, inicia, vence)
+
+    def _periodo(self, socio: Socio, plan: Plan) -> tuple[date, date]:
+        inicia = self._calculadora.calcular_fecha_inicio(
+            self._pagos.vigentes_de(socio), self._reloj.hoy()
+        )
+        return inicia, self._calculadora.calcular_vencimiento(inicia, plan.duracion_dias)
 
     def _buscar_socio(self, tipo: TipoDocumento, numero: str) -> Socio:
         socio = self._socios.buscar_por_documento(tipo, numero.strip())

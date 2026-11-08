@@ -3,115 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FitManage · Recepción</title>
-  <link rel="icon" href="data:,">
+  <meta name="color-scheme" content="light">
+  <title>FitManage</title>
+  <link rel="preload" href="/recepcion/sora.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/recepcion/atkinson.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/recepcion/app.css">
-  <script type="module" src="/recepcion/app.js"></script>
+  <script src="/recepcion/app.js" defer></script>
 </head>
 <body>
-  <header class="barra">
-    <span class="marca">FitManage <span class="marca-lugar">Recepción</span></span>
-    <span class="sesion" id="sesion" hidden>
-      <span id="rol"></span>
-      <button type="button" class="enlace" id="salir">Cerrar sesión</button>
-    </span>
-  </header>
-
-  <main>
-    <section id="pantalla-ingreso" class="tarjeta" aria-labelledby="titulo-ingreso">
-      <h1 id="titulo-ingreso">Inicia sesión</h1>
-      <form id="form-ingreso" novalidate>
-        <label>Correo
-          <input type="email" name="correo" autocomplete="username" required maxlength="254">
-        </label>
-        <label>Contraseña
-          <input type="password" name="contrasena" autocomplete="current-password" required minlength="8" maxlength="128">
-        </label>
-        <button type="submit" class="principal">Entrar</button>
-        <p class="aviso" role="alert" data-error></p>
-      </form>
-    </section>
-
-    <section id="pantalla-recepcion" hidden>
-      <form id="form-consulta" class="consulta" novalidate>
-        <label class="campo-tipo">Documento
-          <select name="tipo" aria-label="Tipo de documento">
-            <option value="CC">CC</option>
-            <option value="CE">CE</option>
-            <option value="PPT">PPT</option>
-            <option value="PASAPORTE">Pasaporte</option>
-          </select>
-        </label>
-        <label class="campo-numero">Número
-          <input name="numero" inputmode="numeric" autocomplete="off" required pattern="[A-Za-z0-9]{5,20}" placeholder="1090123456">
-        </label>
-        <button type="submit" class="principal">Consultar</button>
-      </form>
-      <p class="aviso" role="alert" id="error-consulta"></p>
-
-      <div id="resultado" aria-live="polite"></div>
-
-      <section id="panel-pago" class="tarjeta" hidden aria-labelledby="titulo-pago">
-        <h2 id="titulo-pago">Registrar pago</h2>
-        <form id="form-pago" novalidate>
-          <label>Plan
-            <select name="planId" required></select>
-          </label>
-          <label>Medio de pago
-            <select name="medio">
-              <option value="EFECTIVO">Efectivo</option>
-              <option value="NEQUI">Nequi</option>
-              <option value="DAVIPLATA">Daviplata</option>
-              <option value="TRANSFERENCIA">Transferencia</option>
-            </select>
-          </label>
-          <label id="campo-referencia" hidden>Número del comprobante
-            <input name="referencia" autocomplete="off" pattern="[A-Za-z0-9\-]{4,30}" placeholder="M123456">
-          </label>
-          <p class="nota">El sistema calcula las fechas y el valor con el plan vigente.</p>
-          <div class="acciones">
-            <button type="submit" class="principal">Confirmar pago</button>
-            <button type="button" class="secundario" data-cerrar>Cancelar</button>
-          </div>
-          <p class="aviso" role="alert" data-error></p>
-        </form>
-      </section>
-
-      <section id="panel-socio" class="tarjeta" hidden aria-labelledby="titulo-socio">
-        <h2 id="titulo-socio">Registrar socio</h2>
-        <form id="form-socio" novalidate>
-          <p class="nota" id="documento-socio"></p>
-          <label>Nombres
-            <input name="nombres" required maxlength="60" autocomplete="off">
-          </label>
-          <label>Apellidos
-            <input name="apellidos" required maxlength="60" autocomplete="off">
-          </label>
-          <label>Celular
-            <input name="telefono" inputmode="numeric" required pattern="3[0-9]{9}" placeholder="3001234567" autocomplete="off">
-          </label>
-          <label class="casilla">
-            <input type="checkbox" name="autoriza" required>
-            El socio autoriza el tratamiento de sus datos personales (Ley 1581 de 2012).
-          </label>
-          <p class="nota nota-pendiente">El texto completo del aviso de privacidad todavía no está aprobado (DT-10). Hasta el hito H2 del roadmap, registra solo datos de prueba.</p>
-          <div class="acciones">
-            <button type="submit" class="principal">Registrar socio</button>
-            <button type="button" class="secundario" data-cerrar>Cancelar</button>
-          </div>
-          <p class="aviso" role="alert" data-error></p>
-        </form>
-      </section>
-    </section>
-  </main>
-
-  <template id="plantilla-estado">
-    <article class="estado">
-      <p class="estado-veredicto"></p>
-      <p class="estado-socio"><span class="estado-nombre"></span> <span class="estado-documento"></span></p>
-      <p class="estado-detalle"></p>
-      <div class="acciones"></div>
-    </article>
-  </template>
+  <!-- Aplicativo del personal (ADR N.° 17): el prototipo de la Guía 4 conectado a /api/v1. -->
+  <div id="app"><noscript>FitManage necesita JavaScript activado.</noscript></div>
 </body>
 </html>

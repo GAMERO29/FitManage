@@ -9,15 +9,15 @@ Proyecto integrador de Ingeniería de Software II · Universidad de Pamplona · 
 | Carpeta | Qué contiene |
 | --- | --- |
 | `dominio/` | Núcleo de reglas de negocio en Python puro (RN-01 a RN-10): entidades, `CalculadoraMembresia`, servicios y puertos. |
-| `aplicacion/` | Casos de uso (registrar socio, consultar estado, registrar y anular pagos). |
+| `aplicacion/` | Casos de uso (registrar socio, consultar estado, registrar, previsualizar y anular pagos, cambiar precios). |
 | `tests/` | Suite de pytest: núcleo con dobles en memoria, integración con la base real, contrato OpenAPI y Pact, aceptación (PA-xx). |
-| `prototipo/` | Prototipo funcional navegable del MVP (HTML autónomo, datos de ejemplo). |
-| `infraestructura/` | Adaptadores: API `/api/v1`, persistencia con Django ORM, observabilidad y la pantalla de recepción (`web/`, ADR N.° 16). |
-| `docs/` | ADR N.° 01 a 16, inventario de deuda, roadmap, runbooks, postmortems, evidencia de cada guía y el [Dossier Técnico Final](docs/Dossier_Final.md). |
+| `prototipo/` | Prototipo original de la Guía 4 (HTML autónomo, datos de ejemplo). Se conserva como evidencia de diseño; el aplicativo real está en `infraestructura/web/`. |
+| `infraestructura/` | Adaptadores: API `/api/v1`, persistencia con Django ORM, observabilidad y el aplicativo del personal (`web/`, ADR N.° 16 y 17). |
+| `docs/` | ADR N.° 01 a 17, inventario de deuda, roadmap, runbooks, postmortems, evidencia de cada guía y el [Dossier Técnico Final](docs/Dossier_Final.md). |
 
 ## En producción
 
-- Pantalla de recepción: https://fitmanage-svol.onrender.com
+- Aplicativo del personal: https://fitmanage-svol.onrender.com. Recepción, registro de socios y pagos, vencimientos con WhatsApp y, para el administrador, historial con anulación, reportes, precios de los planes y cuentas del personal.
 - La primera cuenta de administrador se crea al arrancar desde `FITMANAGE_ADMIN_NOMBRE`, `FITMANAGE_ADMIN_CORREO` y `FITMANAGE_ADMIN_CLAVE`, configuradas en el panel de Render (`preparar_gimnasio`).
 
 ## Ejecutar las pruebas

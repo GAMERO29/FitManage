@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from aplicacion.acceso import RestablecimientoClaveService
 from aplicacion.pagos import AnulacionPagoService, RegistroPagoService
+from aplicacion.planes import CambioPrecioService
 from aplicacion.socios import ConsultaEstadoService, RegistroSocioService
 from dominio.puertos import CorreoSaliente, Reloj
 from infraestructura.correo import CorreoDjango
@@ -51,3 +52,7 @@ def anulacion_pago() -> AnulacionPagoService:
 
 def restablecimiento(enlace_para) -> RestablecimientoClaveService:
     return RestablecimientoClaveService(UsuarioRepositorioORM(), correo(), enlace_para)
+
+
+def cambio_precio() -> CambioPrecioService:
+    return CambioPrecioService(PlanRepositorioORM())

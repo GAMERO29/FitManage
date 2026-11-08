@@ -1,6 +1,27 @@
 # Evidencia de la Guía 16 (FPI-32)
 
-## Pantalla de recepción (ADR N.° 16)
+## Aplicativo conectado (ADR N.° 17)
+
+`aplicativo/e2e.js` recorre las ocho pantallas con Chromium contra gunicorn local, con la base de `preparar_gimnasio` y una recepcionista de prueba. Resultado de la corrida del 7/11/2026:
+
+| Captura | Qué comprueba |
+| --- | --- |
+| `01-ingreso.png` | Contraseña equivocada: «Correo o contraseña incorrectos». |
+| `02-recepcion.png` · `03-no-registrado.png` | Recepción vacía y un documento sin socio, con «Registrar socio». |
+| `04-registro-socio.png` | Registro con la autorización y la nota de DT-10. |
+| `05-pago.png` · `06-pago-registrado.png` | Pago Mensual por Nequi: inicio, vencimiento y valor vienen de `GET /pagos/vista-previa`. Se hizo **doble clic** en confirmar y quedó un solo pago. |
+| `07-activo.png` | «ACTIVO · Puede ingresar», 30 días. |
+| `08-renovacion-vista-previa.png` | Renovación anticipada Trimestral: empieza el 07/12/2026, el día siguiente al vencimiento, y suma 120 días (RN-04). No se registró. |
+| `09-historial.png` · `10-anulado.png` | Historial del socio y anulación del último pago con motivo; la membresía se recalcula. |
+| `11-reportes.png` | Ingresos del mes: el pago anulado no suma. |
+| `12-planes.png` | Precio del plan Diario cambiado a $ 9.000. |
+| `13-personal.png` | Cuenta nueva creada con contraseña inicial. |
+| `14-vencimientos.png` | Vencimientos de los próximos 3 días. |
+| `15-celular-recepcionista.png` · `16-recepcionista-sin-permiso.png` | La recepcionista en un celular (412 px) no ve el menú de administración, y si escribe `#reportes` recibe «Esta sección es solo para el administrador»; el servidor responde 403 de todos modos. |
+
+La consola solo mostró los dos errores esperados: el 401 de la contraseña equivocada y el 404 del documento no registrado. Ninguna violación de la política de contenido.
+
+## Pantalla de recepción (ADR N.° 16, reemplazada por el ADR N.° 17)
 
 `e2e.js` recorre el flujo con Chromium (Playwright) contra gunicorn local, con la base creada por `preparar_gimnasio`: inicio de sesión fallido y correcto, consulta de un documento que no existe, registro del socio, pago Mensual por Nequi y la consulta final. Para probar PA-11, el formulario de pago se envía dos veces seguidas: la base queda con **un** pago.
 

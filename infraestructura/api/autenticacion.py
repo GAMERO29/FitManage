@@ -24,6 +24,7 @@ class Sesion:
     token_acceso: str
     token_renovacion: str
     rol: str
+    nombre: str
 
 
 class CredencialesInvalidas(Exception):
@@ -43,7 +44,7 @@ def _abrir_sesion(cuenta: UsuarioModelo) -> Sesion:
         usuario=cuenta, huella=huella, vence=tokens.ahora_real() + tokens.VIGENCIA_RENOVACION
     )
     usuario = _a_usuario(cuenta)
-    return Sesion(tokens.emitir_acceso(usuario), token, usuario.rol.value)
+    return Sesion(tokens.emitir_acceso(usuario), token, usuario.rol.value, usuario.nombre)
 
 
 def _bloqueo(cuenta: UsuarioModelo, ahora: datetime) -> CuentaBloqueada:

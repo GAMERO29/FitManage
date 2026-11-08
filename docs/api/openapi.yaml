@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.2.0
+  version: 1.3.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -110,6 +110,7 @@ paths:
                 tipo: Bearer
                 expiraEn: 900
                 rol: RECEPCIONISTA
+                nombre: Laura
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
@@ -166,8 +167,83 @@ paths:
                 tipo: Bearer
                 expiraEn: 900
                 rol: RECEPCIONISTA
+                nombre: Laura
         '401':
           $ref: '#/components/responses/NoAutenticado'
+
+  /personal:
+    get:
+      tags: [Acceso del personal]
+      operationId: listarPersonal
+      summary: Listar las cuentas del personal
+      description: Solo administrador. Muestra si cada cuenta está bloqueada por intentos fallidos (RF-09). Nunca devuelve contraseñas ni sus hashes.
+      responses:
+        '200':
+          description: Cuentas ordenadas por nombre.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cuenta'
+              example:
+                - id: 2b8e4f1a-6c3d-4a9e-b7f0-1d5c9e8a3b66
+                  nombre: Laura
+                  correo: laura@gimnasio-demo.co
+                  rol: RECEPCIONISTA
+                  activa: true
+                  bloqueada: false
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+    post:
+      tags: [Acceso del personal]
+      operationId: crearCuenta
+      summary: Crear la cuenta de una persona del personal
+      description: |
+        Solo administrador (DT-24). El administrador define una contraseña inicial de al menos 12
+        caracteres y se la entrega a la persona; el servidor guarda solo su hash.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CuentaNueva'
+            example:
+              nombre: Diego Salcedo
+              correo: diego@gimnasio-demo.co
+              rol: RECEPCIONISTA
+              contrasena: clave-inicial-2026
+      responses:
+        '201':
+          description: Cuenta creada.
+          headers:
+            Location:
+              description: Ruta de la cuenta.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cuenta'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '409':
+          description: Ya hay una cuenta con ese correo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#correo-duplicado
+                title: Ya hay una cuenta con ese correo
+                status: 409
+                codigo: CORREO_DUPLICADO
 
   /personal/{usuarioId}/restablecimiento:
     post:
@@ -214,6 +290,35 @@ paths:
                 title: No se pudo enviar el correo
                 status: 503
                 codigo: CORREO_NO_DISPONIBLE
+
+  /personal/{usuarioId}/desbloqueo:
+    post:
+      tags: [Acceso del personal]
+      operationId: desbloquearCuenta
+      summary: Desbloquear una cuenta antes de los 15 minutos
+      description: Solo administrador (RF-09). Reinicia los intentos fallidos.
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador de la cuenta del personal.
+          schema:
+            type: string
+            format: uuid
+          example: 2b8e4f1a-6c3d-4a9e-b7f0-1d5c9e8a3b66
+      responses:
+        '200':
+          description: Cuenta desbloqueada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cuenta'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
 
   /socios:
     post:
@@ -269,6 +374,32 @@ paths:
                 title: Documento ya registrado
                 status: 409
                 codigo: DOCUMENTO_DUPLICADO
+
+  /socios/{tipoDocumento}/{numeroDocumento}/pagos:
+    get:
+      tags: [Membresías y cobros]
+      operationId: historialSocio
+      summary: Historial de pagos de un socio
+      description: |
+        Solo administrador (CU-03, RF-10). Trae los pagos vigentes y anulados, del más reciente al más
+        antiguo, y el estado actual. Es la única respuesta con el nombre completo del socio, porque
+        el administrador lo necesita para resolver reclamos. No incluye el teléfono.
+      parameters:
+        - $ref: '#/components/parameters/TipoDocumento'
+        - $ref: '#/components/parameters/NumeroDocumento'
+      responses:
+        '200':
+          description: Historial del socio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistorialSocio'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
 
   /estados:
     get:
@@ -377,6 +508,103 @@ paths:
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
+
+  /planes/{planId}:
+    patch:
+      tags: [Membresías y cobros]
+      operationId: cambiarPrecio
+      summary: Cambiar el precio de un plan
+      description: Solo administrador (CU-05, RF-02). El precio nuevo vale para los pagos que se registren después; los ya registrados guardan su valor (RN-08).
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: Identificador del plan.
+          schema:
+            type: string
+            format: uuid
+          example: 7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrecioNuevo'
+            example:
+              precio: 80000
+      responses:
+        '200':
+          description: Plan con el precio nuevo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /pagos/vista-previa:
+    get:
+      tags: [Membresías y cobros]
+      operationId: vistaPreviaPago
+      summary: Ver cómo quedaría la membresía antes de registrar el pago
+      description: |
+        Aplica las mismas reglas que el registro (RN-03, RN-04, RN-08) sin guardar nada, para que la
+        pantalla muestre inicio, vencimiento y valor sin calcularlos en el navegador (DT-04).
+      parameters:
+        - name: tipoDocumento
+          in: query
+          required: true
+          description: Tipo de documento del socio.
+          schema:
+            $ref: '#/components/schemas/TipoDocumento'
+          example: CC
+        - name: numeroDocumento
+          in: query
+          required: true
+          description: Número de documento del socio.
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9]{5,20}$'
+          example: '1090123456'
+        - name: planId
+          in: query
+          required: true
+          description: Plan que se va a pagar.
+          schema:
+            type: string
+            format: uuid
+          example: 7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22
+      responses:
+        '200':
+          description: Periodo y valor que tendría el pago.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VistaPreviaPago'
+              example:
+                plan:
+                  id: 7a5e1b2c-9d40-4c8f-b6a3-2e1f0d9c8b22
+                  nombre: Mensual
+                  duracionDias: 30
+                  precio: 75000
+                valor: 75000
+                inicia: '2026-10-22'
+                vence: '2026-11-20'
+                diasDesdeHoy: 45
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
 
   /pagos:
     post:
@@ -777,7 +1005,7 @@ components:
     TokenAcceso:
       type: object
       additionalProperties: false
-      required: [tokenAcceso, tipo, expiraEn, rol]
+      required: [tokenAcceso, tipo, expiraEn, rol, nombre]
       properties:
         tokenAcceso:
           type: string
@@ -791,6 +1019,9 @@ components:
           example: 900
         rol:
           $ref: '#/components/schemas/Rol'
+        nombre:
+          type: string
+          description: Nombre de la persona, para mostrarlo en la interfaz.
 
     RestablecimientoEnviado:
       type: object
@@ -1055,6 +1286,110 @@ components:
           type: string
           format: uri
           description: No aparece si el teléfono no tiene 10 dígitos.
+
+    Cuenta:
+      type: object
+      additionalProperties: false
+      required: [id, nombre, correo, rol, activa, bloqueada]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        rol:
+          $ref: '#/components/schemas/Rol'
+        activa:
+          type: boolean
+        bloqueada:
+          type: boolean
+          description: Verdadero si tiene 5 intentos fallidos y no han pasado 15 minutos.
+        bloqueadaHasta:
+          type: string
+          format: date-time
+          description: Solo si está bloqueada.
+
+    CuentaNueva:
+      type: object
+      additionalProperties: false
+      required: [nombre, correo, rol, contrasena]
+      properties:
+        nombre:
+          type: string
+          minLength: 2
+          maxLength: 80
+        correo:
+          type: string
+          format: email
+          maxLength: 254
+        rol:
+          $ref: '#/components/schemas/Rol'
+        contrasena:
+          type: string
+          format: password
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+
+    PrecioNuevo:
+      type: object
+      additionalProperties: false
+      required: [precio]
+      properties:
+        precio:
+          type: integer
+          minimum: 1
+          maximum: 10000000
+          description: Pesos colombianos, sin decimales.
+
+    VistaPreviaPago:
+      type: object
+      additionalProperties: false
+      required: [plan, valor, inicia, vence, diasDesdeHoy]
+      properties:
+        plan:
+          $ref: '#/components/schemas/Plan'
+        valor:
+          type: integer
+          minimum: 0
+        inicia:
+          type: string
+          format: date
+        vence:
+          type: string
+          format: date
+        diasDesdeHoy:
+          type: integer
+          minimum: 1
+          description: Días con acceso contados desde hoy, incluidos los que ya tenía.
+
+    HistorialSocio:
+      type: object
+      additionalProperties: false
+      required: [socio, estado, pagos]
+      properties:
+        socio:
+          type: object
+          additionalProperties: false
+          required: [nombreCompleto, documentoEnmascarado, autorizoEl]
+          properties:
+            nombreCompleto:
+              type: string
+            documentoEnmascarado:
+              type: string
+            autorizoEl:
+              type: string
+              format: date-time
+              description: Fecha de la autorización de tratamiento de datos.
+        estado:
+          $ref: '#/components/schemas/EstadoPublico'
+        pagos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pago'
 
     Problema:
       type: object

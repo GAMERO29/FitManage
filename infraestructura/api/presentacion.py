@@ -6,7 +6,7 @@ from datetime import date, datetime
 
 from django.utils.crypto import salted_hmac
 
-from dominio.modelos import EstadoMembresia, Pago, Socio, TipoDocumento
+from dominio.modelos import EstadoMembresia, Pago, Plan, Socio, TipoDocumento
 
 
 def nombre_corto(nombres: str, apellidos: str) -> str:
@@ -82,4 +82,54 @@ def pago(p: Pago, nombre_plan: str) -> dict:
             "anuladoPor": p.anulado_por.nombre,
             "anuladoEl": fecha_hora(p.fecha_anulacion),
         }
+    return cuerpo
+
+
+def plan(p: Plan) -> dict:
+    return {
+        "id": str(p.id),
+        "nombre": p.nombre,
+        "duracionDias": p.duracion_dias,
+        "precio": int(p.precio),
+    }
+
+
+def vista_previa(previa, hoy: date) -> dict:
+    return {
+        "plan": plan(previa.plan),
+        "valor": int(previa.plan.precio),
+        "inicia": previa.inicia.isoformat(),
+        "vence": previa.vence.isoformat(),
+        "diasDesdeHoy": (previa.vence - hoy).days + 1,
+    }
+
+
+def historial(
+    socio: Socio, estado: EstadoMembresia, vence: date | None, hoy: date, pagos: list[dict]
+) -> dict:
+    """Solo para el administrador: es la única respuesta con el nombre completo del socio."""
+    return {
+        "socio": {
+            "nombreCompleto": f"{socio.nombres} {socio.apellidos}",
+            "documentoEnmascarado": documento_enmascarado(
+                socio.tipo_documento, socio.numero_documento
+            ),
+            "autorizoEl": fecha_hora(socio.autorizacion_datos),
+        },
+        "estado": estado_publico(socio, estado, vence, hoy),
+        "pagos": pagos,
+    }
+
+
+def cuenta(m, bloqueada: bool) -> dict:
+    cuerpo = {
+        "id": str(m.id),
+        "nombre": m.nombre,
+        "correo": m.correo,
+        "rol": m.rol,
+        "activa": bool(m.activo),
+        "bloqueada": bloqueada,
+    }
+    if bloqueada:
+        cuerpo["bloqueadaHasta"] = fecha_hora(m.bloqueada_hasta)
     return cuerpo
