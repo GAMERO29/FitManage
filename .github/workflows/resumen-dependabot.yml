@@ -2,7 +2,11 @@
 #
 # Lista las alertas abiertas de Dependabot con su severidad, el paquete y el archivo donde se declara,
 # y las deja en el resumen de la corrida y en el log. Sirve para revisar las alertas sin abrir la
-# pestaña Security, con el token de la propia corrida y permiso solo de lectura.
+# pestaña Security.
+#
+# El token de la corrida (GITHUB_TOKEN) no puede leer alertas de Dependabot (403, probado en el PR #44).
+# Por eso usa el secreto DEPENDABOT_LECTURA: un token fine-grained solo para este repositorio, con
+# el permiso «Dependabot alerts: Read-only» y fecha de vencimiento. No tiene ningún permiso de escritura.
 #
 # Es informativo: no bloquea nada. Lo que bloquea a `main` son los checks `sca-dependencias` y
 # `sca-imagen` de ci-security.yml.
@@ -18,7 +22,6 @@ on:
 
 permissions:
   contents: read
-  security-events: read
 
 concurrency:
   group: resumen-dependabot-${{ github.ref }}
@@ -31,10 +34,14 @@ jobs:
     steps:
       - name: Listar alertas abiertas
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_LECTURA }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::error::Falta el secreto DEPENDABOT_LECTURA (token fine-grained de solo lectura)."
+            exit 1
+          fi
           gh api --paginate "repos/${REPO}/dependabot/alerts?state=open&per_page=100" > alertas.json
           total=$(jq -s 'add | length' alertas.json)
           {
