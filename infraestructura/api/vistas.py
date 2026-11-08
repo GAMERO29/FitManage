@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 
 from django.conf import settings
 from django.core import signing
@@ -13,8 +14,8 @@ from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from dominio.errores import DocumentoDuplicado, SocioNoEncontrado
-from dominio.modelos import SolicitudPago, TipoDocumento
-from infraestructura import consultas
+from dominio.modelos import Rol, SolicitudPago, TipoDocumento
+from infraestructura import consultas, cuentas
 from infraestructura.api import autenticacion, contenedor, presentacion
 from infraestructura.api.http import SolicitudInvalida, leer_json, no_autenticado, problema
 from infraestructura.api.seguridad import SOLO_ADMINISTRADOR, TODO_EL_PERSONAL, endpoint
@@ -50,7 +51,13 @@ def salud(request: HttpRequest) -> JsonResponse:
 # --- Acceso del personal -----------------------------------------------------------------
 def _con_cookie(sesion: autenticacion.Sesion) -> JsonResponse:
     respuesta = JsonResponse(
-        {"tokenAcceso": sesion.token_acceso, "tipo": "Bearer", "expiraEn": 900, "rol": sesion.rol}
+        {
+            "tokenAcceso": sesion.token_acceso,
+            "tipo": "Bearer",
+            "expiraEn": 900,
+            "rol": sesion.rol,
+            "nombre": sesion.nombre,
+        }
     )
     respuesta.set_cookie(
         COOKIE_RENOVACION,
@@ -115,6 +122,29 @@ def restablecer_clave(request: HttpRequest, usuarioId: str) -> JsonResponse:  # 
     )
 
 
+@require_http_methods(["GET", "POST"])
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def personal(request: HttpRequest) -> JsonResponse:
+    ahora = contenedor.reloj().ahora()
+    if request.method == "GET":
+        return JsonResponse(
+            [presentacion.cuenta(m, cuentas.esta_bloqueada(m, ahora)) for m in cuentas.listar()],
+            safe=False,
+        )
+    datos = leer_json(request)
+    nueva = cuentas.crear(datos["nombre"], datos["correo"], Rol(datos["rol"]), datos["contrasena"])
+    respuesta = JsonResponse(presentacion.cuenta(nueva, False), status=201)
+    respuesta["Location"] = f"/api/v1/personal/{nueva.id}"
+    return respuesta
+
+
+@require_POST
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def desbloquear_cuenta(request: HttpRequest, usuarioId: str) -> JsonResponse:  # noqa: N803
+    cuenta = cuentas.desbloquear(uuid.UUID(usuarioId))
+    return JsonResponse(presentacion.cuenta(cuenta, False))
+
+
 # --- Socios ------------------------------------------------------------------------------
 @require_POST
 @endpoint(roles=TODO_EL_PERSONAL)
@@ -136,6 +166,21 @@ def registrar_socio(request: HttpRequest) -> JsonResponse:
     )
     respuesta["Location"] = f"/api/v1/estados/{socio.tipo_documento.value}/{socio.numero_documento}"
     return respuesta
+
+
+@require_GET
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def historial_socio(
+    request: HttpRequest,
+    tipoDocumento: str,  # noqa: N803
+    numeroDocumento: str,  # noqa: N803
+) -> JsonResponse:
+    hoy = contenedor.reloj().hoy()
+    socio, estado, vence, pagos = consultas.historial(
+        TipoDocumento(tipoDocumento), numeroDocumento, hoy
+    )
+    filas = [presentacion.pago(p, _nombre_plan(p.plan_id)) for p in pagos]
+    return JsonResponse(presentacion.historial(socio, estado, vence, hoy, filas))
 
 
 # --- Recepción ---------------------------------------------------------------------------
@@ -213,6 +258,27 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
         ],
         safe=False,
     )
+
+
+@require_http_methods(["PATCH"])
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def cambiar_precio_plan(request: HttpRequest, planId: str) -> JsonResponse:  # noqa: N803
+    datos = leer_json(request)
+    plan = contenedor.cambio_precio().cambiar_precio(
+        uuid.UUID(planId), Decimal(datos["precio"]), request.usuario
+    )
+    return JsonResponse(presentacion.plan(plan))
+
+
+@require_GET
+@endpoint(roles=TODO_EL_PERSONAL)
+def vista_previa_pago(request: HttpRequest) -> JsonResponse:
+    previa = contenedor.registro_pago().vista_previa(
+        TipoDocumento(request.GET["tipoDocumento"]),
+        request.GET["numeroDocumento"],
+        uuid.UUID(request.GET["planId"]),
+    )
+    return JsonResponse(presentacion.vista_previa(previa, contenedor.reloj().hoy()))
 
 
 def _nombre_plan(plan_id: uuid.UUID) -> str:

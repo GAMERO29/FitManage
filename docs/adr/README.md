@@ -19,6 +19,7 @@ Un ADR aceptado no se edita. Si la decisión cambia, se escribe uno nuevo y el a
 | [13](ADR-013-observabilidad.md) | OpenTelemetry con trazas al 10 %, métricas para Prometheus y logs JSON sin datos personales; logs 7 días, métricas 15 días | Aceptado | 03/11/2026 |
 | [14](ADR-014-slo-presupuesto-de-error.md) | SLO de la consulta de estado: 99,5 % de disponibilidad y 99 % bajo 500 ms en 14 días, alertas por consumo del presupuesto y congelamiento | Aceptado | 06/11/2026 |
 | [15](ADR-015-mantenimiento-deuda-residual.md) | Pagar ahora la lógica en los controladores (DT-16), convivir con la deuda del prototipo y de `Pago`, roadmap con disparadores y Django 5.2 LTS hasta 6.2 LTS | Aceptado | 06/11/2026 |
-| [16](ADR-016-pantalla-recepcion.md) | La pantalla de recepción es una página estática del mismo origen que consume la API; el primer arranque crea los planes y la primera cuenta | Aceptado | 06/11/2026 |
+| [16](ADR-016-pantalla-recepcion.md) | La pantalla de recepción es una página estática del mismo origen que consume la API; el primer arranque crea los planes y la primera cuenta | Reemplazado en la interfaz por el 17 | 06/11/2026 |
+| [17](ADR-017-aplicativo-conectado.md) | El aplicativo del personal es el prototipo de la Guía 4 conectado a la API, sin datos ni reglas propias | Aceptado | 07/11/2026 |
 
 Los ADR 01 y 02 se escribieron con la plantilla de 5 campos de la Guía 1. Desde el ADR 03 se usa la plantilla completa de 6 campos (`plantilla.md`), que agrega las alternativas consideradas. Los dos primeros no se reescriben para cumplirla, precisamente porque un ADR aceptado es inmutable.

@@ -10,6 +10,7 @@ Todos los errores salen como `application/problem+json` (RFC 9457) con `type`, `
 | <a id="sin-permiso"></a>sin-permiso | `SIN_PERMISO` | 403 | El rol no puede hacer esto (el entrenador en pagos, la recepcionista en reportes). Queda en la auditoría. |
 | <a id="no-encontrado"></a>no-encontrado | `NO_ENCONTRADO` | 404 | No existe el socio, el plan o el pago. |
 | <a id="documento-duplicado"></a>documento-duplicado | `DOCUMENTO_DUPLICADO` | 409 | Ya hay un socio con ese tipo y número (RN-01). |
+| <a id="correo-duplicado"></a>correo-duplicado | `CORREO_DUPLICADO` | 409 | Ya hay una cuenta del personal con ese correo (sin importar mayúsculas). |
 | <a id="comprobante-duplicado"></a>comprobante-duplicado | `COMPROBANTE_DUPLICADO` | 409 | La referencia ya pertenece a un pago vigente (RN-06). |
 | <a id="no-es-el-ultimo-pago"></a>no-es-el-ultimo-pago | `NO_ES_EL_ULTIMO_PAGO` | 409 | Se intentó anular un pago que no es el último vigente o que ya estaba anulado (RN-07). |
 | <a id="cuenta-bloqueada"></a>cuenta-bloqueada | `CUENTA_BLOQUEADA` | 423 | 5 intentos fallidos; se desbloquea sola a los 15 minutos. |

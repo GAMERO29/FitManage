@@ -11,7 +11,16 @@ from urllib.parse import quote
 from uuid import UUID
 
 from dominio.calculadora import CalculadoraMembresia
-from dominio.modelos import ZONA_HORARIA, EstadoMembresia, EstadoPago, MedioPago, Pago, Socio
+from dominio.errores import SocioNoEncontrado
+from dominio.modelos import (
+    ZONA_HORARIA,
+    EstadoMembresia,
+    EstadoPago,
+    MedioPago,
+    Pago,
+    Socio,
+    TipoDocumento,
+)
 from dominio.recordatorio import texto_recordatorio
 from infraestructura.persistencia.models import PagoModelo, SocioModelo
 from infraestructura.persistencia.repositorios import _a_pago, _a_socio
@@ -107,3 +116,22 @@ def vencimientos(hoy: date, dias: int, nombres_de_plan: dict[UUID, str]) -> list
             }
         )
     return sorted(filas, key=lambda f: (f["venceEl"], f["nombreCorto"]))
+
+
+def historial(
+    tipo: TipoDocumento, numero: str, hoy: date
+) -> tuple[Socio, EstadoMembresia, date | None, list[Pago]]:
+    """CU-03: todos los pagos del socio, vigentes y anulados, del más reciente al más antiguo."""
+    modelo = SocioModelo.objects.filter(
+        tipo_documento=tipo.value, numero_documento=numero.strip()
+    ).first()
+    if modelo is None:
+        raise SocioNoEncontrado(f"No hay socio con documento {tipo.value} {numero}.")
+    pagos = [
+        _a_pago(m)
+        for m in PagoModelo.objects.select_related("socio", "registrado_por", "anulado_por")
+        .filter(socio_id=modelo.id)
+        .order_by("-fecha_inicio", "-registrado_en")
+    ]
+    estado, vence = CALCULADORA.estado_de(pagos, hoy)
+    return _a_socio(modelo), estado, vence, pagos

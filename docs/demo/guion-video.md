@@ -30,31 +30,29 @@ El texto entre comillas es para decirlo con tus palabras; no hace falta leerlo l
 
 > «Soy Juan Sebastián Cárdenas y este es FitManage, el proyecto integrador de Ingeniería de Software II. El problema salió de observar la recepción de un gimnasio de barrio: en hora pico, la recepcionista no sabe si quien llega pagó, y la fila crece. FitManage responde eso por documento, en segundos. Todo lo que van a ver está en producción.»
 
-### 0:25–1:45 · El flujo crítico en vivo
+### 0:25–1:40 · El flujo crítico en vivo
 
 | Haces | Dices |
 | --- | --- |
-| Inicias sesión. | «Entro como administrador. El token dura 15 minutos y se renueva con una cookie que JavaScript no puede leer: es el ADR 06.» |
-| Consultas CC 1090000011. | «Consulto una cédula que no existe. El sistema me dice que no está registrada y me ofrece registrarla.» |
-| Registrar socio: Ana Prueba Demo, 3001234567, marcas la autorización. | «Uso datos inventados. Fíjense en el aviso: el texto legal de privacidad de la Ley 1581 todavía no está aprobado, así que solo se cargan datos de prueba. Es la deuda DT-10.» |
-| Aparece «Sin membresía». Registrar pago: Mensual, Nequi, M123456. **Doble clic** en «Confirmar pago». | «Ahora no tiene membresía. Registro un pago mensual por Nequi. Yo no escribo el valor ni las fechas: los calcula el servidor con el plan vigente. Y pulso confirmar dos veces a propósito, porque en recepción pasa cuando el internet está lento. Cada pago lleva una clave de idempotencia y queda uno solo.» |
-| Aparece «Puede entrar», 30 días. | «Puede entrar, con 30 días. Ese es el flujo crítico: los casos de uso 02, 03 y 04.» |
+| Inicias sesión. | «Este es el aplicativo que se diseñó en Software I, ahora conectado a la API real. El token dura 15 minutos y se renueva con una cookie que JavaScript no puede leer: es el ADR 06.» |
+| Consultas CC 1090000011. | «Es una cédula que no existe. El sistema dice que no está registrada y me ofrece registrarla.» |
+| Botón «Registrar socio» del resultado: Ana · Prueba Demo · 3001234567, marcas la autorización y guardas. | «Uso datos inventados. El aviso de privacidad de la Ley 1581 todavía no está aprobado, así que solo se cargan datos de prueba: es la deuda DT-10.» |
+| «Registrar su primer pago»: Mensual, Nequi, M123456. Señalas el anillo y las fechas. **Doble clic** en «Registrar pago». | «Inicio, vencimiento y valor los calcula el servidor; la pantalla solo los muestra. Pulso dos veces a propósito: el botón se bloquea y la clave de idempotencia garantiza un solo pago.» |
+| Vuelves a recepción y consultas: «ACTIVO · 30 días». | «Ese es el flujo crítico: consultar el estado, registrar al socio y registrar el pago, los casos de uso 02, 04 y 01.» |
 
-### 1:45–2:10 · En el celular
+### 1:40–2:20 · Administración (ADR 17)
 
-**En pantalla:** en la misma pestaña, F12 → Ctrl+Shift+M → Pixel 7, y vuelves a consultar el documento.
+**En pantalla:** «Ver historial» → «Anular último pago» con un motivo → Reportes → Planes → Personal.
 
-> «Es la misma pantalla en tamaño de celular, porque el personal muchas veces consulta desde el suyo. El documento sale enmascarado: la consulta no muestra el número completo.»
+> «Como administrador veo el historial y puedo anular el último pago: no se borra, queda con motivo y nombre, y la membresía se recalcula. El reporte ya no cuenta ese pago. Aquí cambio un precio, que solo vale para los pagos nuevos, y aquí creo la cuenta de una recepcionista. Antes este prototipo calculaba todo en el navegador con datos de ejemplo; ahora cada pantalla lee y escribe en la API, y el servidor decide los permisos: es el ADR 17.»
 
-Cierra las herramientas con F12 antes de seguir.
-
-### 2:10–3:00 · La puerta de calidad (ADR 09 y ADR 12)
+### 2:20–3:05 · La puerta de calidad (ADR 09 y ADR 12)
 
 **En pantalla:** PR #42 → Checks; luego la regla de `main`; luego el release v1.0.0.
 
 > «Nada entra a `main` sin un PR que pase nueve checks obligatorios: estilo, pruebas con cobertura mínima de 95 % (el proyecto está en 99 %), SonarCloud, el contrato de la API, la imagen probada contra PostgreSQL, Semgrep, el escaneo de dependencias y de la imagen, y la búsqueda de secretos. La regla de `main` no permite push directo ni reescribir la historia. Un hallazgo crítico o alto de seguridad detiene el merge, y cada excepción tiene justificación y fecha de vencimiento: eso es el ADR 12. Dependabot está activo y hoy reporta cero alertas. Esta es la versión final, la v1.0.0.»
 
-### 3:00–3:55 · Producción y decisiones (ADR 05 y ADR 14)
+### 3:05–3:55 · Producción y decisiones (ADR 05 y ADR 14)
 
 **En pantalla:** el tablero de Grafana; luego el postmortem.
 
@@ -74,7 +72,7 @@ Cierra las herramientas con F12 antes de seguir.
 
 **En pantalla:** `deuda-tecnica.md` y `roadmap.md`.
 
-> «Lo pendiente, sin rodeos: la base gratuita de Render vence cerca del 2 de diciembre; falta aprobar el aviso de privacidad antes del primer socio real, y no hay pantalla para crear planes ni personal. Lo más importante: ningún usuario real ha usado el sistema todavía. La verificación es fuerte; validar con una recepcionista real es el primer pendiente del roadmap. Gracias.»
+> «Lo pendiente, sin rodeos: la base gratuita de Render vence cerca del 2 de diciembre; falta aprobar el aviso de privacidad antes del primer socio real; todavía no se pueden crear planes nuevos ni restablecer una contraseña por correo, y la consulta sin internet es el hito H4. Lo más importante: ningún usuario real ha usado el sistema todavía. La verificación es fuerte; validar con una recepcionista real es el primer pendiente del roadmap. Gracias.»
 
 ## Después de grabar
 

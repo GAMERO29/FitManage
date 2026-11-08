@@ -1,7 +1,8 @@
-"""Pantalla de recepción (Guía 16, ADR N.° 16): tres archivos estáticos que consumen /api/v1.
+"""Aplicativo del personal (ADR N.° 16 y N.° 17): archivos estáticos que consumen /api/v1.
 
-No usa plantillas ni la app de archivos estáticos de Django: son tres archivos fijos, leídos una
-vez al arrancar. La política de contenido solo permite cargar y llamar al mismo origen, así que la
+No usa plantillas ni la app de archivos estáticos de Django: son cinco archivos fijos (la página,
+el script, la hoja de estilos y las dos fuentes del prototipo), leídos una vez al arrancar. La
+política de contenido solo permite cargar y llamar al mismo origen, así que la
 página no puede ejecutar scripts en línea ni mandar datos a otro dominio.
 """
 
@@ -17,6 +18,8 @@ ARCHIVOS = {
     "recepcion.html": "text/html; charset=utf-8",
     "app.js": "text/javascript; charset=utf-8",
     "app.css": "text/css; charset=utf-8",
+    "sora.woff2": "font/woff2",
+    "atkinson.woff2": "font/woff2",
 }
 CONTENIDO = {nombre: (CARPETA / nombre).read_bytes() for nombre in ARCHIVOS}
 POLITICA = (
@@ -43,6 +46,6 @@ def recepcion(request: HttpRequest) -> HttpResponse:
 
 @require_safe
 def recurso(request: HttpRequest, nombre: str) -> HttpResponse:
-    if nombre not in ("app.js", "app.css"):
+    if nombre not in ARCHIVOS or nombre == "recepcion.html":
         raise Http404
     return _archivo(nombre)

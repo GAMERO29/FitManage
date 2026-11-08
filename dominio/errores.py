@@ -59,3 +59,7 @@ class UsuarioNoEncontrado(ErrorDeDominio):
 
 class CorreoNoDisponible(ErrorDeDominio):
     """El servidor de correo no aceptó el mensaje; nada del negocio cambió."""
+
+
+class CorreoDuplicado(ErrorDeDominio):
+    """Ya hay una cuenta del personal con ese correo."""

@@ -32,6 +32,9 @@ class PlanesEnMemoria:
     def obtener(self, plan_id: UUID) -> Plan | None:
         return self._planes.get(plan_id)
 
+    def guardar(self, plan: Plan) -> None:
+        self._planes[plan.id] = plan
+
 
 class PagosEnMemoria:
     def __init__(self, *pagos: Pago) -> None:

@@ -9,7 +9,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 | | |
 | --- | --- |
 | Problema (FPI-01) | En hora pico, la recepción de un gimnasio de barrio no sabe si la persona que llega pagó, y la fila crece. FitManage responde eso por documento, en segundos. |
-| Sistema en producción | https://fitmanage-svol.onrender.com (pantalla de recepción en `/`, API en `/api/v1`) |
+| Sistema en producción | https://fitmanage-svol.onrender.com (aplicativo del personal en `/`, API en `/api/v1`) |
 | Repositorio | https://github.com/GAMERO29/FitManage · release **v1.0.0** |
 | Video demo | Pendiente de grabación; guion en [`docs/demo/guion-video.md`](demo/guion-video.md). |
 | Stack | Django 5.2 LTS, Python 3.12, PostgreSQL 16, gunicorn, OpenTelemetry, imagen en `ghcr.io/gamero29/fitmanage`, Render (plan gratuito). |
@@ -20,7 +20,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 
 **Validación (¿construimos lo correcto?).** Es la parte débil, y se dice:
 
-- Hasta la Guía 16 **no existía una pantalla que recepción pudiera usar**: solo la API. Se construyó en esta guía (ADR N.° 16).
+- Hasta la Guía 16 **no existía una interfaz que el gimnasio pudiera usar**: solo la API, y el prototipo validado en Software I funcionaba con datos de ejemplo. Primero se hizo una pantalla de recepción (ADR N.° 16) y después se conectó el prototipo completo a la API (ADR N.° 17): ocho pantallas, sin reglas propias en el navegador.
 - **Ningún usuario real ha usado el sistema.** Las reglas de negocio salen de la entrevista y la observación de Software I (FPI-04), pero no hubo piloto.
 - **No se pueden cargar socios reales** hasta tener el aviso de privacidad aprobado (DT-10, hito H2).
 
@@ -30,7 +30,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 | --- | --- | --- | --- |
 | FPI-17 | Línea base LB-1 y puerta de calidad automática (ADR 01). | Se mantuvo y creció: de un flujo `Calidad` a nueve checks. | Vigente. |
 | FPI-18 | Drivers priorizados: integridad del pago, consulta en hora pico, sin conexión, costo 0 (ADR 02). | Se mantuvo. | Vigente; QA-02 sin conexión sigue pendiente (H4). |
-| FPI-19 | Una sola aplicación Django con plantillas (ADR 03). | **Cambió en parte:** las plantillas nunca se construyeron. | Reemplazado en la interfaz por el ADR 16. |
+| FPI-19 | Una sola aplicación Django con plantillas (ADR 03). | **Cambió en parte:** las plantillas nunca se construyeron. | Reemplazado en la interfaz por los ADR 16 y 17. |
 | FPI-20 | Monolito modular con núcleo hexagonal donde hay dinero (ADR 04). | Se mantuvo; la Guía 15 corrigió una desviación (DT-16). | Vigente. |
 | FPI-21 | No distribuir ningún contexto (ADR 05). | Se mantuvo. | Vigente; defendido en la sección 4. |
 | FPI-22 | JWT de 15 min y renovación en cookie `HttpOnly` (ADR 06). | Se mantuvo; la pantalla de recepción lo usa. | Vigente. |
@@ -42,7 +42,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 | FPI-28 | Semgrep y Trivy bloquean críticos y altos; excepciones con vencimiento (ADR 12). | Se mantuvo; en la Guía 16 se sumó la puerta de licencias. | Vigente. |
 | FPI-29 | OpenTelemetry al 10 % y logs sin datos personales (ADR 13). | Se mantuvo. | Vigente. |
 | FPI-30 | SLO de 99,5 % en 14 días con alertas por consumo (ADR 14). | Se mantuvo; el SLI pasó a cubrir el recorrido completo tras el postmortem. | Vigente. |
-| FPI-31 | Pagar DT-16, convivir con DT-04/06/12, Django 5.2 LTS (ADR 15). | Se mantuvo; H0 se cumplió el 6/11. | Vigente. |
+| FPI-31 | Pagar DT-16, convivir con DT-04/06/12, Django 5.2 LTS (ADR 15). | **Cambió en parte:** en la FPI-32 se pagaron DT-04 y DT-06 al conectar el prototipo (ADR 17). H0 se cumplió el 6/11. | Vigente, salvo la convivencia con el prototipo. |
 
 ## 4. Defensa de decisiones con evidencia
 
@@ -76,5 +76,5 @@ Inventario completo en [`docs/deuda-tecnica.md`](deuda-tecnica.md) y plan en [`d
 | --- | --- | --- |
 | Base de Render gratuita (DT-18) | Infraestructura | Costo 0 mientras no hay datos reales. Vence cerca del 2/12/2026: plan de US$6 o exportación, hito H1. |
 | Aviso de privacidad (DT-10) y auditoría (DT-14) | Cumplimiento | Sin datos reales todavía. Se paga antes del primer socio real, hito H2. |
-| Gestión de planes y personal (DT-24) | Funcionalidad | La operación de la demo no la necesita. Hito H2. |
-| Prototipo con reglas propias (DT-04, DT-06) | Diseño | Se convive: no se despliega (ADR 15). |
+| Crear planes y restablecer contraseñas (DT-24, DT-26) | Funcionalidad | Precios, cuentas nuevas y desbloqueo ya funcionan (ADR 17). Crear o desactivar planes y el restablecimiento por correo quedan para H2. |
+| JavaScript del aplicativo sin pruebas propias en CI (DT-25) | Pruebas | Lo cubren la prueba de extremo a extremo y las pruebas de la API; llevar `e2e.js` al pipeline. |

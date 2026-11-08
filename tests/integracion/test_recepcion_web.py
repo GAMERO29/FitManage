@@ -1,4 +1,4 @@
-"""Guía 16 (ADR N.° 16): la pantalla de recepción se sirve con una política estricta."""
+"""Guía 16 (ADR N.° 16 y N.° 17): el aplicativo del personal se sirve con una política estricta."""
 
 import re
 from pathlib import Path
@@ -14,9 +14,11 @@ WEB = Path(__file__).resolve().parents[2] / "infraestructura" / "web"
         ("/", "text/html"),
         ("/recepcion/app.js", "text/javascript"),
         ("/recepcion/app.css", "text/css"),
+        ("/recepcion/sora.woff2", "font/woff2"),
+        ("/recepcion/atkinson.woff2", "font/woff2"),
     ],
 )
-def test_sirve_los_tres_archivos_con_politica_de_contenido(client, ruta, tipo):
+def test_sirve_los_archivos_con_politica_de_contenido(client, ruta, tipo):
     r = client.get(ruta)
     assert r.status_code == 200 and r["Content-Type"].startswith(tipo)
     assert "script-src 'self'" in r["Content-Security-Policy"]
@@ -42,11 +44,18 @@ def test_la_pagina_no_carga_nada_de_otro_dominio_ni_scripts_en_linea():
     en_linea = re.search(r"<script(?![^>]*\bsrc=)", html)
     assert not en_linea, "script en línea: la política lo bloquearía"
     assert " on" + "click=" not in html
+    assert " style=" not in html, "estilo en línea: la política lo bloquearía"
+
+
+def test_la_hoja_de_estilos_no_carga_fuentes_de_otro_dominio():
+    css = (WEB / "app.css").read_text(encoding="utf-8")
+    assert "url(http" not in css and "data:font" not in css
 
 
 def test_el_script_no_guarda_el_token_ni_escribe_html():
     js = (WEB / "app.js").read_text(encoding="utf-8")
     codigo = "\n".join(linea for linea in js.splitlines() if not linea.lstrip().startswith("//"))
-    for prohibido in ("localStorage", "sessionStorage", "innerHTML", "outerHTML", "eval("):
+    prohibidos = ("localStorage", "sessionStorage", "innerHTML", "outerHTML", "insertAdjacentHTML")
+    for prohibido in (*prohibidos, "eval(", 'setAttribute("style"', "document.write"):
         assert prohibido not in codigo, prohibido
     assert "Idempotency-Key" in codigo  # PA-11: el doble clic reutiliza la misma clave
