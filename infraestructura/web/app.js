@@ -102,6 +102,10 @@ const diaBogota = (fecha) => fecha.toLocaleDateString("en-CA", { timeZone: "Amer
 const puedeAnular = (pago) => esAdmin() || (pago.registradoPor === sesion.nombre && diaBogota(new Date(pago.registradoEl)) === diaBogota(new Date()));
 
 /* --- API ---------------------------------------------------------------------------------- */
+let servidorCaido = false;
+// Un 5xx sin código del contrato, o SERVICIO_NO_DISPONIBLE, es el servidor que no puede atender.
+// CORREO_NO_DISPONIBLE (503) es otra cosa: el sistema funciona y solo falló el envío del correo.
+const fallaDelServidor = (estado, datos) => estado >= 500 && (!datos || !datos.codigo || datos.codigo === "SERVICIO_NO_DISPONIBLE");
 async function llamar(ruta, { metodo = "GET", cuerpo, cabeceras = {}, renovar = true } = {}) {
   let respuesta;
   try {
@@ -117,13 +121,16 @@ async function llamar(ruta, { metodo = "GET", cuerpo, cabeceras = {}, renovar = 
       body: cuerpo ? JSON.stringify(cuerpo) : undefined,
     });
   } catch {
+    servidorCaido = true;
     return { estado: 0, datos: null };
   }
+  // H-03: el indicador del menú refleja la última respuesta del servidor, no solo la red del equipo.
+  const datos = await respuesta.json().catch(() => null);
+  servidorCaido = fallaDelServidor(respuesta.status, datos);
   if (respuesta.status === 401 && sesion && renovar) {
     if (await renovarSesion()) return llamar(ruta, { metodo, cuerpo, cabeceras, renovar: false });
     cerrarSesion("La sesión venció. Vuelva a iniciar sesión.");
   }
-  const datos = await respuesta.json().catch(() => null);
   return { estado: respuesta.status, datos };
 }
 async function renovarSesion() {
@@ -139,6 +146,9 @@ async function renovarSesion() {
 }
 function mensajeDe({ estado, datos }) {
   if (estado === 0) return SIN_CONEXION;
+  // Guía II-06 (H-01): con la base caída la API responde 500; «Intente de nuevo» llevaba a repetir
+  // sin fin. Se dice qué hacer mientras tanto, como en el plan de contingencia del ADR N.° 14.
+  if (fallaDelServidor(estado, datos)) return "El sistema no puede consultar ni guardar datos en este momento. Anote la atención en la hoja de papel y avise al administrador; puede volver a intentar en un minuto.";
   if (!datos) return `El servidor respondió ${estado}. Intente de nuevo.`;
   const detalle = (datos.errores || []).map((e) => e.mensaje).join(" ");
   return [datos.title, detalle || datos.detail].filter(Boolean).join(". ");
@@ -237,7 +247,7 @@ function marco(...contenido) {
       h("nav", { "aria-label": "Menú principal" },
         h("div", { class: "grupo" }, enlace("recepcion", "Recepción"), enlace("socio", "Registrar socio"), enlace("pago", "Registrar pago"), enlace("vencimientos", "Vencimientos"), enlace("historial", "Socios e historial")),
         esAdmin() ? h("div", { class: "grupo" }, h("div", { class: "grupo-t" }, "Administración"), enlace("reportes", "Reportes"), enlace("planes", "Planes"), enlace("personal", "Personal"), enlace("auditoria", "Auditoría")) : null),
-      h("div", { class: "conexion" + (navigator.onLine ? "" : " caida") }, h("i", {}), h("span", {}, navigator.onLine ? "En línea con el servidor" : "Sin conexión: la consulta necesita internet")),
+      h("div", { class: "conexion" + (navigator.onLine && !servidorCaido ? "" : " caida"), role: "status" }, h("i", {}), h("span", {}, !navigator.onLine ? "Sin conexión: la consulta necesita internet" : servidorCaido ? "El servidor no responde: use la hoja de papel" : "En línea con el servidor")),
       h("div", { class: "usuario" }, h("span", { class: "avatar" }, nombre.charAt(0).toUpperCase()), h("div", {}, h("strong", {}, nombre), h("small", {}, ROLES[sesion.rol] || sesion.rol)),
         h("button", { type: "button", class: "salir", "aria-label": "Cerrar sesión", title: "Cerrar sesión", onclick: () => cerrarSesion() }, ico("salir"))),
       h("div", { class: "demo" }, "Solo datos de prueba hasta que se apruebe el aviso de privacidad (DT-10).")),

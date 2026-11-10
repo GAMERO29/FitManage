@@ -1,0 +1,5 @@
+PASA · 500 sin cuerpo (base caída) · indicador: «El servidor no responde: use la hoja de papel» · mensaje: «El sistema no puede consultar ni guardar datos en este momento. Anote la atención en la ho»
+PASA · 503 SERVICIO_NO_DISPONIBLE · indicador: «El servidor no responde: use la hoja de papel» · mensaje: «El sistema no puede consultar ni guardar datos en este momento. Anote la atención en la ho»
+PASA · 503 CORREO_NO_DISPONIBLE · indicador: «En línea con el servidor» · mensaje: «No se pudo enviar el correo»
+PASA · 404 NO_ENCONTRADO · indicador: «En línea con el servidor» · mensaje: «?No registradoNadie tiene el documento CC 1090000011Registrar socio»
+Resumen: 4 de 4 casos pasan.
