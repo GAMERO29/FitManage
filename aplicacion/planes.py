@@ -5,9 +5,10 @@ from __future__ import annotations
 from decimal import Decimal
 from uuid import UUID
 
+from dominio.auditoria import EventoAuditoria, TipoEvento
 from dominio.errores import PermisoDenegado, PlanDuplicado, PlanNoDisponible, UltimoPlanActivo
 from dominio.modelos import Plan, Usuario
-from dominio.puertos import PlanRepositorio
+from dominio.puertos import PlanRepositorio, RegistroAuditoria, Reloj, SinAuditoria
 
 
 class GestionPlanesService:
@@ -17,8 +18,17 @@ class GestionPlanesService:
     Un plan no se borra: se desactiva (RN-09), y deja de ofrecerse en el formulario de pago.
     """
 
-    def __init__(self, planes: PlanRepositorio) -> None:
+    def __init__(
+        self,
+        planes: PlanRepositorio,
+        reloj: Reloj | None = None,
+        auditoria: RegistroAuditoria | None = None,
+    ) -> None:
+        if auditoria is not None and reloj is None:
+            raise ValueError("Para registrar la auditoría hace falta el reloj.")
         self._planes = planes
+        self._reloj = reloj
+        self._auditoria = auditoria or SinAuditoria()
 
     def crear(self, nombre: str, duracion_dias: int, precio: Decimal, solicitante: Usuario) -> Plan:
         self._exigir_administrador(solicitante)
@@ -27,6 +37,12 @@ class GestionPlanesService:
             raise PlanDuplicado(f"Ya hay un plan llamado {nombre}.")
         plan = Plan(nombre, duracion_dias, precio)
         self._planes.guardar(plan)
+        self._registrar(
+            TipoEvento.PLAN_CREADO,
+            solicitante,
+            plan,
+            {"duracionDias": plan.duracion_dias, "precio": int(plan.precio)},
+        )
         return plan
 
     def cambiar(
@@ -50,7 +66,25 @@ class GestionPlanesService:
             id=actual.id,
         )
         self._planes.guardar(nuevo)
+        if nuevo.precio != actual.precio:  # RN-08: vale para los pagos que vengan
+            self._registrar(
+                TipoEvento.PRECIO_CAMBIADO,
+                solicitante,
+                nuevo,
+                {"antes": int(actual.precio), "despues": int(nuevo.precio)},
+            )
+        if nuevo.activo != actual.activo:
+            tipo = TipoEvento.PLAN_REACTIVADO if nuevo.activo else TipoEvento.PLAN_DESACTIVADO
+            self._registrar(tipo, solicitante, nuevo, {})
         return nuevo
+
+    def _registrar(self, tipo: TipoEvento, actor: Usuario, plan: Plan, extra: dict) -> None:
+        if self._reloj is None:  # solo pasa con SinAuditoria: pruebas que no miran el rastro
+            return
+        detalle = {"plan": plan.nombre, **extra}
+        self._auditoria.registrar(
+            EventoAuditoria(tipo, actor, self._reloj.ahora(), plan.id, None, detalle)
+        )
 
     def _activos(self) -> int:
         return sum(1 for p in self._planes.todos() if p.activo)

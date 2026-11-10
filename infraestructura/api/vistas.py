@@ -255,9 +255,10 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
     """
     if request.method == "POST":
         datos = leer_json(request)
-        plan = contenedor.gestion_planes().crear(
-            datos["nombre"], datos["duracionDias"], Decimal(datos["precio"]), request.usuario
-        )
+        with transaction.atomic():  # el plan y su evento de auditoría, juntos o ninguno
+            plan = contenedor.gestion_planes().crear(
+                datos["nombre"], datos["duracionDias"], Decimal(datos["precio"]), request.usuario
+            )
         respuesta = JsonResponse(presentacion.plan(plan), status=201)
         respuesta["Location"] = f"/api/v1/planes/{plan.id}"
         return respuesta
@@ -286,12 +287,13 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
 @endpoint(roles=SOLO_ADMINISTRADOR)
 def cambiar_plan(request: HttpRequest, planId: str) -> JsonResponse:  # noqa: N803
     datos = leer_json(request)
-    plan = contenedor.gestion_planes().cambiar(
-        uuid.UUID(planId),
-        request.usuario,
-        precio=Decimal(datos["precio"]) if "precio" in datos else None,
-        activo=datos.get("activo"),
-    )
+    with transaction.atomic():
+        plan = contenedor.gestion_planes().cambiar(
+            uuid.UUID(planId),
+            request.usuario,
+            precio=Decimal(datos["precio"]) if "precio" in datos else None,
+            activo=datos.get("activo"),
+        )
     return JsonResponse(presentacion.plan(plan))
 
 
@@ -409,6 +411,23 @@ def reporte_ingresos(request: HttpRequest) -> JsonResponse:
             ]
         )
     return JsonResponse(consultas.reporte_ingresos(desde, hasta))
+
+
+@require_GET
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def consultar_auditoria(request: HttpRequest) -> JsonResponse:
+    desde = date.fromisoformat(request.GET["desde"])
+    hasta = date.fromisoformat(request.GET["hasta"])
+    if hasta < desde or (hasta - desde).days > 31:
+        raise SolicitudInvalida(
+            [
+                {
+                    "campo": "hasta",
+                    "mensaje": "Debe ser igual o posterior a desde y máximo 31 días después.",
+                }
+            ]
+        )
+    return JsonResponse(consultas.auditoria(desde, hasta, int(request.GET.get("pagina", "1"))))
 
 
 @require_GET
