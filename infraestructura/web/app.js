@@ -24,6 +24,7 @@ const ESTADO = () => ({
   pagoBusqueda: { tipo: "CC", numero: "" },
 });
 let S = ESTADO();
+let llevarDatos = false;
 
 const TIPOS = [["CC", "CC · Cédula de ciudadanía"], ["CE", "CE · Cédula de extranjería"], ["PPT", "PPT · Permiso por protección temporal"], ["PASAPORTE", "Pasaporte"]];
 const MEDIOS = [["EFECTIVO", "Efectivo"], ["NEQUI", "Nequi"], ["DAVIPLATA", "Daviplata"], ["TRANSFERENCIA", "Transferencia"]];
@@ -219,7 +220,11 @@ function buscadorDoc(estado, alBuscar, texto = "Buscar") {
 }
 
 /* --- Marco con riel ------------------------------------------------------------------------ */
-function enlace(r, texto) { return h("a", { href: `#${r}`, "aria-current": rutaActual() === r ? "page" : null }, ico(r), h("span", {}, texto)); }
+function enlace(r, texto) {
+  // Volver a la misma sección desde el menú también la deja en blanco.
+  const mismo = (ev) => { if (rutaActual() === r) { ev.preventDefault(); S = ESTADO(); render(); } };
+  return h("a", { href: `#${r}`, "aria-current": rutaActual() === r ? "page" : null, onclick: mismo }, ico(r), h("span", {}, texto));
+}
 function marco(...contenido) {
   const nombre = sesion.nombre || "Personal";
   return h("div", { class: "app" },
@@ -277,7 +282,7 @@ async function consultar() {
   const i = document.getElementById("doc");
   if (i) i.focus();
 }
-function irAPago(tipo, numero, estado) { S.pago = { ...ESTADO().pago, socio: { tipo, numero, estado } }; ir("pago"); }
+function irAPago(tipo, numero, estado) { llevarDatos = true; S.pago = { ...ESTADO().pago, socio: { tipo, numero, estado } }; ir("pago"); }
 function resultadoConsulta() {
   const res = S.consulta.resultado;
   if (!res) return h("div", { class: "resultado r-vacio" }, anillo([], 1, { t: 96, punteada: true, pista: "#C9BCE0" }),
@@ -285,12 +290,12 @@ function resultadoConsulta() {
   if (res.estado === 404) return h("div", { class: "resultado r-neutro", role: "status" },
     anillo([], 1, { t: 140, punteada: true, pista: "rgba(61,58,77,.35)", centro: h("b", { class: "estado-grande" }, "?") }),
     h("div", {}, h("div", { class: "estado estado-grande" }, "No registrado"), h("div", { class: "estado-sub" }, `Nadie tiene el documento ${res.tipo} ${res.numero}`),
-      h("div", { class: "acciones" }, h("a", { class: "btn", href: "#socio", onclick: () => { Object.assign(S.socio, { ...ESTADO().socio, tipo: res.tipo, numero: res.numero }); } }, "Registrar socio"))));
+      h("div", { class: "acciones" }, h("a", { class: "btn", href: "#socio", onclick: () => { llevarDatos = true; Object.assign(S.socio, { ...ESTADO().socio, tipo: res.tipo, numero: res.numero }); } }, "Registrar socio"))));
   if (res.estado !== 200) return aviso("mal", mensajeDe(res));
   const e = res.datos;
   const datos = (extra) => h("div", { class: "datos" }, h("div", { class: "dato" }, h("span", {}, "Socio"), h("strong", {}, e.nombreCorto)),
     h("div", { class: "dato" }, h("span", {}, "Documento"), h("strong", { class: "tab" }, e.documentoEnmascarado)), extra);
-  const historial = esAdmin() ? h("a", { class: "btn-sec", href: "#historial", onclick: () => { Object.assign(S.hist, { ...ESTADO().hist, tipo: res.tipo, numero: res.numero }); } }, "Ver historial") : null;
+  const historial = esAdmin() ? h("a", { class: "btn-sec", href: "#historial", onclick: () => { llevarDatos = true; Object.assign(S.hist, { ...ESTADO().hist, tipo: res.tipo, numero: res.numero }); } }, "Ver historial") : null;
   const pagar = (clase, texto) => h("a", { class: clase, href: "#pago", onclick: (ev) => { ev.preventDefault(); irAPago(res.tipo, res.numero, e); } }, texto);
   if (e.estado === "ACTIVO") {
     const clave = e.diasRestantes <= 3 ? "aviso" : "ok";
@@ -370,7 +375,7 @@ function pSocio() {
         campo("tipo-s", "Tipo de documento", selectTipo("tipo-s", X.tipo, (v) => { X.tipo = v; })),
         h("div", { class: "campo" }, h("label", { class: "et", for: "num" }, "Número de documento"),
           h("input", { id: "num", type: "text", inputmode: "numeric", autocomplete: "off", value: X.numero, class: "tab-num" + (dup ? " error-campo" : ""), oninput: (e) => { X.numero = e.target.value; } }),
-          dup ? h("div", { class: "msg-error", role: "alert" }, ico("alerta", 18), h("span", {}, "Ese documento ya está registrado. ", h("a", { href: "#recepcion", onclick: () => { Object.assign(S.consulta, { tipo: X.tipo, numero: X.numero.trim() }); void consultar(); } }, "Ver su estado"))) : null),
+          dup ? h("div", { class: "msg-error", role: "alert" }, ico("alerta", 18), h("span", {}, "Ese documento ya está registrado. ", h("a", { href: "#recepcion", onclick: () => { llevarDatos = true; Object.assign(S.consulta, { tipo: X.tipo, numero: X.numero.trim() }); void consultar(); } }, "Ver su estado"))) : null),
         campo("nom", "Nombres", nombres), campo("ape", "Apellidos", apellidos),
         campo("tel", "Celular (10 dígitos)", telefono, "Se usa para el recordatorio por WhatsApp.")),
       h("div", { class: "autorizacion" + (X.falta ? " falta" : "") },
@@ -727,7 +732,10 @@ function cerrarSesion(motivo) {
   render();
 }
 window.addEventListener("hashchange", () => {
-  if (rutaActual() === "pago" && S.pago.ok) S.pago = ESTADO().pago; // un pago terminado no se queda en pantalla
+  // Al cambiar de sección los campos quedan en blanco, salvo cuando un botón lleva el socio a la
+  // siguiente pantalla (Registrar socio, Registrar pago o Ver historial desde una consulta).
+  if (!llevarDatos) S = ESTADO();
+  llevarDatos = false;
   mensajeLogin = ""; render(); window.scrollTo(0, 0); const m = document.getElementById("contenido"); if (m) m.focus({ preventScroll: true }); });
 window.addEventListener("online", render);
 window.addEventListener("offline", render);
