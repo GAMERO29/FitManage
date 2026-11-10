@@ -79,6 +79,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
 textarea{padding:12px 14px;min-height:96px;resize:vertical}
 .error-campo{border-color:var(--rojo)!important;background:#FFFBFA!important}
 .msg-error{font-size:14px;color:var(--rojo-tinta);display:flex;gap:6px;align-items:flex-start}
+.msg-aviso{font-size:13px;color:var(--ambar-tinta);display:flex;gap:6px;align-items:flex-start;margin-top:6px}
 .btn{min-height:48px;padding:0 22px;border:0;border-radius:var(--r-s);background:var(--marca);color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-shadow:0 1px 2px rgba(35,0,90,.2),0 4px 10px -4px rgba(35,0,90,.45);transition:background-color .15s, transform .15s}
 .btn:hover{background:var(--marca-2);color:#fff}
 .btn:active{transform:translateY(1px)}

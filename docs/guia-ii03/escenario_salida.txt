@@ -1,0 +1,10 @@
+A1 PASA · 4 eventos: PAGO_REGISTRADO(Laura Demo), PLAN_CAMBIADO(Diana Demo), PAGO_ANULADO(Carlos Demo), PRECIO_CAMBIADO(Carlos Demo)
+A2 PASA · socio en la consulta: {"nombre":"Ana Prueba Demo","documentoEnmascarado":"CC ******0011"}
+A3 PASA · GET /auditoria con el token de Laura: 403
+A4 PASA · filas en pantalla: 4; devolución señalada: true
+A5 PASA · ancho del documento: 360 px
+A6 PASA · opción en el menú: false; título al entrar por la ruta: «Esta sección es solo para el administrador»
+A7 PASA · PATCH enviados: 1
+A8 PASA · sin errores de JavaScript
+
+Resumen: 8 de 8 comprobaciones pasan.
