@@ -1,0 +1,17 @@
+NOTICE:  database "fm_ensayo_0003" does not exist, skipping
+1. Base en 0002 (lo que hay hoy en producción)
+   pagos: 40 · vigentes: 30 · anulados: 10
+2. Consulta previa: filas que romperían los CHECK nuevos
+   0
+3. migrate a 0003
+
+real	0m1.048s
+user	0m0.992s
+sys	0m0.036s
+   OK
+   pagos después: 40 · tabla auditoria: t · disparador: 1
+4. Vuelta atrás a 0002 (el código anterior no conoce la tabla nueva)
+   OK · pagos: 40 · auditoria existe: f
+5. Caso negativo: una fila incoherente hace fallar la migración
+psycopg.errors.CheckViolation: check constraint "anulacion_completa_o_ninguna" of relation "pagos" is violated by some row
+   estado de la migración: 0002_credenciales_renovacion_idempotencia

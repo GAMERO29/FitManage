@@ -93,6 +93,9 @@ def main() -> None:
             socio = socios[n % SOCIOS]  # 10 pagos por socio: un año de renovaciones
             plan = azar.choices(planes, weights=[1, 2, 6, 1])[0]
             inicio = HOY - timedelta(days=azar.randint(0, 360))
+            registrado = datetime.combine(inicio, datetime.min.time(), ZONA_HORARIA)
+            # Guía II-03: un pago anulado lleva motivo, autor y fecha (CHECK de la migración 0003).
+            anulado = azar.random() < 0.02
             pagos.append(
                 PagoModelo(
                     id=uuid.uuid4(),
@@ -105,8 +108,11 @@ def main() -> None:
                     fecha_inicio=inicio,
                     fecha_vencimiento=inicio + timedelta(days=plan.duracion_dias - 1),
                     registrado_por=laura,
-                    registrado_en=datetime.combine(inicio, datetime.min.time(), ZONA_HORARIA),
-                    estado="ANULADO" if azar.random() < 0.02 else "VIGENTE",
+                    registrado_en=registrado,
+                    estado="ANULADO" if anulado else "VIGENTE",
+                    fecha_anulacion=registrado + timedelta(hours=1) if anulado else None,
+                    anulado_por=laura if anulado else None,
+                    motivo_anulacion="Pago de carga anulado" if anulado else None,
                 )
             )
         PagoModelo.objects.bulk_create(pagos, batch_size=2_000)
