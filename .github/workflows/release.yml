@@ -1,0 +1,50 @@
+# Guía II-05: etiqueta y publica una versión que YA está desplegada y verificada en producción.
+# Se lanza a mano (workflow_dispatch). No construye nada: la imagen es la que probó CI y desplegó
+# Despliegue, identificada por el commit. Si el commit no tuvo un despliegue exitoso, no hay versión.
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión SemVer con v (por ejemplo v1.1.0); sus notas deben estar en docs/releases/"
+        required: true
+      commit:
+        description: "SHA completo del commit de main que está en producción"
+        required: true
+permissions:
+  contents: write # crear la etiqueta y la release
+  actions: read # consultar si el commit se desplegó
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      COMMIT: ${{ inputs.commit }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: La versión, sus notas y el commit son válidos
+        run: |
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::$VERSION no es vX.Y.Z"; exit 1; }
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::el commit debe ser el SHA completo"; exit 1; }
+          test -f "docs/releases/$VERSION.md" || { echo "::error::faltan docs/releases/$VERSION.md"; exit 1; }
+          git merge-base --is-ancestor "$COMMIT" origin/main || { echo "::error::$COMMIT no está en main"; exit 1; }
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then echo "::error::$VERSION ya existe"; exit 1; fi
+      - name: El commit tuvo un despliegue exitoso y verificado
+        run: |
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/deploy.yml/runs?head_sha=$COMMIT&status=success" --jq '.total_count')
+          [ "$n" -ge 1 ] || { echo "::error::$COMMIT no tiene un despliegue exitoso"; exit 1; }
+          echo "Despliegues exitosos de $COMMIT: $n"
+      - name: Etiqueta anotada y release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" "$COMMIT" -m "$VERSION"
+          git push origin "refs/tags/$VERSION"
+          gh release create "$VERSION" --verify-tag --title "$VERSION" --notes-file "docs/releases/$VERSION.md"
+          echo "### $VERSION publicada sobre \`$COMMIT\`" >> "$GITHUB_STEP_SUMMARY"
