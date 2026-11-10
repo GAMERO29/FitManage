@@ -1,0 +1,6 @@
+T1 PASA · la pantalla dice: «30díasACTIVOPuede ingresarSocioAna P.DocumentoCC ******0011Vencemiércoles 9 de d»
+T2 PASA · pago Nequi M123456 VIGENTE; vence 2027-01-08
+T3 PASA · vigentes: Quincenal, Mensual · M123456 ANULADO («La socia pidió quince días y no un mes»)
+A1 PASA · la pantalla de auditoría muestra a Laura Demo, la hora y el motivo
+A2 PASA · precio nuevo 80000; pagos Mensual ya hechos: 75000, 75000
+Resumen: 5 de 5 tareas se pueden completar y observar en esta versión.

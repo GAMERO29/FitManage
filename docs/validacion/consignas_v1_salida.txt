@@ -1,0 +1,9 @@
+Textos de la interfaz revisados: 94
+T1: PISTA: Entrar
+T2: sin pistas
+T3: PISTA: días
+T4: PISTA: Siguiente
+T5: sin pistas
+A1: sin pistas
+A2: sin pistas
+Resumen: 3 pistas en 7 consignas.
