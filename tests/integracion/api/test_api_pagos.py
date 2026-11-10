@@ -179,11 +179,29 @@ def test_motivo_demasiado_corto_es_400(administracion):
     )
 
 
-def test_la_recepcionista_no_puede_anular(api):
-    """PA-07."""
+def test_la_recepcionista_no_anula_un_pago_de_otro_dia(api):
+    """PA-07, ajustada por el ADR N.° 18: el pago de Jorge lo registró ella, pero el 31/8."""
     r = api.como("laura@gimnasio-demo.co").patch(f"{PAGOS}/{ID_PAGO_JORGE}", ANULACION)
     assert r.status_code == 403
     assert PagoModelo.objects.get(id=ID_PAGO_JORGE).estado == "VIGENTE"
+
+
+def test_la_recepcionista_anula_el_pago_que_registro_hoy(api):
+    """ADR N.° 18: corrige un error en el momento."""
+    laura = api.como("laura@gimnasio-demo.co")
+    pago = laura.post(
+        PAGOS,
+        {
+            "tipoDocumento": "PPT",
+            "numeroDocumento": "25789456",
+            "planId": str(ID_MENSUAL),
+            "medio": "EFECTIVO",
+        },
+        {"Idempotency-Key": str(uuid.uuid4())},
+    ).json()
+    r = laura.patch(f"{PAGOS}/{pago['id']}", ANULACION)
+    assert r.status_code == 200
+    assert r.json()["anulacion"]["anuladoPor"] == "Laura"
 
 
 def test_delete_no_existe_sobre_pagos(administracion, client):

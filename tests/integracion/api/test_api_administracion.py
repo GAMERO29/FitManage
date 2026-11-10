@@ -81,8 +81,9 @@ def test_el_historial_trae_pagos_vigentes_y_anulados(administracion):
     assert cuerpo["estado"]["estado"] == "SIN_MEMBRESIA"
 
 
-def test_la_recepcionista_no_ve_el_historial(recepcion):
-    assert recepcion.get("/api/v1/socios/CC/1090123456/pagos").status_code == 403
+def test_la_recepcionista_tambien_ve_el_historial(recepcion):
+    """ADR N.° 18: lo necesita para corregir sus pagos del día y cambiar planes."""
+    assert recepcion.get("/api/v1/socios/CC/1090123456/pagos").status_code == 200
 
 
 def test_historial_de_un_socio_que_no_existe(administracion):

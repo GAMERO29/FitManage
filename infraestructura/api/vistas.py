@@ -169,7 +169,7 @@ def registrar_socio(request: HttpRequest) -> JsonResponse:
 
 
 @require_GET
-@endpoint(roles=SOLO_ADMINISTRADOR)
+@endpoint(roles=TODO_EL_PERSONAL)
 def historial_socio(
     request: HttpRequest,
     tipoDocumento: str,  # noqa: N803
@@ -344,7 +344,7 @@ def registrar_pago(request: HttpRequest) -> JsonResponse:
 
 
 @require_http_methods(["PATCH"])
-@endpoint(roles=SOLO_ADMINISTRADOR)
+@endpoint(roles=TODO_EL_PERSONAL)
 def anular_pago(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: N803
     datos = leer_json(request)
     with transaction.atomic():
@@ -355,7 +355,7 @@ def anular_pago(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: N80
 
 
 @require_http_methods(["GET", "POST"])
-@endpoint(roles=SOLO_ADMINISTRADOR)
+@endpoint(roles=TODO_EL_PERSONAL)
 def cambio_de_plan(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: N803
     """GET: cómo quedaría el cambio. POST: anula el pago y registra el plan nuevo, todo o nada."""
     servicio = contenedor.cambio_plan()

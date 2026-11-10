@@ -8,7 +8,7 @@ from fechas import bogota
 from aplicacion.pagos import AnulacionPagoService
 from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import MotivoRequerido, PagoNoAnulable, PagoNoEncontrado, PermisoDenegado
-from dominio.modelos import EstadoMembresia, EstadoPago
+from dominio.modelos import EstadoMembresia, EstadoPago, Rol, Usuario
 
 AHORA = bogota(2026, 10, 7, 19, 0)
 
@@ -27,10 +27,40 @@ def test_administrador_anula_el_ultimo_pago_vigente(ana, mensual, laura, carlos,
     assert anterior.esta_vigente()
 
 
-def test_recepcionista_no_puede_anular(ana, mensual, laura, fabrica_pago):
-    _, servicio = preparar(fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura))
+def test_la_recepcionista_anula_lo_que_ella_registro_hoy(ana, mensual, laura, fabrica_pago):
+    """ADR N.° 18: corrige un error en el momento."""
+    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    _, servicio = preparar(pago)
+    assert servicio.anular_ultimo(ana, laura, "Plan equivocado") is pago
+
+
+def test_la_recepcionista_no_anula_un_pago_de_ayer(ana, mensual, laura, fabrica_pago):
+    _, servicio = preparar(fabrica_pago(ana, mensual, date(2026, 10, 6), date(2026, 11, 4), laura))
     with pytest.raises(PermisoDenegado):
         servicio.anular_ultimo(ana, laura, "Intento")
+
+
+def test_la_recepcionista_no_anula_lo_que_registro_otra_persona(
+    ana, mensual, laura, carlos, fabrica_pago
+):
+    _, servicio = preparar(fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), carlos))
+    with pytest.raises(PermisoDenegado):
+        servicio.anular_ultimo(ana, laura, "Intento")
+
+
+def test_la_recepcionista_si_puede_preparar_un_cambio_de_plan_de_otro_dia(
+    ana, mensual, laura, fabrica_pago
+):
+    pago = fabrica_pago(ana, mensual, date(2026, 9, 7), date(2026, 10, 6), laura)
+    _, servicio = preparar(pago)
+    assert servicio.verificar_anulable(pago.id, laura, para_cambio_de_plan=True) is pago
+
+
+def test_otros_roles_no_anulan(ana, mensual, laura, fabrica_pago):
+    entrenador = Usuario("Diego", "diego@gimnasio-demo.co", Rol.ENTRENADOR)
+    _, servicio = preparar(fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura))
+    with pytest.raises(PermisoDenegado):
+        servicio.anular_ultimo(ana, entrenador, "Intento")
 
 
 def test_sin_pagos_vigentes_no_hay_nada_que_anular(ana, carlos):
@@ -94,8 +124,8 @@ def test_por_id_pago_inexistente(carlos):
         servicio.anular(uuid4(), carlos, "No existe")
 
 
-def test_por_id_la_recepcionista_no_puede(ana, mensual, laura, fabrica_pago):
-    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+def test_por_id_la_recepcionista_no_anula_un_pago_viejo(ana, mensual, laura, fabrica_pago):
+    pago = fabrica_pago(ana, mensual, date(2026, 9, 7), date(2026, 10, 6), laura)
     _, servicio = preparar(pago)
     with pytest.raises(PermisoDenegado):
         servicio.anular(pago.id, laura, "Intento")

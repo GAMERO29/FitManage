@@ -31,7 +31,7 @@ const MEDIOS = [["EFECTIVO", "Efectivo"], ["NEQUI", "Nequi"], ["DAVIPLATA", "Dav
 const ROLES = { RECEPCIONISTA: "Recepcionista", ADMINISTRADOR: "Administrador", ENTRENADOR: "Entrenador" };
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-const RUTAS_ADMIN = ["historial", "reportes", "planes", "personal"];
+const RUTAS_ADMIN = ["reportes", "planes", "personal"];
 const TITULOS = { login: "Iniciar sesión", recepcion: "Recepción", pago: "Registrar pago", socio: "Registrar socio", vencimientos: "Vencimientos", historial: "Socios e historial", reportes: "Reportes", planes: "Planes", personal: "Personal" };
 const COLOR = { ok: "#1E8A4C", aviso: "#B45309", mal: "#B42318", neutro: "#77738A", plan: "#5B3A99" };
 const MEDIO_COLOR = { EFECTIVO: "#23005A", NEQUI: "#5B3A99", DAVIPLATA: "#9A84C7", TRANSFERENCIA: "#1E8A4C" };
@@ -96,6 +96,9 @@ const cuando = (iso) => { const n = diasHasta(iso); return n === 0 ? "Hoy" : n =
 const mayuscula = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const nombrePlan = (id) => (planes.find((p) => p.id === id) || {}).nombre;
 const esAdmin = () => sesion && sesion.rol === "ADMINISTRADOR";
+const diaBogota = (fecha) => fecha.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+// ADR N.° 18: la recepcionista anula solo lo que ella registró hoy. Es una ayuda en pantalla; decide el servidor.
+const puedeAnular = (pago) => esAdmin() || (pago.registradoPor === sesion.nombre && diaBogota(new Date(pago.registradoEl)) === diaBogota(new Date()));
 
 /* --- API ---------------------------------------------------------------------------------- */
 async function llamar(ruta, { metodo = "GET", cuerpo, cabeceras = {}, renovar = true } = {}) {
@@ -231,8 +234,8 @@ function marco(...contenido) {
     h("aside", { class: "riel" },
       h("a", { class: "marca", href: "#recepcion", "aria-label": "FitManage, ir a recepción" }, marcaSvg(36), h("b", {}, "Fit", h("span", {}, "Manage"))),
       h("nav", { "aria-label": "Menú principal" },
-        h("div", { class: "grupo" }, enlace("recepcion", "Recepción"), enlace("socio", "Registrar socio"), enlace("pago", "Registrar pago"), enlace("vencimientos", "Vencimientos")),
-        esAdmin() ? h("div", { class: "grupo" }, h("div", { class: "grupo-t" }, "Administración"), enlace("historial", "Socios e historial"), enlace("reportes", "Reportes"), enlace("planes", "Planes"), enlace("personal", "Personal")) : null),
+        h("div", { class: "grupo" }, enlace("recepcion", "Recepción"), enlace("socio", "Registrar socio"), enlace("pago", "Registrar pago"), enlace("vencimientos", "Vencimientos"), enlace("historial", "Socios e historial")),
+        esAdmin() ? h("div", { class: "grupo" }, h("div", { class: "grupo-t" }, "Administración"), enlace("reportes", "Reportes"), enlace("planes", "Planes"), enlace("personal", "Personal")) : null),
       h("div", { class: "conexion" + (navigator.onLine ? "" : " caida") }, h("i", {}), h("span", {}, navigator.onLine ? "En línea con el servidor" : "Sin conexión: la consulta necesita internet")),
       h("div", { class: "usuario" }, h("span", { class: "avatar" }, nombre.charAt(0).toUpperCase()), h("div", {}, h("strong", {}, nombre), h("small", {}, ROLES[sesion.rol] || sesion.rol)),
         h("button", { type: "button", class: "salir", "aria-label": "Cerrar sesión", title: "Cerrar sesión", onclick: () => cerrarSesion() }, ico("salir"))),
@@ -295,7 +298,7 @@ function resultadoConsulta() {
   const e = res.datos;
   const datos = (extra) => h("div", { class: "datos" }, h("div", { class: "dato" }, h("span", {}, "Socio"), h("strong", {}, e.nombreCorto)),
     h("div", { class: "dato" }, h("span", {}, "Documento"), h("strong", { class: "tab" }, e.documentoEnmascarado)), extra);
-  const historial = esAdmin() ? h("a", { class: "btn-sec", href: "#historial", onclick: () => { llevarDatos = true; Object.assign(S.hist, { ...ESTADO().hist, tipo: res.tipo, numero: res.numero }); } }, "Ver historial") : null;
+  const historial = h("a", { class: "btn-sec", href: "#historial", onclick: () => { llevarDatos = true; Object.assign(S.hist, { ...ESTADO().hist, tipo: res.tipo, numero: res.numero }); } }, "Ver historial");
   const pagar = (clase, texto) => h("a", { class: clase, href: "#pago", onclick: (ev) => { ev.preventDefault(); irAPago(res.tipo, res.numero, e); } }, texto);
   if (e.estado === "ACTIVO") {
     const clave = e.diasRestantes <= 3 ? "aviso" : "ok";
@@ -575,7 +578,7 @@ function pHistorial() {
   const H = S.hist;
   if (H.numero && !H.datos && !H.error) una("hist", cargarHistorial);
   const buscar = buscadorDoc(H, () => { H.datos = null; H.error = null; H.aviso = null; void cargarHistorial(); }, "Ver historial");
-  if (!H.datos) return marco(h("div", {}, h("h1", {}, "Socios e historial"), h("div", { class: "sub mt-6" }, "Pagos vigentes y anulados de un socio. Solo el administrador lo ve.")), buscar, H.error ? aviso("mal", H.error) : null);
+  if (!H.datos) return marco(h("div", {}, h("h1", {}, "Socios e historial"), h("div", { class: "sub mt-6" }, "Pagos vigentes y anulados de un socio. Desde aquí se cambia el plan o se anula el último pago.")), buscar, H.error ? aviso("mal", H.error) : null);
   const d = H.datos, e = d.estado;
   const vigentes = d.pagos.filter((p) => p.estado === "VIGENTE");
   const ultimo = vigentes.slice().sort((a, b) => (a.inicia < b.inicia ? 1 : a.inicia > b.inicia ? -1 : a.registradoEl < b.registradoEl ? 1 : -1))[0];
@@ -594,7 +597,8 @@ function pHistorial() {
       h("div", { class: "cabecera hoja-centro" }, h("h2", { id: "t-h" }, "Historial de pagos"),
         h("div", { class: "fila" },
           h("button", { type: "button", class: "btn-sec", disabled: !ultimo || !!H.cambio, onclick: () => abrirCambio(ultimo) }, "Cambiar plan"),
-          h("button", { type: "button", class: "btn-sec peligro", disabled: !ultimo || H.confirmando, onclick: () => { H.confirmando = true; H.cambio = null; H.aviso = null; H.cambiado = null; render(); const t = document.getElementById("motivo"); if (t) t.focus(); } }, "Anular último pago"))),
+          h("button", { type: "button", class: "btn-sec peligro", disabled: !ultimo || H.confirmando || !puedeAnular(ultimo), title: ultimo && !puedeAnular(ultimo) ? "Solo puede anular los pagos que usted registró hoy" : null, onclick: () => { H.confirmando = true; H.cambio = null; H.aviso = null; H.cambiado = null; render(); const t = document.getElementById("motivo"); if (t) t.focus(); } }, "Anular último pago"))),
+      ultimo && !puedeAnular(ultimo) ? h("p", { class: "sub peq mt-8 sin-margen" }, "Usted puede anular solo los pagos que registró hoy. Para anular este pago, pídaselo al administrador; cambiar el plan sí lo puede hacer.") : null,
       d.pagos.length ? h("div", { class: "mt-12" }, tabla(["Plan", "Periodo", "Medio", "Referencia", ">Valor", "Registró", "Estado"], filas)) : h("p", { class: "vacio" }, "Todavía no tiene pagos.")),
     H.cambio && ultimo ? panelCambio() : null,
     H.confirmando && ultimo ? h("section", { class: "hoja pila anular", "aria-labelledby": "t-an" },

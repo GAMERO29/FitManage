@@ -106,9 +106,22 @@ def test_un_pago_ya_anulado_no_se_cambia(administracion, pago_de_ana, trimestral
     assert r.status_code == 409
 
 
-def test_la_recepcionista_no_cambia_planes(api, pago_de_ana, trimestral):
+def test_la_recepcionista_cambia_el_plan_aunque_el_pago_sea_de_otro_dia(
+    api, pago_de_ana, trimestral
+):
+    """ADR N.° 18: el pago de Ana es del 22/9 y lo registró Laura; el cambio no tiene ese límite."""
     recepcion = ClienteAPI(Client()).como("laura@gimnasio-demo.co")
     r = recepcion.post(
+        ruta(pago_de_ana),
+        {"planId": trimestral["id"], "medio": "EFECTIVO", "motivo": "Pidió el plan Trimestral"},
+    )
+    assert r.status_code == 201
+    assert r.json()["anulado"]["anulacion"]["anuladoPor"] == "Laura"
+
+
+def test_el_entrenador_no_cambia_planes(api, pago_de_ana, trimestral):
+    entrenador = ClienteAPI(Client()).como("diego@gimnasio-demo.co")
+    r = entrenador.post(
         ruta(pago_de_ana), {"planId": trimestral["id"], "medio": "EFECTIVO", "motivo": "Cambio"}
     )
     assert r.status_code == 403

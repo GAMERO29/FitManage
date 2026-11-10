@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.5.0
+  version: 1.6.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -381,9 +381,10 @@ paths:
       operationId: historialSocio
       summary: Historial de pagos de un socio
       description: |
-        Solo administrador (CU-03, RF-10). Trae los pagos vigentes y anulados, del más reciente al más
-        antiguo, y el estado actual. Es la única respuesta con el nombre completo del socio, porque
-        el administrador lo necesita para resolver reclamos. No incluye el teléfono.
+        Recepcionista y administrador (CU-03, RF-10, ADR N.° 18). Trae los pagos vigentes y anulados,
+        del más reciente al más antiguo, y el estado actual. Es la única respuesta con el nombre
+        completo del socio, porque se necesita para resolver reclamos y corregir pagos. No incluye el
+        teléfono.
       parameters:
         - $ref: '#/components/parameters/TipoDocumento'
         - $ref: '#/components/parameters/NumeroDocumento'
@@ -774,7 +775,7 @@ paths:
       operationId: vistaPreviaCambioPlan
       summary: Ver cómo quedaría el cambio de plan
       description: |
-        Solo administrador. Sin cambiar nada, dice el periodo y el valor del plan nuevo, que empieza
+        Recepcionista y administrador (ADR N.° 18). Sin cambiar nada, dice el periodo y el valor del plan nuevo, que empieza
         el mismo día que el pago que reemplaza, y la diferencia con lo que ya pagó el socio.
       parameters:
         - name: planId
@@ -822,7 +823,8 @@ paths:
       operationId: cambiarPlanDelSocio
       summary: Cambiar el plan de un socio
       description: |
-        Solo administrador. En una sola transacción anula el último pago vigente del socio con el
+        Recepcionista y administrador, sin importar quién ni cuándo se registró el pago (ADR N.° 18).
+        En una sola transacción anula el último pago vigente del socio con el
         motivo (RN-07) y registra el plan nuevo desde el mismo día de inicio, con su precio completo
         (RN-08). Si el pago nuevo no se puede registrar (por ejemplo, el comprobante ya está en otro
         pago vigente), la anulación tampoco queda. El comprobante del pago anulado se puede volver a usar.
@@ -870,7 +872,8 @@ paths:
       operationId: anularPago
       summary: Anular el último pago vigente de un socio
       description: |
-        Solo administrador (RN-07). Es un `PATCH` porque cambia el estado de un pago que ya existe:
+        El administrador anula cualquier último pago vigente (RN-07); la recepcionista, solo los que
+        ella registró hoy (ADR N.° 18); otro caso responde 403. Es un `PATCH` porque cambia el estado de un pago que ya existe:
         el pago no se borra (por eso no es `DELETE`) y queda con motivo, usuario y fecha en la auditoría.
       parameters:
         - name: pagoId
