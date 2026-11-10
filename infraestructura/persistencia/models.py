@@ -125,4 +125,51 @@ class PagoModelo(models.Model):
                 condition=Q(fecha_vencimiento__gte=F("fecha_inicio")),
                 name="vencimiento_no_anterior_al_inicio",
             ),
+            # Guía II-03, DT-30: la base ya no acepta un estado inventado ni una anulación a medias.
+            models.CheckConstraint(
+                condition=Q(estado__in=["VIGENTE", "ANULADO"]), name="estado_de_pago_conocido"
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        estado="VIGENTE",
+                        fecha_anulacion__isnull=True,
+                        anulado_por__isnull=True,
+                        motivo_anulacion__isnull=True,
+                    )
+                    | (
+                        Q(
+                            estado="ANULADO",
+                            fecha_anulacion__isnull=False,
+                            anulado_por__isnull=False,
+                            motivo_anulacion__isnull=False,
+                        )
+                        & ~Q(motivo_anulacion="")
+                    )
+                ),
+                name="anulacion_completa_o_ninguna",
+            ),
         ]
+
+
+class EventoAuditoriaModelo(models.Model):
+    """Rastro de solo inserción (ADR N.° 19, DT-14). Un disparador rechaza UPDATE y DELETE.
+
+    Guarda ids y valores del negocio, nunca el documento ni el teléfono del socio.
+    """
+
+    id = models.BigAutoField(primary_key=True)
+    ocurrido_en = models.DateTimeField()
+    tipo = models.CharField(max_length=30)
+    actor = models.ForeignKey(
+        UsuarioModelo, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    # Copia del nombre: si la cuenta cambia de nombre, el rastro sigue diciendo quién fue.
+    actor_nombre = models.CharField(max_length=80)
+    entidad_id = models.UUIDField()
+    socio_id = models.UUIDField(null=True, blank=True)
+    detalle = models.JSONField(default=dict)
+
+    class Meta:
+        db_table = "auditoria"
+        indexes = [models.Index(fields=["ocurrido_en"], name="auditoria_ocurrido_en")]
