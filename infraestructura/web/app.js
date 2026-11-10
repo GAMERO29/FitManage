@@ -18,6 +18,7 @@ const ESTADO = () => ({
   pago: { socio: null, planId: null, medio: "EFECTIVO", referencia: "", previa: null, error: null, ok: null, clave: null, enviando: false },
   hist: { tipo: "CC", numero: "", datos: null, error: null, confirmando: false, motivo: "", falta: false, aviso: null, cambio: null, cambiado: null },
   reporte: { desde: null, hasta: null, datos: null, error: null },
+  audit: { desde: null, hasta: null, pagina: 1, datos: null, error: null },
   venc: { dias: 3, filas: null, error: null },
   planes: { todos: null, aviso: null, error: null, creando: false },
   personal: { cuentas: null, error: null, aviso: null, creando: false },
@@ -31,8 +32,8 @@ const MEDIOS = [["EFECTIVO", "Efectivo"], ["NEQUI", "Nequi"], ["DAVIPLATA", "Dav
 const ROLES = { RECEPCIONISTA: "Recepcionista", ADMINISTRADOR: "Administrador", ENTRENADOR: "Entrenador" };
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-const RUTAS_ADMIN = ["reportes", "planes", "personal"];
-const TITULOS = { login: "Iniciar sesión", recepcion: "Recepción", pago: "Registrar pago", socio: "Registrar socio", vencimientos: "Vencimientos", historial: "Socios e historial", reportes: "Reportes", planes: "Planes", personal: "Personal" };
+const RUTAS_ADMIN = ["reportes", "planes", "personal", "auditoria"];
+const TITULOS = { login: "Iniciar sesión", recepcion: "Recepción", pago: "Registrar pago", socio: "Registrar socio", vencimientos: "Vencimientos", historial: "Socios e historial", reportes: "Reportes", planes: "Planes", personal: "Personal", auditoria: "Auditoría" };
 const COLOR = { ok: "#1E8A4C", aviso: "#B45309", mal: "#B42318", neutro: "#77738A", plan: "#5B3A99" };
 const MEDIO_COLOR = { EFECTIVO: "#23005A", NEQUI: "#5B3A99", DAVIPLATA: "#9A84C7", TRANSFERENCIA: "#1E8A4C" };
 const SIN_CONEXION = "No hay conexión con FitManage. Revise el internet de la recepción.";
@@ -67,7 +68,7 @@ function s(tag, attrs, ...hijos) {
 }
 
 /* Iconos del prototipo: trazo 1.8, 20 px */
-const ICO = {"recepcion":[["circle",{"cx":"11","cy":"11","r":"6.5"}],["path",{"d":"m16 16 4 4"}]],"socio":[["circle",{"cx":"10","cy":"8","r":"3.5"}],["path",{"d":"M3.5 19c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5M18 7v6M15 10h6"}]],"pago":[["rect",{"x":"3","y":"6","width":"18","height":"12","rx":"2.5"}],["path",{"d":"M3 10h18M7 14.5h3"}]],"vencimientos":[["rect",{"x":"4","y":"5","width":"16","height":"15","rx":"2.5"}],["path",{"d":"M4 10h16M9 3v4M15 3v4M9 14.5l2 2 4-4"}]],"historial":[["path",{"d":"M4 6h11M4 12h11M4 18h7"}],["circle",{"cx":"18.5","cy":"17","r":"2.5"}],["path",{"d":"M18.5 6v8"}]],"reportes":[["path",{"d":"M4 20V10M10 20V4M16 20v-7M21 20H3"}]],"planes":[["path",{"d":"M12 3 4 7l8 4 8-4-8-4ZM4 12l8 4 8-4M4 17l8 4 8-4"}]],"personal":[["circle",{"cx":"9","cy":"8","r":"3"}],["circle",{"cx":"17","cy":"9","r":"2.5"}],["path",{"d":"M3 19c.6-3 3-4.5 6-4.5s5.4 1.5 6 4.5M15.5 14.6c2.6-.3 4.8.9 5.5 3.4"}]],"salir":[["path",{"d":"M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"}]],"volver":[["path",{"d":"M15 6l-6 6 6 6"}]],"alerta":[["circle",{"cx":"12","cy":"12","r":"9"}],["path",{"d":"M12 7.5v5.5M12 16.5v.01"}]],"ok":[["circle",{"cx":"12","cy":"12","r":"9"}],["path",{"class":"check","pathLength":"1","d":"m8 12.5 2.8 2.8L16 10"}]],"wa":[["path",{"d":"M4 20l1.3-4A8 8 0 1 1 8.2 19z"}],["path",{"d":"M9 9.5c.3 2.3 2.2 4.3 4.6 4.8l1-1.2 2 .9c-.3 1.3-1.4 2-2.6 1.8A7 7 0 0 1 8.2 10c-.2-1.2.5-2.3 1.8-2.6l.9 2z"}]]};
+const ICO = {"recepcion":[["circle",{"cx":"11","cy":"11","r":"6.5"}],["path",{"d":"m16 16 4 4"}]],"socio":[["circle",{"cx":"10","cy":"8","r":"3.5"}],["path",{"d":"M3.5 19c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5M18 7v6M15 10h6"}]],"pago":[["rect",{"x":"3","y":"6","width":"18","height":"12","rx":"2.5"}],["path",{"d":"M3 10h18M7 14.5h3"}]],"vencimientos":[["rect",{"x":"4","y":"5","width":"16","height":"15","rx":"2.5"}],["path",{"d":"M4 10h16M9 3v4M15 3v4M9 14.5l2 2 4-4"}]],"historial":[["path",{"d":"M4 6h11M4 12h11M4 18h7"}],["circle",{"cx":"18.5","cy":"17","r":"2.5"}],["path",{"d":"M18.5 6v8"}]],"reportes":[["path",{"d":"M4 20V10M10 20V4M16 20v-7M21 20H3"}]],"planes":[["path",{"d":"M12 3 4 7l8 4 8-4-8-4ZM4 12l8 4 8-4M4 17l8 4 8-4"}]],"personal":[["circle",{"cx":"9","cy":"8","r":"3"}],["circle",{"cx":"17","cy":"9","r":"2.5"}],["path",{"d":"M3 19c.6-3 3-4.5 6-4.5s5.4 1.5 6 4.5M15.5 14.6c2.6-.3 4.8.9 5.5 3.4"}]],"auditoria":[["path",{"d":"M12 3 5 6v5c0 4.6 3 8.4 7 10 4-1.6 7-5.4 7-10V6l-7-3Z"}],["path",{"d":"M9 12l2 2 4-4"}]],"salir":[["path",{"d":"M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"}]],"volver":[["path",{"d":"M15 6l-6 6 6 6"}]],"alerta":[["circle",{"cx":"12","cy":"12","r":"9"}],["path",{"d":"M12 7.5v5.5M12 16.5v.01"}]],"ok":[["circle",{"cx":"12","cy":"12","r":"9"}],["path",{"class":"check","pathLength":"1","d":"m8 12.5 2.8 2.8L16 10"}]],"wa":[["path",{"d":"M4 20l1.3-4A8 8 0 1 1 8.2 19z"}],["path",{"d":"M9 9.5c.3 2.3 2.2 4.3 4.6 4.8l1-1.2 2 .9c-.3 1.3-1.4 2-2.6 1.8A7 7 0 0 1 8.2 10c-.2-1.2.5-2.3 1.8-2.6l.9 2z"}]]};
 function ico(nombre, t = 20) {
   return s("svg", { width: t, height: t, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
     ICO[nombre].map(([tag, a]) => s(tag, a)));
@@ -235,7 +236,7 @@ function marco(...contenido) {
       h("a", { class: "marca", href: "#recepcion", "aria-label": "FitManage, ir a recepción" }, marcaSvg(36), h("b", {}, "Fit", h("span", {}, "Manage"))),
       h("nav", { "aria-label": "Menú principal" },
         h("div", { class: "grupo" }, enlace("recepcion", "Recepción"), enlace("socio", "Registrar socio"), enlace("pago", "Registrar pago"), enlace("vencimientos", "Vencimientos"), enlace("historial", "Socios e historial")),
-        esAdmin() ? h("div", { class: "grupo" }, h("div", { class: "grupo-t" }, "Administración"), enlace("reportes", "Reportes"), enlace("planes", "Planes"), enlace("personal", "Personal")) : null),
+        esAdmin() ? h("div", { class: "grupo" }, h("div", { class: "grupo-t" }, "Administración"), enlace("reportes", "Reportes"), enlace("planes", "Planes"), enlace("personal", "Personal"), enlace("auditoria", "Auditoría")) : null),
       h("div", { class: "conexion" + (navigator.onLine ? "" : " caida") }, h("i", {}), h("span", {}, navigator.onLine ? "En línea con el servidor" : "Sin conexión: la consulta necesita internet")),
       h("div", { class: "usuario" }, h("span", { class: "avatar" }, nombre.charAt(0).toUpperCase()), h("div", {}, h("strong", {}, nombre), h("small", {}, ROLES[sesion.rol] || sesion.rol)),
         h("button", { type: "button", class: "salir", "aria-label": "Cerrar sesión", title: "Cerrar sesión", onclick: () => cerrarSesion() }, ico("salir"))),
@@ -504,11 +505,14 @@ async function cargarHistorial() {
   H.error = r.estado === 200 ? null : r.estado === 404 ? "No hay ningún socio con ese documento." : mensajeDe(r);
   render();
 }
-async function anularUltimo(pago) {
+async function anularUltimo(pago, boton) {
   const H = S.hist;
   if (H.motivo.trim().length < 5) { H.falta = true; return render(); }
+  ocupado(boton, true); // D-07 (Guía II-01): un doble clic ya no envía dos PATCH
   const r = await llamar(`/pagos/${encodeURIComponent(pago.id)}`, { metodo: "PATCH", cuerpo: { estado: "ANULADO", motivo: H.motivo.trim() } });
+  ocupado(boton, false);
   if (r.estado === 200) { H.confirmando = false; H.motivo = ""; H.falta = false; H.aviso = r.datos; S.venc.filas = null; await cargarHistorial(); }
+  else if (r.estado === 409) { H.confirmando = false; H.error = `${mensajeDe(r)} El historial ya muestra el estado actual.`; await cargarHistorial(); }
   else { H.error = mensajeDe(r); render(); }
 }
 /* Cambio de plan: anula el último pago y registra el plan nuevo desde el mismo día (un solo paso). */
@@ -606,7 +610,7 @@ function pHistorial() {
       h("p", { class: "sub peq sin-margen" }, "El pago no se borra. Queda anulado con el motivo, quién lo anuló y la fecha; deja de sumar en los ingresos y la membresía se recalcula. Solo se puede anular el último pago vigente (RN-07)."),
       h("div", { class: "campo" }, h("label", { class: "et", for: "motivo" }, "Motivo de la anulación"), motivo,
         H.falta ? h("div", { class: "msg-error", role: "alert" }, ico("alerta", 18), "Escriba el motivo (al menos 5 caracteres) para poder anular.") : null),
-      h("div", { class: "fila" }, h("button", { type: "button", class: "btn btn-peligro", onclick: () => anularUltimo(ultimo) }, "Anular pago"),
+      h("div", { class: "fila" }, h("button", { type: "button", class: "btn btn-peligro", onclick: (e) => anularUltimo(ultimo, e.currentTarget) }, "Anular pago"),
         h("button", { type: "button", class: "btn-sec", onclick: () => { H.confirmando = false; H.falta = false; render(); } }, "No anular"))) : null,
     H.error ? aviso("mal", H.error) : null,
     H.aviso ? aviso("aviso", "Pago anulado y guardado con el motivo. La membresía ya se recalculó; si hace falta, registre el plan correcto.") : null,
@@ -650,6 +654,60 @@ function pReportes() {
     h("section", { class: "hoja", "aria-labelledby": "t-v" }, h("div", { class: "cabecera hoja-centro" }, h("h2", { id: "t-v" }, "Próximos vencimientos")), vencimientosTabla()));
 }
 function leyendaPunto(color) { const i = h("span", { class: "punto" }); i.style.setProperty("background", color); return i; }
+
+/* --- Auditoría (ADR N.° 19): el rastro que no se puede borrar --------------------------------------- */
+async function cargarAuditoria() {
+  const A = S.audit;
+  const r = await llamar(`/auditoria?${new URLSearchParams({ desde: A.desde, hasta: A.hasta, pagina: String(A.pagina) })}`);
+  A.datos = r.estado === 200 ? r.datos : null;
+  A.error = r.estado === 200 ? null : mensajeDe(r);
+  render();
+}
+function quePaso(e) {
+  const d = e.detalle;
+  switch (e.tipo) {
+    case "PAGO_REGISTRADO": return `Registró un pago ${d.plan} por ${pesos(d.valor)} (${mayuscula(String(d.medio).toLowerCase())}${d.referencia ? `, comprobante ${d.referencia}` : ""}).`;
+    case "PAGO_ANULADO": return `Anuló un pago de ${pesos(d.valor)} que registró ${d.registradoPor}. Motivo: ${d.motivo}`;
+    case "PLAN_CAMBIADO": return `Cambió el plan a ${d.planNuevo}: anuló el pago de ${pesos(d.valorAnterior)} que registró ${d.registroDelAnulado}. ${d.diferencia < 0 ? `Diferencia a devolver: ${pesos(-d.diferencia)}.` : d.diferencia > 0 ? `Diferencia a cobrar: ${pesos(d.diferencia)}.` : "Sin diferencia de dinero."} Motivo: ${d.motivo}`;
+    case "PRECIO_CAMBIADO": return `Cambió el precio del plan ${d.plan} de ${pesos(d.antes)} a ${pesos(d.despues)}.`;
+    case "PLAN_CREADO": return `Creó el plan ${d.plan}: ${d.duracionDias} días por ${pesos(d.precio)}.`;
+    case "PLAN_DESACTIVADO": return `Desactivó el plan ${d.plan}.`;
+    case "PLAN_REACTIVADO": return `Volvió a activar el plan ${d.plan}.`;
+    default: return e.tipo;
+  }
+}
+/* R13 de la Guía II-01: devolver dinero sobre un pago que registró otra persona merece una mirada. */
+const paraRevisar = (e) => e.tipo === "PLAN_CAMBIADO" && e.detalle.diferencia < 0 && e.detalle.registroDelAnulado !== e.actor;
+function pAuditoria() {
+  const A = S.audit;
+  if (!A.desde) { const hoy = new Date(); A.desde = aISO(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6)); A.hasta = hoyISO(); una("audit", cargarAuditoria); }
+  const desde = h("input", { id: "a-desde", type: "date", value: A.desde });
+  const hasta = h("input", { id: "a-hasta", type: "date", value: A.hasta });
+  const d = A.datos;
+  let contenido = h("p", { class: "vacio" }, "Cargando…");
+  if (A.error) contenido = aviso("mal", A.error);
+  else if (d && !d.eventos.length) contenido = h("p", { class: "vacio" }, "No hay operaciones registradas en ese periodo.");
+  else if (d) {
+    const paginas = Math.max(1, Math.ceil(d.total / d.porPagina));
+    const ir = (n) => { A.pagina = n; A.datos = null; render(); void cargarAuditoria(); };
+    contenido = [
+      h("p", { class: "sub peq sin-margen" }, `${d.total} ${d.total === 1 ? "operación" : "operaciones"} del ${corta(d.desde)} al ${corta(d.hasta)}. Este registro no se puede modificar ni borrar.`),
+      h("div", { class: "mt-12" }, tabla(["Fecha y hora", "Quién", "Qué pasó", "Socio"], d.eventos.map((e) => h("tr", {},
+        h("td", {}, horaDe(e.ocurridoEl)),
+        h("td", {}, h("b", {}, e.actor)),
+        h("td", {}, quePaso(e), paraRevisar(e) ? h("div", { class: "msg-aviso peq" }, ico("alerta", 16), "Devolución sobre un pago que registró otra persona: conviene revisarla.") : null),
+        h("td", {}, e.socio ? [e.socio.nombre, h("div", { class: "sub peq" }, e.socio.documentoEnmascarado)] : "—"))))),
+      paginas > 1 ? h("div", { class: "fila mt-12" },
+        h("button", { type: "button", class: "btn-sec", disabled: d.pagina <= 1, onclick: () => ir(d.pagina - 1) }, "Anterior"),
+        h("span", { class: "sub" }, `Página ${d.pagina} de ${paginas}`),
+        h("button", { type: "button", class: "btn-sec", disabled: d.pagina >= paginas, onclick: () => ir(d.pagina + 1) }, "Siguiente")) : null];
+  }
+  return marco(
+    h("div", { class: "cabecera" }, h("div", {}, h("h1", {}, "Auditoría"), h("div", { class: "sub" }, "Quién registró, anuló o cambió pagos y planes. Máximo 31 días por consulta.")),
+      h("form", { class: "fila fila-abajo", novalidate: true, onsubmit: (e) => { e.preventDefault(); A.desde = desde.value; A.hasta = hasta.value; A.pagina = 1; A.datos = null; A.error = null; render(); void cargarAuditoria(); } },
+        campo("a-desde", "Desde", desde), campo("a-hasta", "Hasta", hasta), h("button", { class: "btn", type: "submit" }, "Ver operaciones"))),
+    h("section", { class: "hoja", "aria-label": "Operaciones del periodo" }, contenido));
+}
 
 /* --- Planes (CU-05, RN-08, RN-09) ------------------------------------------------------------------------ */
 async function cargarTodosLosPlanes() {
@@ -780,7 +838,7 @@ function pDenegado() {
     h("p", { class: "sub sin-margen" }, `«${TITULOS[rutaActual()]}» no está disponible para su cuenta. El servidor también la bloquea si se escribe la dirección a mano (RNF-05).`),
     h("div", {}, h("a", { class: "btn", href: "#recepcion" }, "Volver a recepción"))));
 }
-const PANTALLAS = { recepcion: pRecepcion, pago: pPago, socio: pSocio, vencimientos: pVencimientos, historial: pHistorial, reportes: pReportes, planes: pPlanes, personal: pPersonal };
+const PANTALLAS = { recepcion: pRecepcion, pago: pPago, socio: pSocio, vencimientos: pVencimientos, historial: pHistorial, reportes: pReportes, planes: pPlanes, personal: pPersonal, auditoria: pAuditoria };
 const rutaActual = () => (location.hash || "#recepcion").slice(1);
 function ir(r) { if (rutaActual() === r) render(); else location.hash = r; }
 let mensajeLogin = "";
