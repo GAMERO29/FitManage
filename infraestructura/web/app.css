@@ -191,7 +191,7 @@ table{width:100%;border-collapse:collapse;font-size:15px;min-width:640px;font-va
 th{text-align:left;font-size:13px;font-weight:700;color:var(--tinta-2);border-bottom:1px solid var(--linea);padding:10px 10px}
 td{border-bottom:1px solid var(--linea-2);padding:13px 10px;vertical-align:middle}
 tr:last-child td{border-bottom:0}
-td.der,th.der{text-align:right}
+td.der,th.der{text-align:right;white-space:nowrap} /* H-02: «$ 75.000» no se parte */
 .anulada td{color:var(--gris)}
 .anulada td:first-child b{text-decoration:line-through}
 
