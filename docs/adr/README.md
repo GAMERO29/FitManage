@@ -22,5 +22,6 @@ Un ADR aceptado no se edita. Si la decisión cambia, se escribe uno nuevo y el a
 | [16](ADR-016-pantalla-recepcion.md) | La pantalla de recepción es una página estática del mismo origen que consume la API; el primer arranque crea los planes y la primera cuenta | Reemplazado en la interfaz por el 17 | 06/11/2026 |
 | [17](ADR-017-aplicativo-conectado.md) | El aplicativo del personal es el prototipo de la Guía 4 conectado a la API, sin datos ni reglas propias | Aceptado | 07/11/2026 |
 | [18](ADR-018-recepcionista-corrige-pagos.md) | La recepcionista anula sus pagos del día y cambia el plan de un socio | Aceptado | 09/11/2026 |
+| [19](ADR-019-auditoria-solo-insercion.md) | Rastro de auditoría de solo inserción, en la misma transacción y en la misma base | Aceptado | 09/11/2026 |
 
 Los ADR 01 y 02 se escribieron con la plantilla de 5 campos de la Guía 1. Desde el ADR 03 se usa la plantilla completa de 6 campos (`plantilla.md`), que agrega las alternativas consideradas. Los dos primeros no se reescriben para cumplirla, precisamente porque un ADR aceptado es inmutable.
