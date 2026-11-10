@@ -18,7 +18,8 @@ Guía II-05 (9/11/2026). Trabajo solo: ejecuto, reviso y decido yo. Lo que revis
 
 7. Verificación funcional en el entorno local con el mismo commit y datos ficticios (`docs/guia-ii05/entrega_controlada.sh`, pasos 2 y 3). En producción **no** creo datos de prueba: la auditoría es de solo inserción y un evento de prueba quedaría para siempre.
 8. En Grafana Cloud, durante 30 minutos: tasa de errores 5xx y p95 del recorrido de recepción contra la línea base (ADR N.° 14). **Detener o revertir** (criterio de esta guía) si se dispara la alerta de consumo del presupuesto de error, si los 5xx superan el 1 % de las peticiones durante 5 minutos o si el p95 de la consulta de estado pasa de 2 s.
-9. Etiquetar la versión con el workflow **Release** (`release.yml`), que solo acepta un commit con despliegue exitoso.
+9. Correr `docs/guia-ii05/coherencia_auditoria.sql` contra la base: debe devolver 0 filas. Si devuelve pagos sin evento, alguna versión sin auditoría escribió en la base (por ejemplo, después de volver a una imagen anterior a la 1.1.0) o hay un defecto.
+10. Etiquetar la versión con el workflow **Release** (`release.yml`), que solo acepta un commit con despliegue exitoso.
 
 ## Revertir
 

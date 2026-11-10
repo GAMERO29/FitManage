@@ -4,3 +4,4 @@
 - `docs/runbooks/Runbook_entrega.md`: el procedimiento, con quién decide y cuándo se detiene.
 - `docs/releases/v1.1.0.md`: identidad de la entrega (commit, imagen, huella, esquema y contrato).
 - `.github/workflows/release.yml`: etiqueta y publica una versión solo si el commit tuvo un despliegue exitoso.
+- `coherencia_auditoria.sql` y `.txt`: señal que encuentra pagos sin su evento; en el laboratorio encontró el pago que registró la versión anterior después de volver a ella.
