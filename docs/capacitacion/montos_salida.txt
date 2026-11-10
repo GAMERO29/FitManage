@@ -1,0 +1,19 @@
+Salida de montos.js (10/11/2026), con el servidor reiniciado entre «antes» y «después».
+== ANTES (app.css sin la corrección de H-02)
+Ancho 1366 px · montos en la tabla: 3 · partidos en dos líneas: 2 [["$ 75.000",2],["$ 75.000",2]]
+Ancho 1280 px · montos en la tabla: 3 · partidos en dos líneas: 2 [["$ 75.000",2],["$ 75.000",2]]
+Ancho 1024 px · montos en la tabla: 3 · partidos en dos líneas: 3 [["$ 75.000",2],["$ 8.000",2],["$ 75.000",2]]
+Ancho 900 px · montos en la tabla: 3 · partidos en dos líneas: 3 [["$ 75.000",2],["$ 8.000",2],["$ 75.000",2]]
+Ancho 800 px · montos en la tabla: 3 · partidos en dos líneas: 3 [["$ 75.000",2],["$ 8.000",2],["$ 75.000",2]]
+Ancho 700 px · montos en la tabla: 3 · partidos en dos líneas: 3 [["$ 75.000",2],["$ 8.000",2],["$ 75.000",2]]
+Ancho 600 px · montos en la tabla: 3 · partidos en dos líneas: 3 [["$ 75.000",2],["$ 8.000",2],["$ 75.000",2]]
+Ancho 390 px · montos en la tabla: 3 · partidos en dos líneas: 3 [["$ 75.000",2],["$ 8.000",2],["$ 75.000",2]]
+== DESPUÉS
+Ancho 1366 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 1280 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 1024 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 900 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 800 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 700 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 600 px · montos en la tabla: 3 · partidos en dos líneas: 0 
+Ancho 390 px · montos en la tabla: 3 · partidos en dos líneas: 0 

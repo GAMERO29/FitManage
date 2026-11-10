@@ -1,0 +1,3 @@
+Mensaje: ["El sistema no puede consultar ni guardar datos en este momento. Anote la atención en la hoja de papel y avise al administrador; puede volver a intentar en un minuto."]
+Indicador: El servidor no responde: use la hoja de papel
+Después de arrancar la base, indicador: En línea con el servidor
