@@ -1,0 +1,25 @@
+                socio_id=datos["ana"].id, referencia__in=["M200001", "M200002"]
+            ).values_list("fecha_inicio", flat=True)
+        )
+        # RN-04: el segundo pago empieza el día siguiente al vencimiento del primero.
+>       assert inicios == ["2026-10-22", "2026-11-21"]
+E       AssertionError: assert ['2026-10-22', '2026-10-22'] == ['2026-10-22', '2026-11-21']
+E         
+E         At index 1 diff: '2026-10-22' != '2026-11-21'
+E         Use -v to get more diff
+
+tests/integracion/api/test_api_concurrencia_socio.py:120: AssertionError
+----------------------------- Captured stdout call -----------------------------
+{"momento": "2026-11-10T02:44:09.415+00:00", "nivel": "INFO", "logger": "fitmanage.peticiones", "mensaje": "petición atendida", "trace_id": "d5a8db6aa264cbdc8ca25d44f2637da2", "span_id": "325dc99b0eef2b7b", "evento": "peticion", "metodo": "POST", "ruta": "/api/v1/auth/token", "estado": 200, "duracion_ms": 5.64, "muestreada": false}
+{"momento": "2026-11-10T02:44:09.421+00:00", "nivel": "INFO", "logger": "fitmanage.peticiones", "mensaje": "petición atendida", "trace_id": "c52f05c08a6f2383e890155db05b49ec", "span_id": "ec8d21e0fad58dfe", "evento": "peticion", "metodo": "POST", "ruta": "/api/v1/auth/token", "estado": 200, "duracion_ms": 5.03, "muestreada": false}
+{"momento": "2026-11-10T02:44:09.853+00:00", "nivel": "INFO", "logger": "fitmanage.peticiones", "mensaje": "petición atendida", "trace_id": "859cfad613ca2bcb11ab8cd0e9da80b7", "span_id": "f2f8152495493e29", "evento": "peticion", "metodo": "POST", "ruta": "/api/v1/pagos", "estado": 201, "duracion_ms": 430.71, "muestreada": true}
+{"momento": "2026-11-10T02:44:09.856+00:00", "nivel": "INFO", "logger": "fitmanage.peticiones", "mensaje": "petición atendida", "trace_id": "aa0c1b62ff0f0136e70a5b06bcea29a7", "span_id": "3a1943b26724cf2d", "evento": "peticion", "metodo": "POST", "ruta": "/api/v1/pagos", "estado": 201, "duracion_ms": 432.09, "muestreada": false}
+------------------------------ Captured log call -------------------------------
+INFO     fitmanage.peticiones:middleware.py:50 petición atendida
+INFO     fitmanage.peticiones:middleware.py:50 petición atendida
+INFO     fitmanage.peticiones:middleware.py:50 petición atendida
+INFO     fitmanage.peticiones:middleware.py:50 petición atendida
+=========================== short test summary info ============================
+FAILED tests/integracion/api/test_api_concurrencia_socio.py::test_d01_dos_anulaciones_del_mismo_pago_solo_una_tiene_exito
+FAILED tests/integracion/api/test_api_concurrencia_socio.py::test_d02_dos_pagos_del_mismo_socio_al_tiempo_no_se_superponen
+2 failed in 1.63s

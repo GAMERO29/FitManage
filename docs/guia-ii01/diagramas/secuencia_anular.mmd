@@ -1,0 +1,38 @@
+%% Secuencia real de PATCH /api/v1/pagos/{pagoId} en a358229 (controlador = frontera de la transacción).
+sequenceDiagram
+  autonumber
+  actor U as Personal
+  participant W as Aplicativo (app.js)
+  participant A as API (anular_pago)
+  participant S as AnulacionPagoService
+  participant R as PagoRepositorioORM
+  participant B as PostgreSQL
+  U->>W: «Anular pago» con motivo
+  W->>A: PATCH /pagos/{id} {estado, motivo} + Bearer
+  A->>A: token válido y rol del personal (@endpoint)
+  alt token inválido o rol entrenador
+    A-->>W: 401 / 403 problem+json
+  end
+  A->>B: BEGIN y SELECT socio FOR UPDATE
+  Note over A,B: la otra operación sobre el mismo socio espera aquí (D-01, D-02)
+  A->>S: anular(pagoId, usuario de la sesión, motivo)
+  S->>R: obtener(pagoId) y vigentes_de(socio)
+  R->>B: SELECT pagos
+  B-->>R: filas
+  alt no existe
+    S-->>A: PagoNoEncontrado → 404
+  else ya anulado o no es el último vigente
+    S-->>A: PagoNoAnulable → 409
+  else recepcionista y no es suyo de hoy (Bogotá)
+    S-->>A: PermisoDenegado → 403
+  else motivo vacío
+    S-->>A: MotivoRequerido → 400
+  else válido
+    S->>S: pago.anular(motivo, usuario, ahora)
+    S->>R: guardar(pago)
+    R->>B: UPDATE pagos SET estado='ANULADO', motivo, anulado_por, fecha
+    A->>B: COMMIT
+    A-->>W: 200 pago con «anulacion»
+    W-->>U: aviso y estado recalculado
+  end
+  Note over A,B: si el COMMIT falla, Django revierte y responde 500: no se muestra «anulado»

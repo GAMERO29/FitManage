@@ -1,0 +1,23 @@
+%% DFD nivel 1 · Anular el último pago. D1–D3 son almacenes (tablas socios, pagos, usuarios).
+flowchart LR
+  P["Personal autenticado"]
+  C(("1.0<br/>Consultar<br/>historial"))
+  V(("2.0<br/>Validar<br/>solicitud"))
+  R(("3.0<br/>Registrar<br/>anulación"))
+  T(("4.0<br/>Preparar<br/>resultado"))
+  D1[("D1 Socios")]
+  D2[("D2 Pagos")]
+  D3[("D3 Usuarios")]
+  P -- "F1 consulta de historial" --> C
+  D1 -- "F5 datos del socio" --> C
+  D2 -- "F6 pagos vigentes y anulados" --> C
+  C -- "F2 historial y estado" --> P
+  P -- "F3 solicitud de anulación" --> V
+  D3 -- "F7 rol y estado de la cuenta" --> V
+  D1 -- "F8 fila del socio bloqueada" --> V
+  D2 -- "F9 pago pedido y último vigente" --> V
+  V -- "F10 anulación autorizada" --> R
+  V -- "F11 rechazo con código" --> T
+  R -- "F12 estado ANULADO, motivo,<br/>quién y cuándo" --> D2
+  R -- "F13 pago anulado confirmado" --> T
+  T -- "F4 resultado" --> P

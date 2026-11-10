@@ -1,0 +1,12 @@
+%% Ciclo de anulación del pago (no es el ciclo completo: la creación está en CU-01).
+stateDiagram-v2
+  direction LR
+  [*] --> Vigente : registrar (CU-01)
+  Vigente --> Anulado : anular [último vigente ∧ motivo ∧ (admin ∨ recepcionista que lo registró hoy)] / guarda motivo, quién y cuándo
+  Vigente --> Vigente : anular [guarda incumplida] / 403, 409 o 400 sin cambios
+  Vigente --> Anulado : cambiar de plan [último vigente ∧ personal] / anula y registra el nuevo en la misma transacción
+  Anulado --> Anulado : anular / 409 «El pago ya está anulado», sin cambios
+  note right of Anulado
+    No hay reactivación ni borrado.
+    El pago sigue en el historial y en la auditoría del propio pago.
+  end note

@@ -1,0 +1,44 @@
+%% Modelo lógico del alcance (contrastado con el esquema físico de PostgreSQL en a358229).
+%% Líneas punteadas (..): relaciones no identificantes, porque pagos tiene su propia clave (id).
+erDiagram
+  SOCIOS ||..o{ PAGOS : "tiene"
+  PLANES ||..o{ PAGOS : "se cobra con"
+  USUARIOS ||..o{ PAGOS : "registra"
+  USUARIOS |o..o{ PAGOS : "anula"
+  SOCIOS {
+    uuid id PK
+    varchar tipo_documento "UNIQUE con numero"
+    varchar numero_documento
+    varchar nombres
+    varchar telefono
+    timestamptz autorizacion_datos
+  }
+  PLANES {
+    uuid id PK
+    varchar nombre
+    int duracion_dias
+    numeric precio
+    bool activo "RN-09: no se borra"
+  }
+  USUARIOS {
+    uuid id PK
+    varchar nombre
+    varchar correo UK
+    varchar rol "ADMINISTRADOR, RECEPCIONISTA, ENTRENADOR"
+    bool activo
+  }
+  PAGOS {
+    uuid id PK
+    uuid socio_id FK
+    uuid plan_id FK
+    numeric valor "RN-08: copia del precio"
+    date fecha_inicio
+    date fecha_vencimiento "CHECK >= inicio"
+    varchar referencia "UNIQUE si VIGENTE"
+    uuid registrado_por_id FK
+    timestamptz registrado_en
+    varchar estado "VIGENTE o ANULADO"
+    timestamptz fecha_anulacion "nulo si vigente"
+    uuid anulado_por_id FK "nulo si vigente"
+    text motivo_anulacion "nulo si vigente"
+  }
