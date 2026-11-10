@@ -1,4 +1,4 @@
-"""Casos de uso de pagos: CU-01 Registrar pago y RF-10 Anular pago (SRP, FPI-11)."""
+"""Casos de uso de pagos: CU-01 Registrar pago, RF-10 Anular pago y cambio de plan (SRP, FPI-11)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from uuid import UUID
 
 from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import (
+    DatosInvalidos,
     MedioPagoInvalido,
     PagoNoAnulable,
     PagoNoEncontrado,
@@ -76,6 +77,37 @@ class RegistroPagoService:
         self._pagos.guardar(pago)
         return pago
 
+    def periodo_desde(self, anterior: Pago, plan_id: UUID) -> VistaPreviaPago:
+        """Cambio de plan: el plan nuevo empieza el mismo día que el pago que reemplaza."""
+        plan = self._buscar_plan(plan_id)
+        if plan.id == anterior.plan_id:
+            raise DatosInvalidos("El socio ya tiene ese plan.")
+        inicia = anterior.fecha_inicio
+        return VistaPreviaPago(
+            plan, inicia, self._calculadora.calcular_vencimiento(inicia, plan.duracion_dias)
+        )
+
+    def registrar_cambio(
+        self, anterior: Pago, plan_id: UUID, medio: str, referencia: str | None, usuario: Usuario
+    ) -> Pago:
+        """Registra el pago del plan nuevo; el anterior ya está anulado (CambioPlanService)."""
+        previa = self.periodo_desde(anterior, plan_id)
+        medio_pago = self._convertir_medio(medio)
+        pago = Pago(
+            socio=anterior.socio,
+            plan_id=previa.plan.id,
+            valor=previa.plan.precio,  # RN-08 y A3: el precio completo del plan nuevo
+            duracion_dias=previa.plan.duracion_dias,
+            medio=medio_pago,
+            referencia=self._validar_referencia(medio_pago, referencia),
+            fecha_inicio=previa.inicia,
+            fecha_vencimiento=previa.vence,
+            registrado_por=usuario,
+            registrado_en=self._reloj.ahora(),
+        )
+        self._pagos.guardar(pago)
+        return pago
+
     def vista_previa(self, tipo: TipoDocumento, numero: str, plan_id: UUID) -> VistaPreviaPago:
         """Las mismas reglas del registro (RN-03, RN-04, RN-08), sin guardar nada."""
         socio = self._buscar_socio(tipo, numero)
@@ -136,6 +168,10 @@ class AnulacionPagoService:
 
     def anular(self, pago_id: UUID, usuario: Usuario, motivo: str) -> Pago:
         """`PATCH /pagos/{pagoId}`: solo se acepta si ese pago es el último vigente de su socio."""
+        return self._anular(self.verificar_anulable(pago_id, usuario), usuario, motivo)
+
+    def verificar_anulable(self, pago_id: UUID, usuario: Usuario) -> Pago:
+        """Las mismas condiciones de la anulación, sin cambiar nada (sirve para la vista previa)."""
         self._exigir_administrador(usuario)
         pago = self._pagos.obtener(pago_id)
         if pago is None:
@@ -145,7 +181,7 @@ class AnulacionPagoService:
         ultimo = self._ultimo_vigente(pago.socio)
         if ultimo is None or ultimo.id != pago.id:
             raise PagoNoAnulable("Solo se puede anular el último pago vigente del socio.")
-        return self._anular(pago, usuario, motivo)
+        return pago
 
     @staticmethod
     def _exigir_administrador(usuario: Usuario) -> None:
@@ -160,3 +196,43 @@ class AnulacionPagoService:
         pago.anular(motivo, usuario, self._reloj.ahora())
         self._pagos.guardar(pago)
         return pago
+
+
+@dataclass(frozen=True)
+class CambioDePlan:
+    anulado: Pago
+    nuevo: Pago
+    diferencia: int  # lo que el socio paga de más (positivo) o se le devuelve (negativo)
+
+
+class CambioPlanService:
+    """Cambia el plan de un socio: anula su último pago y registra el nuevo desde el mismo día.
+
+    Es la secuencia que ya hacía el administrador a mano (CU-03 seguido de CU-01), en un solo paso.
+    La vista la ejecuta dentro de una transacción: si el pago nuevo no se puede registrar, la
+    anulación tampoco queda.
+    """
+
+    def __init__(self, anulacion: AnulacionPagoService, registro: RegistroPagoService) -> None:
+        self._anulacion = anulacion
+        self._registro = registro
+
+    def vista_previa(
+        self, pago_id: UUID, plan_id: UUID, usuario: Usuario
+    ) -> tuple[Pago, VistaPreviaPago]:
+        anterior = self._anulacion.verificar_anulable(pago_id, usuario)
+        return anterior, self._registro.periodo_desde(anterior, plan_id)
+
+    def cambiar(
+        self,
+        pago_id: UUID,
+        plan_id: UUID,
+        medio: str,
+        referencia: str | None,
+        motivo: str,
+        usuario: Usuario,
+    ) -> CambioDePlan:
+        anterior, _ = self.vista_previa(pago_id, plan_id, usuario)  # valida antes de tocar nada
+        anulado = self._anulacion.anular(anterior.id, usuario, motivo)
+        nuevo = self._registro.registrar_cambio(anulado, plan_id, medio, referencia, usuario)
+        return CambioDePlan(anulado, nuevo, int(nuevo.valor - anulado.valor))

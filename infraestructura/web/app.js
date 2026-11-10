@@ -16,7 +16,7 @@ const ESTADO = () => ({
   consulta: { tipo: "CC", numero: "", resultado: null },
   socio: { tipo: "CC", numero: "", nombres: "", apellidos: "", telefono: "", autoriza: false, error: null, ok: false, falta: false },
   pago: { socio: null, planId: null, medio: "EFECTIVO", referencia: "", previa: null, error: null, ok: null, clave: null, enviando: false },
-  hist: { tipo: "CC", numero: "", datos: null, error: null, confirmando: false, motivo: "", falta: false, aviso: null },
+  hist: { tipo: "CC", numero: "", datos: null, error: null, confirmando: false, motivo: "", falta: false, aviso: null, cambio: null, cambiado: null },
   reporte: { desde: null, hasta: null, datos: null, error: null },
   venc: { dias: 3, filas: null, error: null },
   planes: { todos: null, aviso: null, error: null, creando: false },
@@ -508,6 +508,69 @@ async function anularUltimo(pago) {
   if (r.estado === 200) { H.confirmando = false; H.motivo = ""; H.falta = false; H.aviso = r.datos; S.venc.filas = null; await cargarHistorial(); }
   else { H.error = mensajeDe(r); render(); }
 }
+/* Cambio de plan: anula el último pago y registra el plan nuevo desde el mismo día (un solo paso). */
+function abrirCambio(ultimo) {
+  const H = S.hist;
+  H.confirmando = false; H.aviso = null; H.cambiado = null; H.error = null;
+  H.cambio = { pago: ultimo, planId: null, medio: ultimo.medio, referencia: ultimo.referencia || "", motivo: "", motivoEditado: false, previa: null, error: null, enviando: false };
+  render();
+}
+async function previaCambio() {
+  const C = S.hist.cambio;
+  const r = await llamar(`/pagos/${encodeURIComponent(C.pago.id)}/cambio-de-plan?${new URLSearchParams({ planId: C.planId })}`);
+  C.previa = r.estado === 200 ? r.datos : null;
+  C.error = r.estado === 200 ? null : mensajeDe(r);
+  render();
+}
+async function confirmarCambio(boton) {
+  const H = S.hist, C = H.cambio;
+  if (C.enviando) return;
+  const pide = C.medio !== "EFECTIVO";
+  if (pide && !C.referencia.trim()) { C.error = "Para pagos que no son en efectivo escriba el número del comprobante."; return render(); }
+  if (C.motivo.trim().length < 5) { C.error = "Escriba el motivo del cambio (al menos 5 caracteres)."; return render(); }
+  C.enviando = true; ocupado(boton, true);
+  const cuerpo = { planId: C.planId, medio: C.medio, motivo: C.motivo.trim(), ...(pide ? { referencia: C.referencia.trim() } : {}) };
+  const r = await llamar(`/pagos/${encodeURIComponent(C.pago.id)}/cambio-de-plan`, { metodo: "POST", cuerpo });
+  C.enviando = false;
+  if (r.estado === 201) { H.cambio = null; H.cambiado = r.datos; S.venc.filas = null; await cargarHistorial(); return; }
+  C.error = r.datos && r.datos.codigo === "COMPROBANTE_DUPLICADO" ? "Ese comprobante ya está en otro pago vigente. No se cambió nada." : mensajeDe(r);
+  render();
+}
+function diferenciaTexto(d) {
+  if (d > 0) return `Cobre ${pesos(d)} adicionales al socio.`;
+  if (d < 0) return `Devuelva ${pesos(-d)} al socio.`;
+  return "Sin diferencia de dinero.";
+}
+function panelCambio() {
+  const C = S.hist.cambio, P = C.pago;
+  const otros = planes.filter((p) => p.nombre !== P.plan);
+  const elegir = (p) => {
+    C.planId = p.id; C.previa = null; C.error = null;
+    if (!C.motivoEditado) C.motivo = `El socio pidió cambiar de ${P.plan} a ${p.nombre}`;
+    render(); void previaCambio();
+  };
+  const pv = C.previa;
+  return h("section", { class: "hoja pila", "aria-labelledby": "t-cp" },
+    h("h2", { id: "t-cp" }, "Cambiar el plan"),
+    h("p", { class: "sub peq sin-margen" }, `Plan actual: ${P.plan}, del ${corta(P.inicia)} al ${corta(P.vence)} (${pesos(P.valor)}). El plan nuevo empieza el mismo día y el pago actual queda anulado con el motivo.`),
+    h("div", { class: "rejilla r4" }, otros.map((p) => h("button", { type: "button", class: "opcion", "aria-pressed": String(C.planId === p.id), onclick: () => elegir(p) },
+      h("b", {}, p.nombre), h("span", { class: "peq sub" }, `${p.duracionDias} ${p.duracionDias === 1 ? "día" : "días"}`), h("span", { class: "precio" }, pesos(p.precio))))),
+    C.planId ? [
+      h("div", { class: "fila" }, MEDIOS.map(([v, t]) => h("button", { type: "button", class: "chip", "aria-pressed": String(C.medio === v), onclick: () => { C.medio = v; C.error = null; render(); } }, t))),
+      C.medio !== "EFECTIVO" ? h("div", { class: "campo campo-ref" }, h("label", { class: "et", for: "ref-c" }, "Referencia del comprobante"),
+        h("input", { id: "ref-c", type: "text", autocomplete: "off", value: C.referencia, oninput: (ev) => { C.referencia = ev.target.value; } }),
+        h("span", { class: "ayuda" }, "Puede ser la misma del pago actual: al anularlo queda libre.")) : null,
+      pv ? h("div", { class: "linea-fechas" }, h("div", { class: "dato" }, h("span", { class: "sub peq" }, "Inicia"), h("strong", {}, corta(pv.inicia))),
+        h("div", { class: "dato" }, h("span", { class: "sub peq" }, "Vence"), h("strong", {}, corta(pv.vence))),
+        h("div", { class: "dato" }, h("span", { class: "sub peq" }, "Valor"), h("strong", {}, pesos(pv.valor)))) : h("p", { class: "vacio" }, "Calculando con el servidor…"),
+      pv ? aviso("aviso", h("b", {}, diferenciaTexto(pv.diferencia)), " Lo calculó el servidor: precio del plan nuevo menos lo que ya pagó.") : null,
+      h("div", { class: "campo" }, h("label", { class: "et", for: "motivo-c" }, "Motivo del cambio"),
+        h("textarea", { id: "motivo-c", oninput: (ev) => { C.motivo = ev.target.value; C.motivoEditado = true; } }, C.motivo))] : null,
+    C.error ? aviso("mal", C.error) : null,
+    h("div", { class: "fila" },
+      h("button", { type: "button", class: "btn btn-confirmar", disabled: !pv, onclick: (ev) => confirmarCambio(ev.currentTarget) }, pv ? `Cambiar a ${pv.plan.nombre}` : "Elija el plan nuevo"),
+      h("button", { type: "button", class: "btn-sec", onclick: () => { S.hist.cambio = null; render(); } }, "Cancelar")));
+}
 function pHistorial() {
   const H = S.hist;
   if (H.numero && !H.datos && !H.error) una("hist", cargarHistorial);
@@ -529,8 +592,11 @@ function pHistorial() {
       estadoPastilla),
     h("section", { class: "hoja", "aria-labelledby": "t-h" },
       h("div", { class: "cabecera hoja-centro" }, h("h2", { id: "t-h" }, "Historial de pagos"),
-        h("button", { type: "button", class: "btn-sec peligro", disabled: !ultimo || H.confirmando, onclick: () => { H.confirmando = true; H.aviso = null; render(); const t = document.getElementById("motivo"); if (t) t.focus(); } }, "Anular último pago")),
+        h("div", { class: "fila" },
+          h("button", { type: "button", class: "btn-sec", disabled: !ultimo || !!H.cambio, onclick: () => abrirCambio(ultimo) }, "Cambiar plan"),
+          h("button", { type: "button", class: "btn-sec peligro", disabled: !ultimo || H.confirmando, onclick: () => { H.confirmando = true; H.cambio = null; H.aviso = null; H.cambiado = null; render(); const t = document.getElementById("motivo"); if (t) t.focus(); } }, "Anular último pago"))),
       d.pagos.length ? h("div", { class: "mt-12" }, tabla(["Plan", "Periodo", "Medio", "Referencia", ">Valor", "Registró", "Estado"], filas)) : h("p", { class: "vacio" }, "Todavía no tiene pagos.")),
+    H.cambio && ultimo ? panelCambio() : null,
     H.confirmando && ultimo ? h("section", { class: "hoja pila anular", "aria-labelledby": "t-an" },
       h("h2", { id: "t-an" }, `¿Anular el pago ${ultimo.plan} del ${corta(ultimo.inicia)} al ${corta(ultimo.vence)}?`),
       h("p", { class: "sub peq sin-margen" }, "El pago no se borra. Queda anulado con el motivo, quién lo anuló y la fecha; deja de sumar en los ingresos y la membresía se recalcula. Solo se puede anular el último pago vigente (RN-07)."),
@@ -539,7 +605,8 @@ function pHistorial() {
       h("div", { class: "fila" }, h("button", { type: "button", class: "btn btn-peligro", onclick: () => anularUltimo(ultimo) }, "Anular pago"),
         h("button", { type: "button", class: "btn-sec", onclick: () => { H.confirmando = false; H.falta = false; render(); } }, "No anular"))) : null,
     H.error ? aviso("mal", H.error) : null,
-    H.aviso ? aviso("aviso", "Pago anulado y guardado con el motivo. La membresía ya se recalculó; si hace falta, registre el plan correcto.") : null);
+    H.aviso ? aviso("aviso", "Pago anulado y guardado con el motivo. La membresía ya se recalculó; si hace falta, registre el plan correcto.") : null,
+    H.cambiado ? aviso("ok", h("b", {}, `Plan cambiado a ${H.cambiado.nuevo.plan}. `), `Queda activo del ${corta(H.cambiado.nuevo.inicia)} al ${corta(H.cambiado.nuevo.vence)}. ${diferenciaTexto(H.cambiado.diferencia)}`) : null);
 }
 
 /* --- Reportes (CU-07, RF-05) ---------------------------------------------------------------------- */

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.4.0
+  version: 1.5.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -759,6 +759,111 @@ paths:
                 detail: La referencia M123456 ya pertenece a un pago vigente del 16/09/2026.
                 codigo: COMPROBANTE_DUPLICADO
 
+  /pagos/{pagoId}/cambio-de-plan:
+    parameters:
+      - name: pagoId
+        in: path
+        required: true
+        description: El último pago vigente del socio, el que se reemplaza.
+        schema:
+          type: string
+          format: uuid
+        example: 5c2d9e7a-1b3f-4a6c-8d9e-0f1a2b3c4d5e
+    get:
+      tags: [Membresías y cobros]
+      operationId: vistaPreviaCambioPlan
+      summary: Ver cómo quedaría el cambio de plan
+      description: |
+        Solo administrador. Sin cambiar nada, dice el periodo y el valor del plan nuevo, que empieza
+        el mismo día que el pago que reemplaza, y la diferencia con lo que ya pagó el socio.
+      parameters:
+        - name: planId
+          in: query
+          required: true
+          description: Plan nuevo.
+          schema:
+            type: string
+            format: uuid
+          example: 9b1c4e2d-7a3f-4d6e-8c5b-1a2b3c4d5e6f
+      responses:
+        '200':
+          description: Periodo, valor y diferencia del cambio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VistaPreviaCambioPlan'
+              example:
+                plan:
+                  id: 9b1c4e2d-7a3f-4d6e-8c5b-1a2b3c4d5e6f
+                  nombre: Trimestral
+                  duracionDias: 90
+                  precio: 200000
+                  activo: true
+                valor: 200000
+                inicia: '2026-11-09'
+                vence: '2027-02-06'
+                diferencia: 125000
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El pago ya estaba anulado o no es el último pago vigente del socio (RN-07).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+    post:
+      tags: [Membresías y cobros]
+      operationId: cambiarPlanDelSocio
+      summary: Cambiar el plan de un socio
+      description: |
+        Solo administrador. En una sola transacción anula el último pago vigente del socio con el
+        motivo (RN-07) y registra el plan nuevo desde el mismo día de inicio, con su precio completo
+        (RN-08). Si el pago nuevo no se puede registrar (por ejemplo, el comprobante ya está en otro
+        pago vigente), la anulación tampoco queda. El comprobante del pago anulado se puede volver a usar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambioPlan'
+            example:
+              planId: 9b1c4e2d-7a3f-4d6e-8c5b-1a2b3c4d5e6f
+              medio: NEQUI
+              referencia: M123456
+              motivo: El socio pidió cambiar de Mensual a Trimestral
+      responses:
+        '201':
+          description: Pago anterior anulado y pago nuevo registrado.
+          headers:
+            Location:
+              description: Ruta del pago nuevo.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CambioPlanHecho'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El pago no es el último vigente del socio, o el comprobante ya está en otro pago vigente.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+
   /pagos/{pagoId}:
     patch:
       tags: [Membresías y cobros]
@@ -1494,6 +1599,57 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Pago'
+
+    CambioPlan:
+      type: object
+      additionalProperties: false
+      required: [planId, medio, motivo]
+      properties:
+        planId:
+          type: string
+          format: uuid
+        medio:
+          $ref: '#/components/schemas/MedioPago'
+        referencia:
+          type: string
+          pattern: '^[A-Za-z0-9-]{4,30}$'
+          description: Obligatoria si el medio no es efectivo.
+        motivo:
+          type: string
+          minLength: 5
+          maxLength: 300
+
+    VistaPreviaCambioPlan:
+      type: object
+      additionalProperties: false
+      required: [plan, valor, inicia, vence, diferencia]
+      properties:
+        plan:
+          $ref: '#/components/schemas/Plan'
+        valor:
+          type: integer
+          minimum: 0
+        inicia:
+          type: string
+          format: date
+        vence:
+          type: string
+          format: date
+        diferencia:
+          type: integer
+          description: Valor del plan nuevo menos lo que ya pagó. Positivo se cobra; negativo se devuelve.
+
+    CambioPlanHecho:
+      type: object
+      additionalProperties: false
+      required: [anulado, nuevo, diferencia]
+      properties:
+        anulado:
+          $ref: '#/components/schemas/Pago'
+        nuevo:
+          $ref: '#/components/schemas/Pago'
+        diferencia:
+          type: integer
 
     Problema:
       type: object
