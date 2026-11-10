@@ -354,6 +354,38 @@ def anular_pago(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: N80
     return JsonResponse(presentacion.pago(pago, _nombre_plan(pago.plan_id)))
 
 
+@require_http_methods(["GET", "POST"])
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def cambio_de_plan(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: N803
+    """GET: cómo quedaría el cambio. POST: anula el pago y registra el plan nuevo, todo o nada."""
+    servicio = contenedor.cambio_plan()
+    if request.method == "GET":
+        anterior, previa = servicio.vista_previa(
+            uuid.UUID(pagoId), uuid.UUID(request.GET["planId"]), request.usuario
+        )
+        return JsonResponse(presentacion.vista_cambio(anterior, previa))
+    datos = leer_json(request)
+    with transaction.atomic():
+        cambio = servicio.cambiar(
+            uuid.UUID(pagoId),
+            uuid.UUID(datos["planId"]),
+            datos["medio"],
+            datos.get("referencia"),
+            datos["motivo"],
+            request.usuario,
+        )
+    respuesta = JsonResponse(
+        {
+            "anulado": presentacion.pago(cambio.anulado, _nombre_plan(cambio.anulado.plan_id)),
+            "nuevo": presentacion.pago(cambio.nuevo, _nombre_plan(cambio.nuevo.plan_id)),
+            "diferencia": cambio.diferencia,
+        },
+        status=201,
+    )
+    respuesta["Location"] = f"/api/v1/pagos/{cambio.nuevo.id}"
+    return respuesta
+
+
 # --- Reportes y recordatorios ------------------------------------------------------------
 @require_GET
 @endpoint(roles=SOLO_ADMINISTRADOR)

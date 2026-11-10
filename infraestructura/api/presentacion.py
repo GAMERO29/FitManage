@@ -134,3 +134,13 @@ def cuenta(m, bloqueada: bool) -> dict:
     if bloqueada:
         cuerpo["bloqueadaHasta"] = fecha_hora(m.bloqueada_hasta)
     return cuerpo
+
+
+def vista_cambio(anterior: Pago, previa) -> dict:
+    return {
+        "plan": plan(previa.plan),
+        "valor": int(previa.plan.precio),
+        "inicia": previa.inicia.isoformat(),
+        "vence": previa.vence.isoformat(),
+        "diferencia": int(previa.plan.precio - anterior.valor),
+    }

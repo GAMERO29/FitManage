@@ -13,6 +13,7 @@
 | `07-activo.png` | «ACTIVO · Puede ingresar», 30 días. |
 | `08-renovacion-vista-previa.png` | Renovación anticipada Trimestral: empieza el 07/12/2026, el día siguiente al vencimiento, y suma 120 días (RN-04). No se registró. |
 | `09-historial.png` · `10-anulado.png` | Historial del socio y anulación del último pago con motivo; la membresía se recalcula. |
+| `09b-cambio-de-plan.png` (corrida del 9/11/2026) | Cambio de plan de Mensual a Trimestral: empieza el mismo día que el pago anterior, el servidor calcula «Cobre $ 125.000 adicionales» y reutiliza el comprobante M123456 del pago que se anula. |
 | `11-reportes.png` | Ingresos del mes: el pago anulado no suma. |
 | `12-planes.png` | Precio del plan Diario cambiado a $ 9.000, plan Semestral creado (180 días, $ 380.000) y Diario desactivado. Después, Registrar pago ofrece Quincenal, Mensual, Trimestral y Semestral, sin Diario. |
 | `13-personal.png` | Cuenta nueva creada con contraseña inicial. |

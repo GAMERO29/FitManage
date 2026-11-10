@@ -6,7 +6,7 @@ Las pruebas reemplazan `reloj` y `correo` (las fronteras con el exterior); nunca
 from __future__ import annotations
 
 from aplicacion.acceso import RestablecimientoClaveService
-from aplicacion.pagos import AnulacionPagoService, RegistroPagoService
+from aplicacion.pagos import AnulacionPagoService, CambioPlanService, RegistroPagoService
 from aplicacion.planes import GestionPlanesService
 from aplicacion.socios import ConsultaEstadoService, RegistroSocioService
 from dominio.puertos import CorreoSaliente, Reloj
@@ -56,3 +56,7 @@ def restablecimiento(enlace_para) -> RestablecimientoClaveService:
 
 def gestion_planes() -> GestionPlanesService:
     return GestionPlanesService(PlanRepositorioORM())
+
+
+def cambio_plan() -> CambioPlanService:
+    return CambioPlanService(anulacion_pago(), registro_pago())
