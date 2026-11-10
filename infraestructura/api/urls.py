@@ -23,4 +23,5 @@ urlpatterns = [
     path("pagos/<str:pagoId>", vistas.anular_pago),
     path("reportes/ingresos", vistas.reporte_ingresos),
     path("vencimientos", vistas.listar_vencimientos),
+    path("auditoria", vistas.consultar_auditoria),
 ]

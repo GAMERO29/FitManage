@@ -60,7 +60,7 @@ def restablecimiento(enlace_para) -> RestablecimientoClaveService:
 
 
 def gestion_planes() -> GestionPlanesService:
-    return GestionPlanesService(PlanRepositorioORM())
+    return GestionPlanesService(PlanRepositorioORM(), reloj(), AuditoriaORM())
 
 
 def cambio_plan() -> CambioPlanService:

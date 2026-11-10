@@ -22,7 +22,8 @@ from dominio.modelos import (
     TipoDocumento,
 )
 from dominio.recordatorio import texto_recordatorio
-from infraestructura.persistencia.models import PagoModelo, SocioModelo
+from infraestructura.api.presentacion import documento_enmascarado
+from infraestructura.persistencia.models import EventoAuditoriaModelo, PagoModelo, SocioModelo
 from infraestructura.persistencia.repositorios import _a_pago, _a_socio
 
 CALCULADORA = CalculadoraMembresia()
@@ -135,3 +136,45 @@ def historial(
     ]
     estado, vence = CALCULADORA.estado_de(pagos, hoy)
     return _a_socio(modelo), estado, vence, pagos
+
+
+# --- Auditoría (ADR N.° 19) ------------------------------------------------------------------
+POR_PAGINA_AUDITORIA = 50
+
+
+def auditoria(desde: date, hasta: date, pagina: int) -> dict:
+    """Una página del rastro, del más reciente al más antiguo. Los días se cuentan en Bogotá."""
+    inicio = datetime.combine(desde, time.min, ZONA_HORARIA)
+    fin = datetime.combine(hasta + timedelta(days=1), time.min, ZONA_HORARIA)
+    consulta = EventoAuditoriaModelo.objects.filter(ocurrido_en__gte=inicio, ocurrido_en__lt=fin)
+    total = consulta.count()
+    corte = (pagina - 1) * POR_PAGINA_AUDITORIA
+    filas = list(consulta.order_by("-ocurrido_en", "-id")[corte : corte + POR_PAGINA_AUDITORIA])
+    socios = SocioModelo.objects.in_bulk({f.socio_id for f in filas if f.socio_id})
+    eventos = []
+    for f in filas:
+        evento = {
+            "id": f.id,
+            "ocurridoEl": f.ocurrido_en.astimezone(ZONA_HORARIA).isoformat(timespec="seconds"),
+            "tipo": f.tipo,
+            "actor": f.actor_nombre,
+            "entidadId": str(f.entidad_id),
+            "detalle": f.detalle,
+        }
+        socio = socios.get(f.socio_id)
+        if socio is not None:
+            evento["socio"] = {
+                "nombre": f"{socio.nombres} {socio.apellidos}",
+                "documentoEnmascarado": documento_enmascarado(
+                    TipoDocumento(socio.tipo_documento), socio.numero_documento
+                ),
+            }
+        eventos.append(evento)
+    return {
+        "desde": desde.isoformat(),
+        "hasta": hasta.isoformat(),
+        "pagina": pagina,
+        "porPagina": POR_PAGINA_AUDITORIA,
+        "total": total,
+        "eventos": eventos,
+    }
