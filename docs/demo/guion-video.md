@@ -79,3 +79,5 @@ El texto entre comillas es para decirlo con tus palabras; no hace falta leerlo l
 1. Revisa que dure 5:00 o menos y que se oiga bien.
 2. Súbelo a YouTube como **No listado** (o a Google Drive con «Cualquier persona con el enlace»). Abre el enlace en una ventana de incógnito para comprobar que se ve.
 3. Ese enlace va en la FPI-32 (sección B) y en el README.
+
+Publicado el 9/11/2026: https://youtu.be/2BhSb2ymYss

@@ -1,6 +1,6 @@
 # Dossier Técnico Final · FitManage
 
-Ingeniería de Software II · Universidad de Pamplona · Juan Sebastián Cárdenas Acevedo · Cierre: 6/11/2026 (FPI-32).
+Ingeniería de Software II · Universidad de Pamplona · Juan Sebastián Cárdenas Acevedo · Cierre: 9/11/2026 (FPI-32).
 
 Regla de este documento: cada afirmación lleva al lugar donde se puede comprobar. Lo que no se pudo comprobar se dice.
 
@@ -11,7 +11,7 @@ Regla de este documento: cada afirmación lleva al lugar donde se puede comproba
 | Problema (FPI-01) | En hora pico, la recepción de un gimnasio de barrio no sabe si la persona que llega pagó, y la fila crece. FitManage responde eso por documento, en segundos. |
 | Sistema en producción | https://fitmanage-svol.onrender.com (aplicativo del personal en `/`, API en `/api/v1`) |
 | Repositorio | https://github.com/GAMERO29/FitManage · release **v1.0.0** |
-| Video demo | Pendiente de grabación; guion en [`docs/demo/guion-video.md`](demo/guion-video.md). |
+| Video demo | https://youtu.be/2BhSb2ymYss (9/11/2026, máximo 5 minutos); guion en [`docs/demo/guion-video.md`](demo/guion-video.md). |
 | Stack | Django 5.2 LTS, Python 3.12, PostgreSQL 16, gunicorn, OpenTelemetry, imagen en `ghcr.io/gamero29/fitmanage`, Render (plan gratuito). |
 
 ## 2. Verificación y validación

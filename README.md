@@ -17,6 +17,7 @@ Proyecto integrador de Ingeniería de Software II · Universidad de Pamplona · 
 
 ## En producción
 
+- Video demo (5 min): https://youtu.be/2BhSb2ymYss
 - Aplicativo del personal: https://fitmanage-svol.onrender.com. Recepción, registro de socios y pagos, vencimientos con WhatsApp, historial del socio con cambio de plan y anulación (la recepcionista anula solo sus pagos del día, ADR N.° 18) y, para el administrador, reportes, planes y cuentas del personal.
 - La primera cuenta de administrador se crea al arrancar desde `FITMANAGE_ADMIN_NOMBRE`, `FITMANAGE_ADMIN_CORREO` y `FITMANAGE_ADMIN_CLAVE`, configuradas en el panel de Render (`preparar_gimnasio`).
 
