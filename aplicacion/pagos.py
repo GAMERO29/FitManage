@@ -19,9 +19,11 @@ from dominio.errores import (
     SocioNoEncontrado,
 )
 from dominio.modelos import (
+    ZONA_HORARIA,
     MedioPago,
     Pago,
     Plan,
+    Rol,
     Socio,
     SolicitudPago,
     TipoDocumento,
@@ -153,26 +155,37 @@ class RegistroPagoService:
 
 
 class AnulacionPagoService:
-    """RF-10 / CU-03 Anular el último pago vigente de un socio."""
+    """RF-10 / CU-03 Anular el último pago vigente de un socio (ADR N.° 18).
+
+    El administrador anula cualquier último pago vigente. La recepcionista solo anula los pagos
+    que ella misma registró hoy, para corregir un error en el momento: así no puede cobrar en
+    efectivo un día y anular el pago después. Para cambiar el plan del socio no tiene ese límite.
+    """
 
     def __init__(self, pagos: PagoRepositorio, reloj: Reloj) -> None:
         self._pagos = pagos
         self._reloj = reloj
 
     def anular_ultimo(self, socio: Socio, usuario: Usuario, motivo: str) -> Pago:
-        self._exigir_administrador(usuario)
+        self._exigir_personal(usuario)
         ultimo = self._ultimo_vigente(socio)
         if ultimo is None:
             raise PagoNoAnulable("El socio no tiene pagos vigentes.")
+        self._exigir_permiso(ultimo, usuario)
         return self._anular(ultimo, usuario, motivo)
 
-    def anular(self, pago_id: UUID, usuario: Usuario, motivo: str) -> Pago:
+    def anular(
+        self, pago_id: UUID, usuario: Usuario, motivo: str, para_cambio_de_plan: bool = False
+    ) -> Pago:
         """`PATCH /pagos/{pagoId}`: solo se acepta si ese pago es el último vigente de su socio."""
-        return self._anular(self.verificar_anulable(pago_id, usuario), usuario, motivo)
+        pago = self.verificar_anulable(pago_id, usuario, para_cambio_de_plan)
+        return self._anular(pago, usuario, motivo)
 
-    def verificar_anulable(self, pago_id: UUID, usuario: Usuario) -> Pago:
+    def verificar_anulable(
+        self, pago_id: UUID, usuario: Usuario, para_cambio_de_plan: bool = False
+    ) -> Pago:
         """Las mismas condiciones de la anulación, sin cambiar nada (sirve para la vista previa)."""
-        self._exigir_administrador(usuario)
+        self._exigir_personal(usuario)
         pago = self._pagos.obtener(pago_id)
         if pago is None:
             raise PagoNoEncontrado(f"No existe el pago {pago_id}.")
@@ -181,12 +194,23 @@ class AnulacionPagoService:
         ultimo = self._ultimo_vigente(pago.socio)
         if ultimo is None or ultimo.id != pago.id:
             raise PagoNoAnulable("Solo se puede anular el último pago vigente del socio.")
+        if not para_cambio_de_plan:
+            self._exigir_permiso(pago, usuario)
         return pago
 
     @staticmethod
-    def _exigir_administrador(usuario: Usuario) -> None:
-        if not usuario.es_administrador():
-            raise PermisoDenegado("Solo un administrador puede anular pagos.")
+    def _exigir_personal(usuario: Usuario) -> None:
+        if not usuario.activo or usuario.rol not in (Rol.ADMINISTRADOR, Rol.RECEPCIONISTA):
+            raise PermisoDenegado("Su rol no puede anular pagos ni cambiar planes.")
+
+    def _exigir_permiso(self, pago: Pago, usuario: Usuario) -> None:
+        if usuario.es_administrador():
+            return
+        registrado_hoy = pago.registrado_en.astimezone(ZONA_HORARIA).date() == self._reloj.hoy()
+        if pago.registrado_por.id != usuario.id or not registrado_hoy:
+            raise PermisoDenegado(
+                "La recepcionista solo puede anular los pagos que ella registró hoy."
+            )
 
     def _ultimo_vigente(self, socio: Socio) -> Pago | None:
         vigentes = self._pagos.vigentes_de(socio)
@@ -220,7 +244,7 @@ class CambioPlanService:
     def vista_previa(
         self, pago_id: UUID, plan_id: UUID, usuario: Usuario
     ) -> tuple[Pago, VistaPreviaPago]:
-        anterior = self._anulacion.verificar_anulable(pago_id, usuario)
+        anterior = self._anulacion.verificar_anulable(pago_id, usuario, para_cambio_de_plan=True)
         return anterior, self._registro.periodo_desde(anterior, plan_id)
 
     def cambiar(
@@ -233,6 +257,6 @@ class CambioPlanService:
         usuario: Usuario,
     ) -> CambioDePlan:
         anterior, _ = self.vista_previa(pago_id, plan_id, usuario)  # valida antes de tocar nada
-        anulado = self._anulacion.anular(anterior.id, usuario, motivo)
+        anulado = self._anulacion.anular(anterior.id, usuario, motivo, para_cambio_de_plan=True)
         nuevo = self._registro.registrar_cambio(anulado, plan_id, medio, referencia, usuario)
         return CambioDePlan(anulado, nuevo, int(nuevo.valor - anulado.valor))

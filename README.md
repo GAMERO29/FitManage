@@ -13,11 +13,11 @@ Proyecto integrador de Ingeniería de Software II · Universidad de Pamplona · 
 | `tests/` | Suite de pytest: núcleo con dobles en memoria, integración con la base real, contrato OpenAPI y Pact, aceptación (PA-xx). |
 | `prototipo/` | Prototipo original de la Guía 4 (HTML autónomo, datos de ejemplo). Se conserva como evidencia de diseño; el aplicativo real está en `infraestructura/web/`. |
 | `infraestructura/` | Adaptadores: API `/api/v1`, persistencia con Django ORM, observabilidad y el aplicativo del personal (`web/`, ADR N.° 16 y 17). |
-| `docs/` | ADR N.° 01 a 17, inventario de deuda, roadmap, runbooks, postmortems, evidencia de cada guía y el [Dossier Técnico Final](docs/Dossier_Final.md). |
+| `docs/` | ADR N.° 01 a 18, inventario de deuda, roadmap, runbooks, postmortems, evidencia de cada guía y el [Dossier Técnico Final](docs/Dossier_Final.md). |
 
 ## En producción
 
-- Aplicativo del personal: https://fitmanage-svol.onrender.com. Recepción, registro de socios y pagos, vencimientos con WhatsApp y, para el administrador, historial con anulación, reportes, precios de los planes y cuentas del personal.
+- Aplicativo del personal: https://fitmanage-svol.onrender.com. Recepción, registro de socios y pagos, vencimientos con WhatsApp, historial del socio con cambio de plan y anulación (la recepcionista anula solo sus pagos del día, ADR N.° 18) y, para el administrador, reportes, planes y cuentas del personal.
 - La primera cuenta de administrador se crea al arrancar desde `FITMANAGE_ADMIN_NOMBRE`, `FITMANAGE_ADMIN_CORREO` y `FITMANAGE_ADMIN_CLAVE`, configuradas en el panel de Render (`preparar_gimnasio`).
 
 ## Ejecutar las pruebas

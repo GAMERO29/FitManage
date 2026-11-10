@@ -108,7 +108,7 @@ def vista_previa(previa, hoy: date) -> dict:
 def historial(
     socio: Socio, estado: EstadoMembresia, vence: date | None, hoy: date, pagos: list[dict]
 ) -> dict:
-    """Solo para el administrador: es la única respuesta con el nombre completo del socio."""
+    """Personal del gimnasio (ADR N.° 18): la única respuesta con el nombre completo del socio."""
     return {
         "socio": {
             "nombreCompleto": f"{socio.nombres} {socio.apellidos}",
