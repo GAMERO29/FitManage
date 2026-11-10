@@ -10,6 +10,7 @@ from datetime import date, datetime
 from typing import Protocol
 from uuid import UUID
 
+from dominio.auditoria import EventoAuditoria
 from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
@@ -52,6 +53,19 @@ class CorreoSaliente(Protocol):
     """
 
     def enviar(self, destinatario: str, asunto: str, cuerpo: str) -> None: ...
+
+
+class RegistroAuditoria(Protocol):
+    """Guarda un evento en la misma transacción de la operación que lo produjo (ADR N.° 19)."""
+
+    def registrar(self, evento: EventoAuditoria) -> None: ...
+
+
+class SinAuditoria:
+    """Para las pruebas del núcleo que no miran el rastro. La API siempre usa el adaptador real."""
+
+    def registrar(self, evento: EventoAuditoria) -> None:
+        return None
 
 
 class Reloj(Protocol):

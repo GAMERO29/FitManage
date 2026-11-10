@@ -11,6 +11,7 @@ from aplicacion.planes import GestionPlanesService
 from aplicacion.socios import ConsultaEstadoService, RegistroSocioService
 from dominio.puertos import CorreoSaliente, Reloj
 from infraestructura.correo import CorreoDjango
+from infraestructura.persistencia.auditoria import AuditoriaORM
 from infraestructura.persistencia.repositorios import (
     PagoRepositorioORM,
     PlanRepositorioORM,
@@ -30,7 +31,11 @@ def correo() -> CorreoSaliente:
 
 def registro_pago() -> RegistroPagoService:
     return RegistroPagoService(
-        SocioRepositorioORM(), PlanRepositorioORM(), PagoRepositorioORM(), reloj()
+        SocioRepositorioORM(),
+        PlanRepositorioORM(),
+        PagoRepositorioORM(),
+        reloj(),
+        auditoria=AuditoriaORM(),
     )
 
 
@@ -47,7 +52,7 @@ def nombre_plan(plan_id) -> str:
 
 
 def anulacion_pago() -> AnulacionPagoService:
-    return AnulacionPagoService(PagoRepositorioORM(), reloj())
+    return AnulacionPagoService(PagoRepositorioORM(), reloj(), AuditoriaORM())
 
 
 def restablecimiento(enlace_para) -> RestablecimientoClaveService:
@@ -59,4 +64,4 @@ def gestion_planes() -> GestionPlanesService:
 
 
 def cambio_plan() -> CambioPlanService:
-    return CambioPlanService(anulacion_pago(), registro_pago())
+    return CambioPlanService(anulacion_pago(), registro_pago(), AuditoriaORM())
