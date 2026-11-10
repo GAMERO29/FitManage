@@ -1,0 +1,4 @@
+Inicio de sesión: 16 reglas pasan · sin violaciones
+Recepción con resultado: 27 reglas pasan · sin violaciones
+Historial con la confirmación de anulación abierta: 28 reglas pasan · sin violaciones
+Auditoría: 21 reglas pasan · sin violaciones

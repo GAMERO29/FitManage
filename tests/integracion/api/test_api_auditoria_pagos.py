@@ -54,8 +54,18 @@ def test_registrar_un_pago_deja_un_evento_con_quien_y_cuanto(recepcion, gimnasio
     assert evento.actor_nombre == "Laura" and evento.actor_id == gimnasio["laura"].id
     assert str(evento.entidad_id) == r.json()["id"]
     assert evento.socio_id == gimnasio["ana"].id
-    assert evento.detalle["valor"] == 75000 and evento.detalle["plan"] == "Mensual"
-    assert evento.detalle["referencia"] == "M777001"
+    # Guía II-04, mutación M9: el oráculo es el detalle completo, no dos campos sueltos.
+    assert evento.detalle == {
+        "plan": "Mensual",
+        "planId": str(ID_MENSUAL),
+        "valor": 75000,
+        "medio": "NEQUI",
+        "referencia": "M777001",
+        "inicia": "2026-10-22",  # Ana estaba activa hasta el 21/10 (RN-04)
+        "vence": "2026-11-20",
+        "registradoPor": "Laura",
+        "registradoEl": "2026-10-07T18:45:00-05:00",
+    }
 
 
 def test_el_evento_no_guarda_el_documento_ni_el_telefono(recepcion):

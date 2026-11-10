@@ -1,0 +1,6 @@
+XFAIL tests/integracion/api/test_api_pagos.py::test_la_misma_clave_de_otra_persona_no_repite_su_pago - DT-23: la clave de idempotencia es global, no por usuario
+SKIPPED [1] tests/integracion/api/test_api_concurrencia_socio.py:71: el bloqueo de fila se prueba en PostgreSQL
+SKIPPED [1] tests/integracion/api/test_api_concurrencia_socio.py:92: el bloqueo de fila se prueba en PostgreSQL
+SKIPPED [1] tests/integracion/api/test_api_concurrencia_socio.py:127: el bloqueo de fila se prueba en PostgreSQL
+SKIPPED [1] tests/integracion/test_concurrencia_postgres.py:41: QA-05 se mide en PostgreSQL
+373 passed, 4 skipped, 1 xfailed in 10.63s

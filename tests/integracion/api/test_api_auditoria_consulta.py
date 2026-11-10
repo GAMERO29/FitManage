@@ -100,3 +100,23 @@ def test_crear_un_plan_deja_evento(administracion):
     assert r.status_code == 201
     (evento,) = EventoAuditoriaModelo.objects.all()
     assert evento.tipo == "PLAN_CREADO" and evento.detalle["precio"] == 380000
+
+
+def test_la_pagina_trae_50_y_la_siguiente_el_resto(administracion, gimnasio):
+    """Guía II-04, mutación M8: ninguna prueba fijaba el tamaño de página del contrato."""
+    from apoyo_api import AHORA
+
+    EventoAuditoriaModelo.objects.bulk_create(
+        EventoAuditoriaModelo(
+            ocurrido_en=AHORA,
+            tipo="PRECIO_CAMBIADO",
+            actor_nombre="Carlos",
+            entidad_id=gimnasio["diario"].id,
+            detalle={"plan": "Diario", "antes": 8000 + i, "despues": 8001 + i},
+        )
+        for i in range(51)
+    )
+    primera = administracion.get(RUTA, HOY).json()
+    segunda = administracion.get(RUTA, {**HOY, "pagina": 2}).json()
+    assert (primera["porPagina"], primera["total"]) == (50, 51)
+    assert (len(primera["eventos"]), len(segunda["eventos"])) == (50, 1)
