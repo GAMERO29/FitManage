@@ -21,6 +21,10 @@ from infraestructura.api.http import SolicitudInvalida, leer_json, no_autenticad
 from infraestructura.api.seguridad import SOLO_ADMINISTRADOR, TODO_EL_PERSONAL, endpoint
 from infraestructura.observabilidad import telemetria
 from infraestructura.observabilidad.privacidad import seudonimo
+from infraestructura.persistencia.bloqueos import (
+    bloquear_socio_del_pago,
+    bloquear_socio_por_documento,
+)
 from infraestructura.persistencia.models import IdempotenciaModelo, PlanModelo
 
 COOKIE_RENOVACION = "fm_renovacion"
@@ -334,6 +338,7 @@ def registrar_pago(request: HttpRequest) -> JsonResponse:
                 )
         except IntegrityError:
             return _respuesta_guardada(clave)
+        bloquear_socio_por_documento(solicitud.tipo_documento.value, solicitud.numero_documento)
         pago = contenedor.registro_pago().registrar_pago(solicitud, request.usuario)
         cuerpo = presentacion.pago(pago, _nombre_plan(pago.plan_id))
         registro.estado_http, registro.cuerpo = 201, cuerpo
@@ -348,6 +353,7 @@ def registrar_pago(request: HttpRequest) -> JsonResponse:
 def anular_pago(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: N803
     datos = leer_json(request)
     with transaction.atomic():
+        bloquear_socio_del_pago(uuid.UUID(pagoId))
         pago = contenedor.anulacion_pago().anular(
             uuid.UUID(pagoId), request.usuario, datos["motivo"]
         )
@@ -366,6 +372,7 @@ def cambio_de_plan(request: HttpRequest, pagoId: str) -> JsonResponse:  # noqa: 
         return JsonResponse(presentacion.vista_cambio(anterior, previa))
     datos = leer_json(request)
     with transaction.atomic():
+        bloquear_socio_del_pago(uuid.UUID(pagoId))
         cambio = servicio.cambiar(
             uuid.UUID(pagoId),
             uuid.UUID(datos["planId"]),

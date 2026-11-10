@@ -129,3 +129,29 @@ def test_por_id_la_recepcionista_no_anula_un_pago_viejo(ana, mensual, laura, fab
     _, servicio = preparar(pago)
     with pytest.raises(PermisoDenegado):
         servicio.anular(pago.id, laura, "Intento")
+
+
+@pytest.mark.parametrize(
+    ("registrado_en", "ahora", "permitido"),
+    [
+        # Guía II-01, tabla de decisión: la frontera del «hoy» es la medianoche de Bogotá.
+        (bogota(2026, 10, 6, 23, 59, 59), bogota(2026, 10, 7, 0, 0, 0), False),
+        (bogota(2026, 10, 7, 0, 0, 0), bogota(2026, 10, 7, 23, 59, 59), True),
+        # 7:30 p. m. en Bogotá ya es el 8 de octubre en UTC: el día se cuenta en Bogotá (RN-03).
+        (bogota(2026, 10, 7, 19, 30), bogota(2026, 10, 7, 21, 0), True),
+    ],
+    ids=["un-segundo-antes-de-medianoche", "primer-segundo-del-dia", "noche-en-utc-es-otro-dia"],
+)
+def test_frontera_del_dia_para_la_recepcionista(
+    ana, mensual, laura, fabrica_pago, registrado_en, ahora, permitido
+):
+    pago = fabrica_pago(
+        ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura, registrado_en=registrado_en
+    )
+    servicio = AnulacionPagoService(PagosEnMemoria(pago), RelojFijo(ahora))
+    if permitido:
+        assert servicio.anular(pago.id, laura, "Plan equivocado") is pago
+    else:
+        with pytest.raises(PermisoDenegado):
+            servicio.anular(pago.id, laura, "Plan equivocado")
+        assert pago.esta_vigente()
