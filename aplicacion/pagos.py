@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
+from dominio.auditoria import EventoAuditoria, TipoEvento, datos_del_pago
 from dominio.calculadora import CalculadoraMembresia
 from dominio.errores import (
     DatosInvalidos,
@@ -29,7 +30,14 @@ from dominio.modelos import (
     TipoDocumento,
     Usuario,
 )
-from dominio.puertos import PagoRepositorio, PlanRepositorio, Reloj, SocioRepositorio
+from dominio.puertos import (
+    PagoRepositorio,
+    PlanRepositorio,
+    RegistroAuditoria,
+    Reloj,
+    SinAuditoria,
+    SocioRepositorio,
+)
 
 
 @dataclass(frozen=True)
@@ -51,12 +59,14 @@ class RegistroPagoService:
         pagos: PagoRepositorio,
         reloj: Reloj,
         calculadora: CalculadoraMembresia | None = None,
+        auditoria: RegistroAuditoria | None = None,
     ) -> None:
         self._socios = socios
         self._planes = planes
         self._pagos = pagos
         self._reloj = reloj
         self._calculadora = calculadora or CalculadoraMembresia()
+        self._auditoria = auditoria or SinAuditoria()
 
     def registrar_pago(self, solicitud: SolicitudPago, usuario: Usuario) -> Pago:
         socio = self._buscar_socio(solicitud.tipo_documento, solicitud.numero_documento)
@@ -77,6 +87,16 @@ class RegistroPagoService:
             registrado_en=self._reloj.ahora(),
         )
         self._pagos.guardar(pago)
+        self._auditoria.registrar(
+            EventoAuditoria(
+                TipoEvento.PAGO_REGISTRADO,
+                usuario,
+                pago.registrado_en,
+                pago.id,
+                socio.id,
+                {**datos_del_pago(pago), "plan": plan.nombre},
+            )
+        )
         return pago
 
     def periodo_desde(self, anterior: Pago, plan_id: UUID) -> VistaPreviaPago:
@@ -109,6 +129,9 @@ class RegistroPagoService:
         )
         self._pagos.guardar(pago)
         return pago
+
+    def nombre_del_plan(self, plan_id: UUID) -> str:
+        return self._buscar_plan(plan_id).nombre
 
     def vista_previa(self, tipo: TipoDocumento, numero: str, plan_id: UUID) -> VistaPreviaPago:
         """Las mismas reglas del registro (RN-03, RN-04, RN-08), sin guardar nada."""
@@ -162,9 +185,12 @@ class AnulacionPagoService:
     efectivo un día y anular el pago después. Para cambiar el plan del socio no tiene ese límite.
     """
 
-    def __init__(self, pagos: PagoRepositorio, reloj: Reloj) -> None:
+    def __init__(
+        self, pagos: PagoRepositorio, reloj: Reloj, auditoria: RegistroAuditoria | None = None
+    ) -> None:
         self._pagos = pagos
         self._reloj = reloj
+        self._auditoria = auditoria or SinAuditoria()
 
     def anular_ultimo(self, socio: Socio, usuario: Usuario, motivo: str) -> Pago:
         self._exigir_personal(usuario)
@@ -179,7 +205,7 @@ class AnulacionPagoService:
     ) -> Pago:
         """`PATCH /pagos/{pagoId}`: solo se acepta si ese pago es el último vigente de su socio."""
         pago = self.verificar_anulable(pago_id, usuario, para_cambio_de_plan)
-        return self._anular(pago, usuario, motivo)
+        return self._anular(pago, usuario, motivo, registrar_evento=not para_cambio_de_plan)
 
     def verificar_anulable(
         self, pago_id: UUID, usuario: Usuario, para_cambio_de_plan: bool = False
@@ -216,9 +242,22 @@ class AnulacionPagoService:
         vigentes = self._pagos.vigentes_de(socio)
         return max(vigentes, key=lambda p: (p.fecha_inicio, p.registrado_en), default=None)
 
-    def _anular(self, pago: Pago, usuario: Usuario, motivo: str) -> Pago:
+    def _anular(
+        self, pago: Pago, usuario: Usuario, motivo: str, registrar_evento: bool = True
+    ) -> Pago:
         pago.anular(motivo, usuario, self._reloj.ahora())
         self._pagos.guardar(pago)
+        if registrar_evento:  # el cambio de plan deja un solo evento, PLAN_CAMBIADO
+            self._auditoria.registrar(
+                EventoAuditoria(
+                    TipoEvento.PAGO_ANULADO,
+                    usuario,
+                    pago.fecha_anulacion,
+                    pago.id,
+                    pago.socio.id,
+                    {**datos_del_pago(pago), "motivo": pago.motivo_anulacion},
+                )
+            )
         return pago
 
 
@@ -237,9 +276,15 @@ class CambioPlanService:
     anulación tampoco queda.
     """
 
-    def __init__(self, anulacion: AnulacionPagoService, registro: RegistroPagoService) -> None:
+    def __init__(
+        self,
+        anulacion: AnulacionPagoService,
+        registro: RegistroPagoService,
+        auditoria: RegistroAuditoria | None = None,
+    ) -> None:
         self._anulacion = anulacion
         self._registro = registro
+        self._auditoria = auditoria or SinAuditoria()
 
     def vista_previa(
         self, pago_id: UUID, plan_id: UUID, usuario: Usuario
@@ -259,4 +304,25 @@ class CambioPlanService:
         anterior, _ = self.vista_previa(pago_id, plan_id, usuario)  # valida antes de tocar nada
         anulado = self._anulacion.anular(anterior.id, usuario, motivo, para_cambio_de_plan=True)
         nuevo = self._registro.registrar_cambio(anulado, plan_id, medio, referencia, usuario)
-        return CambioDePlan(anulado, nuevo, int(nuevo.valor - anulado.valor))
+        cambio = CambioDePlan(anulado, nuevo, int(nuevo.valor - anulado.valor))
+        self._auditoria.registrar(
+            EventoAuditoria(
+                TipoEvento.PLAN_CAMBIADO,
+                usuario,
+                nuevo.registrado_en,
+                nuevo.id,
+                nuevo.socio.id,
+                {
+                    "pagoAnulado": str(anulado.id),
+                    "planAnteriorId": str(anulado.plan_id),
+                    "valorAnterior": int(anulado.valor),
+                    "registroDelAnulado": anulado.registrado_por.nombre,
+                    "planNuevo": self._registro.nombre_del_plan(plan_id),
+                    "valorNuevo": int(nuevo.valor),
+                    "diferencia": cambio.diferencia,
+                    "medio": nuevo.medio.value,
+                    "motivo": anulado.motivo_anulacion,
+                },
+            )
+        )
+        return cambio
