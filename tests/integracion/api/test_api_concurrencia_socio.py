@@ -118,3 +118,44 @@ def test_d02_dos_pagos_del_mismo_socio_al_tiempo_no_se_superponen(datos):
     )
     # RN-04: el segundo pago empieza el día siguiente al vencimiento del primero.
     assert inicios == ["2026-10-22", "2026-11-21"]
+
+
+def test_anular_y_pagar_al_tiempo_deja_un_resultado_que_existe_en_algun_orden(datos):
+    """El resultado debe ser el de hacer una operación después de la otra, en cualquier orden."""
+    laura, carlos = _token("laura@gimnasio-demo.co"), _token("carlos@gimnasio-demo.co")
+    ana = datos["ana"]
+    ultimo = PagoModelo.objects.get(socio_id=ana.id, estado="VIGENTE")
+
+    def anular():
+        return Client().patch(
+            f"/api/v1/pagos/{ultimo.id}",
+            json.dumps({"estado": "ANULADO", "motivo": "Plan equivocado"}),
+            "application/json",
+            HTTP_AUTHORIZATION=f"Bearer {carlos}",
+        )
+
+    def pagar():
+        return Client().post(
+            "/api/v1/pagos",
+            json.dumps(
+                {
+                    "tipoDocumento": "CC",
+                    "numeroDocumento": "1090123456",
+                    "planId": str(datos["mensual"].id),
+                    "medio": "EFECTIVO",
+                }
+            ),
+            "application/json",
+            HTTP_AUTHORIZATION=f"Bearer {laura}",
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+
+    codigo_anular, codigo_pagar = _a_la_vez(anular, pagar)
+
+    nuevo = PagoModelo.objects.exclude(id=ultimo.id).get(socio_id=ana.id)
+    assert codigo_pagar == 201
+    if codigo_anular == 200:  # primero se anuló: el pago nuevo empieza hoy, 7/10
+        assert str(nuevo.fecha_inicio) == "2026-10-07"
+    else:  # primero se pagó: el anterior ya no es el último y no se anula
+        assert codigo_anular == 409
+        assert str(nuevo.fecha_inicio) == "2026-10-22"

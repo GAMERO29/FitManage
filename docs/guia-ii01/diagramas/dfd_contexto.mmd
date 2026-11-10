@@ -1,0 +1,9 @@
+%% DFD de contexto · Anular el último pago (CU-03). No es UML: rectángulo = entidad externa,
+%% círculo = proceso, las flechas son datos con nombre. Versión analizada: a358229.
+flowchart LR
+  P["Personal autenticado<br/>(administrador o recepcionista)"]
+  S(("0<br/>Anulación de pagos<br/>FitManage"))
+  P -- "F1 consulta de historial<br/>(tipo y número de documento + token)" --> S
+  S -- "F2 historial y estado<br/>de la membresía" --> P
+  P -- "F3 solicitud de anulación<br/>(pagoId, motivo + token)" --> S
+  S -- "F4 resultado de la anulación<br/>(pago anulado o problema)" --> P

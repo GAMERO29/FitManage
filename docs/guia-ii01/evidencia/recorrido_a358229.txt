@@ -1,0 +1,15 @@
+R1 PASA · Pago registrado. Mensual por $ 75.000: queda activo hasta el martes 8 de diciembre.
+R2 PASA · botón habilitado: true; alcanzado con 3 pulsaciones de Tab
+R3 PASA · foco en #motivo; mensaje: «Escriba el motivo (al menos 5 caracteres) para poder anular.»; el pago sigue vigente: true
+R4 PASA · pagos en el historial: 1; estado del pago: ANULADO; anuló: Laura Demo; membresía: SIN_MEMBRESIA
+R5 PASA · pago nuevo de Laura: 201; botón deshabilitado para Diana: true
+R6 PASA · PATCH directo de Diana: 403; el pago sigue VIGENTE
+R7 PASA · PATCH del entrenador: 403; historial: 403
+R8 PASA · códigos: 200 y 409; el 409 dice «El pago ya está anulado.»
+R9 PASA · repetición: 409; motivo y autor conservados: «Doble clic 1», Carlos Demo
+R10 PASA · columna Estado: AnuladoAnuló Carlos Demo: Doble clic 1 | AnuladoAnuló Laura Demo: Plan equivocado: la socia pidió Quincenal
+R11 PASA · ancho del documento: 360 px
+R13 PASA · Diana cambia a Diario el pago que registró Laura: 201; diferencia -67000 (negativa = se le devuelve a la socia); el pago de Laura queda ANULADO
+R12 PASA · ninguno
+
+Resumen: 13 de 13 comprobaciones pasan.
