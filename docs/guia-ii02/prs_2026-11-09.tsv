@@ -1,0 +1,55 @@
+numero	autor	creado	integrado	cerrado	titulo
+1	GAMERO29	2026-10-31T01:44:15Z	2026-10-31T01:45:29Z	2026-10-31T01:45:29Z	Refactor hexagonal del módulo de pagos: casos de uso en aplicacion/ y adaptadores con Django ORM
+2	GAMERO29	2026-10-31T02:33:21Z	2026-10-31T02:34:27Z	2026-10-31T02:34:27Z	Contexto Acceso del personal: repositorio propio de usuarios (paga DT-11)
+3	GAMERO29	2026-10-31T21:37:28Z	2026-10-31T21:39:14Z	2026-10-31T21:39:14Z	API real según el contrato, con integración, aceptación y Pact (Guía 7)
+4	GAMERO29	2026-11-02T18:12:08Z	2026-11-02T19:01:19Z	2026-11-02T19:01:19Z	TDD del recordatorio de WhatsApp, regresión en paralelo y prueba de carga con k6 (Guía 8)
+5	GAMERO29	2026-11-02T19:25:47Z	2026-11-02T19:37:51Z	2026-11-02T19:37:51Z	Pipeline de CI profesional con Quality Gate y artefacto inmutable (Guía 9)
+6	GAMERO29	2026-11-02T20:09:19Z		2026-11-02T20:15:06Z	DEMO (no unir): cambio sin pruebas para comprobar la puerta de calidad
+7	GAMERO29	2026-11-02T20:17:36Z	2026-11-02T20:20:37Z	2026-11-02T20:20:37Z	Guía 9 resuelta con la FPI-25 y evidencia del Quality Gate
+8	GAMERO29	2026-11-02T22:28:08Z	2026-11-02T22:56:28Z	2026-11-02T22:56:28Z	Contenerización multietapa y Docker Compose con volumen (Guía 10)
+9	GAMERO29	2026-11-03T00:07:33Z	2026-11-03T01:24:46Z	2026-11-03T01:24:46Z	Despliegue continuo a Render con healthcheck y rollback (Guía 11)
+10	GAMERO29	2026-11-03T02:14:47Z	2026-11-03T03:04:41Z	2026-11-03T03:04:41Z	El healthcheck del despliegue explica por qué espera
+11	GAMERO29	2026-11-03T03:29:02Z	2026-11-03T03:32:39Z	2026-11-03T03:32:39Z	Render: host del healthcheck y HOME de gunicorn
+12	GAMERO29	2026-11-03T03:38:44Z	2026-11-03T03:42:19Z	2026-11-03T03:42:19Z	Simulacro de rollback por rama
+13	GAMERO29	2026-11-03T04:04:32Z	2026-11-03T04:08:09Z	2026-11-03T04:08:09Z	Guía 11 resuelta con la FPI-27 y el ADR N.° 11
+14	GAMERO29	2026-11-03T04:32:26Z	2026-11-03T05:18:31Z	2026-11-03T05:18:31Z	DevSecOps: SAST, SCA y escaneo de secretos (Guía 12)
+15	GAMERO29	2026-11-03T04:59:59Z		2026-11-03T05:02:58Z	Demo guía 12: workflow de seguridad de la IA (no se fusiona)
+16	GAMERO29	2026-11-03T05:08:36Z		2026-11-03T05:10:09Z	Demo guía 12: inyección SQL a propósito (no se fusiona)
+17	dependabot[bot]	2026-11-03T05:19:28Z	2026-11-07T02:05:51Z	2026-11-07T02:05:51Z	build(deps): Bump docker/login-action from 4.6.0 to 4.7.0
+18	dependabot[bot]	2026-11-03T05:19:44Z	2026-11-07T02:09:59Z	2026-11-07T02:09:59Z	build(deps): Bump actions/setup-python from 7.0.0 to 7.1.0
+19	dependabot[bot]	2026-11-03T05:19:54Z		2026-11-07T01:05:27Z	build(deps): Bump SonarSource/sonarqube-scan-action from 8.3.0 to 8.4.0
+20	dependabot[bot]	2026-11-03T05:20:07Z		2026-11-07T01:01:03Z	build(deps): Bump django from 5.2.18 to 6.1.2
+21	dependabot[bot]	2026-11-03T05:20:13Z		2026-11-07T01:01:06Z	build(deps-dev): Bump openapi-spec-validator from 0.8.5 to 0.9.0
+22	dependabot[bot]	2026-11-03T05:20:20Z	2026-11-07T02:22:01Z	2026-11-07T02:22:01Z	build(deps-dev): Bump pytest from 9.1.1 to 9.2.0
+23	dependabot[bot]	2026-11-03T05:20:48Z		2026-11-07T01:05:37Z	build(deps): Bump github/codeql-action/upload-sarif from 4.39.0 to 4.39.1
+24	GAMERO29	2026-11-03T19:27:55Z	2026-11-03T20:48:26Z	2026-11-03T20:48:26Z	Guía 13: observabilidad con OpenTelemetry, Prometheus y Grafana (FPI-29)
+25	GAMERO29	2026-11-03T21:01:07Z	2026-11-03T21:04:46Z	2026-11-03T21:04:46Z	Tablero de Grafana portable a Grafana Cloud
+26	GAMERO29	2026-11-03T21:24:05Z	2026-11-03T21:27:43Z	2026-11-03T21:27:43Z	Tablero compatible con la lectura de 1 minuto de Grafana Cloud
+27	GAMERO29	2026-11-06T21:43:50Z	2026-11-06T22:22:49Z	2026-11-06T22:22:49Z	Docs: producción conectada a Grafana Cloud
+28	GAMERO29	2026-11-06T22:12:47Z		2026-11-06T22:22:51Z	Producción conectada a Grafana Cloud
+29	GAMERO29	2026-11-06T22:32:52Z	2026-11-07T00:27:41Z	2026-11-07T00:27:41Z	Guía 14: SLO, presupuesto de error, runbook y postmortem (FPI-30)
+30	GAMERO29	2026-11-07T01:00:51Z	2026-11-07T01:04:44Z	2026-11-07T01:04:44Z	Guía 15: paga DT-16, revisión de la deuda residual y roadmap
+31	dependabot[bot]	2026-11-07T01:05:18Z	2026-11-07T02:14:07Z	2026-11-07T02:14:07Z	build(deps): Bump SonarSource/sonarqube-scan-action from 8.3.0 to 8.4.1
+32	dependabot[bot]	2026-11-07T01:05:28Z	2026-11-07T02:18:35Z	2026-11-07T02:18:35Z	build(deps): Bump github/codeql-action/upload-sarif from 4.39.0 to 4.39.3
+33	dependabot[bot]	2026-11-07T01:06:35Z	2026-11-07T02:25:48Z	2026-11-07T02:25:48Z	build(deps): Bump the parches-python group with 2 updates
+34	GAMERO29	2026-11-07T01:09:22Z	2026-11-07T01:12:56Z	2026-11-07T01:12:56Z	ADR N.° 15: precisión sobre la complejidad de las vistas
+35	GAMERO29	2026-11-07T01:13:17Z	2026-11-07T01:17:13Z	2026-11-07T01:17:13Z	Guía 15: documento de entrega
+36	GAMERO29	2026-11-07T02:26:11Z	2026-11-07T02:29:40Z	2026-11-07T02:29:40Z	Hito H0 cumplido (paga DT-17)
+37	GAMERO29	2026-11-07T02:37:11Z	2026-11-07T02:41:01Z	2026-11-07T02:41:01Z	Guía 15: entrega actualizada (H0 cumplido)
+39	GAMERO29	2026-11-07T03:09:12Z	2026-11-07T03:16:38Z	2026-11-07T03:16:38Z	Guía 16: pantalla de recepción, primer arranque, licencias y cierre del programa
+40	GAMERO29	2026-11-07T03:33:10Z	2026-11-07T03:36:59Z	2026-11-07T03:36:59Z	Bitácora de IA con las 31 fichas y notas de releases
+41	GAMERO29	2026-11-07T03:58:13Z	2026-11-07T04:01:22Z	2026-11-07T04:01:22Z	Entregas de la Guía 16 y de las fichas FPI-13 a FPI-16
+42	GAMERO29	2026-11-08T00:14:21Z	2026-11-08T00:17:51Z	2026-11-08T00:17:51Z	La pantalla de recepción responde HEAD (405 vistos en Grafana Cloud)
+43	GAMERO29	2026-11-08T00:24:10Z	2026-11-08T00:27:59Z	2026-11-08T00:27:59Z	FPI-32 con los datos de producción de Grafana Cloud
+44	GAMERO29	2026-11-08T00:35:31Z	2026-11-08T00:45:46Z	2026-11-08T00:45:46Z	ci: resumen de alertas de Dependabot
+45	GAMERO29	2026-11-08T00:49:11Z	2026-11-08T00:53:04Z	2026-11-08T00:53:04Z	docs(demo): guion final del video
+46	GAMERO29	2026-11-08T00:57:14Z	2026-11-08T01:00:47Z	2026-11-08T01:00:47Z	docs: una sola materia (Ingeniería de Software II)
+47	GAMERO29	2026-11-08T01:54:19Z	2026-11-08T02:02:13Z	2026-11-08T02:02:13Z	feat(app): el prototipo pasa a ser el aplicativo real, conectado a la API (ADR 17)
+48	GAMERO29	2026-11-08T04:55:21Z	2026-11-08T04:58:56Z	2026-11-08T04:58:56Z	feat(planes): crear, desactivar y reactivar planes desde el aplicativo
+49	dependabot[bot]	2026-11-09T11:18:34Z			build(deps): Bump docker/login-action from 4.7.0 to 4.8.0
+50	dependabot[bot]	2026-11-09T11:19:06Z			build(deps): Bump the parches-python group with 2 updates
+51	GAMERO29	2026-11-10T00:19:46Z	2026-11-10T00:23:22Z	2026-11-10T00:23:22Z	fix(app): los campos quedan en blanco al cambiar de sección
+52	GAMERO29	2026-11-10T01:06:50Z	2026-11-10T01:10:51Z	2026-11-10T01:10:51Z	feat(pagos): cambiar el plan de un socio en un solo paso
+53	GAMERO29	2026-11-10T01:26:02Z	2026-11-10T01:30:23Z	2026-11-10T01:30:23Z	feat(permisos): la recepcionista anula sus pagos del día y cambia planes (ADR 18)
+54	GAMERO29	2026-11-10T02:19:35Z	2026-11-10T02:23:31Z	2026-11-10T02:23:31Z	docs(FPI-32): video demo publicado y docx final de la Guía 16
+55	GAMERO29	2026-11-10T02:55:28Z	2026-11-10T03:01:43Z	2026-11-10T03:01:43Z	fix(pagos): las operaciones de un mismo socio se hacen de una en una (Guía II-01)
