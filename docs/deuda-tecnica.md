@@ -99,3 +99,9 @@ Comparación del inventario contra el sistema al cerrar el semestre. «Empeoró�
 | DT-28 | La interfaz decide si habilita «Anular último pago» comparando el **nombre** de quien registró con el de la sesión; el servidor compara el **id**. Con dos cuentas del mismo nombre, el botón aparece habilitado y la API responde 403. | Diseño (interfaz) | `infraestructura/web/app.js` (`puedeAnular`), `presentacion.pago` | Bajo: el servidor protege; solo confunde. | Inadvertida y prudente | Agregar `registradoPorId` a la respuesta (cambio compatible del contrato) y comparar ids. |
 | DT-29 | Repetir la anulación de un pago ya anulado responde 409 con el código `NO_ES_EL_ULTIMO_PAGO` y el título «Solo se puede anular el último pago vigente»; solo el detalle dice «El pago ya está anulado». | Contrato | `infraestructura/api/errores.py` | Bajo: el aplicativo muestra el detalle. | Inadvertida y prudente | Decidir en la Guía II-03 si se agrega un código nuevo (cambio de contrato) o se documenta el actual. |
 | DT-30 | El esquema físico no protege la coherencia de la anulación: `estado` no tiene CHECK de valores y nada impide en la base un pago `ANULADO` sin motivo o sin autor, ni un `UPDATE` que lo vuelva a `VIGENTE`. | Diseño de datos | tabla `pagos` | Medio: hoy solo lo impide el dominio. | Deliberada y prudente | Va con la migración del incremento de auditoría (DT-14, Guía II-03). |
+
+## Pagos de la Guía II-03 (incremento de auditoría, 9/11/2026)
+
+- **DT-14 pagada** (ADR N.° 19): pagos, anulaciones, cambios de plan, precios y estado de los planes dejan un evento de solo inserción en la misma transacción. Pendiente dentro de DT-14: los eventos de cuentas del personal (creación, bloqueo y desbloqueo), issue #57.
+- **DT-30 pagada**: CHECK `estado_de_pago_conocido` y `anulacion_completa_o_ninguna` (migración 0003).
+- **D-07 de la Guía II-01 corregido**: «Anular pago» no envía dos veces y recarga el historial ante un 409.

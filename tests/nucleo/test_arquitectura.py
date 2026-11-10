@@ -51,3 +51,31 @@ def test_los_controladores_no_hacen_el_trabajo_de_los_casos_de_uso():
     vistas = RAIZ / "infraestructura" / "api" / "vistas.py"
     fugas = sorted(n for n in _importaciones(vistas) if n in PROHIBIDOS_EN_CONTROLADORES)
     assert fugas == []
+
+
+# Guía II-01 (D-01, D-02) y II-03: todo controlador que escribe pagos bloquea al socio y abre una
+# transacción, para que el evento de auditoría y la operación queden juntos o no queden.
+ESCRIBEN_PAGOS = {"registro_pago", "anulacion_pago", "cambio_plan"}
+
+
+def _llamadas(funcion: ast.FunctionDef) -> set[str]:
+    nombres = set()
+    for nodo in ast.walk(funcion):
+        if isinstance(nodo, ast.Call):
+            f = nodo.func
+            nombres.add(f.attr if isinstance(f, ast.Attribute) else getattr(f, "id", ""))
+    return nombres
+
+
+def test_toda_escritura_de_pagos_bloquea_al_socio_dentro_de_una_transaccion():
+    arbol = ast.parse((RAIZ / "infraestructura" / "api" / "vistas.py").read_text(encoding="utf-8"))
+    revisadas, fugas = 0, []
+    for funcion in (n for n in arbol.body if isinstance(n, ast.FunctionDef)):
+        llamadas = _llamadas(funcion)
+        servicios = llamadas & ESCRIBEN_PAGOS
+        if not servicios or funcion.name.startswith("vista_previa"):  # la vista previa solo lee
+            continue
+        revisadas += 1
+        if "atomic" not in llamadas or not any(n.startswith("bloquear_socio") for n in llamadas):
+            fugas.append(funcion.name)
+    assert revisadas >= 3 and fugas == []

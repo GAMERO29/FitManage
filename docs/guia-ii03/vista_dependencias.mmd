@@ -1,0 +1,31 @@
+%% Guía II-03 · Vista de dependencias del incremento de auditoría (lo implementado en el código).
+%% Flechas continuas: «usa». Flechas punteadas: «implementa». Verde: lo nuevo de este incremento.
+flowchart LR
+  subgraph Infraestructura
+    V["Controladores<br/>(vistas.py)<br/>transaction.atomic + bloqueo"]
+    C["Raíz de composición<br/>(contenedor.py)"]
+    ORM["AuditoriaORM"]
+    T[("tabla auditoria<br/>+ disparador")]
+    Q["consultas.auditoria<br/>GET /api/v1/auditoria"]
+  end
+  subgraph Aplicacion["Aplicación"]
+    S1["RegistroPagoService<br/>AnulacionPagoService<br/>CambioPlanService"]
+    S2["GestionPlanesService"]
+  end
+  subgraph Dominio
+    P["Puerto<br/>RegistroAuditoria"]
+    E["EventoAuditoria<br/>TipoEvento"]
+  end
+  V --> C
+  C --> S1
+  C --> S2
+  C --> ORM
+  S1 --> P
+  S2 --> P
+  S1 --> E
+  ORM -. implementa .-> P
+  ORM --> T
+  Q --> T
+  V --> Q
+  classDef nuevo fill:#e3f4ea,stroke:#1a7f4b
+  class ORM,T,Q,P,E nuevo
