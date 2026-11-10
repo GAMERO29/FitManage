@@ -18,12 +18,17 @@ POSTGRES_BORRAR = """
 DROP TRIGGER IF EXISTS auditoria_sin_cambios ON auditoria;
 DROP FUNCTION IF EXISTS auditoria_solo_insercion();
 """
-SQLITE_CREAR = [
+# Cada sentencia va en su propia variable: dentro de una lista, dos cadenas seguidas se unirían
+# en silencio si faltara una coma (Semgrep lo marca, y con razón).
+SQLITE_SIN_UPDATE = (
     "CREATE TRIGGER auditoria_sin_update BEFORE UPDATE ON auditoria "
-    "BEGIN SELECT RAISE(ABORT, 'La auditoría es de solo inserción: UPDATE no está permitido'); END",
+    "BEGIN SELECT RAISE(ABORT, 'La auditoría es de solo inserción: UPDATE no está permitido'); END"
+)
+SQLITE_SIN_DELETE = (
     "CREATE TRIGGER auditoria_sin_delete BEFORE DELETE ON auditoria "
-    "BEGIN SELECT RAISE(ABORT, 'La auditoría es de solo inserción: DELETE no está permitido'); END",
-]
+    "BEGIN SELECT RAISE(ABORT, 'La auditoría es de solo inserción: DELETE no está permitido'); END"
+)
+SQLITE_CREAR = [SQLITE_SIN_UPDATE, SQLITE_SIN_DELETE]
 SQLITE_BORRAR = [
     "DROP TRIGGER IF EXISTS auditoria_sin_update",
     "DROP TRIGGER IF EXISTS auditoria_sin_delete",
