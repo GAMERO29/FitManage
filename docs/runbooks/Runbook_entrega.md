@@ -22,6 +22,6 @@ Guía II-05 (9/11/2026). Trabajo solo: ejecuto, reviso y decido yo. Lo que revis
 
 ## Revertir
 
-- **Código:** volver a desplegar la imagen `sha-<commit estable>` por el Deploy Hook (`python -m despliegue.render`), o con el workflow de Despliegue apuntando a ese commit.
+- **Código:** volver a desplegar la imagen `sha-<commit estable>` por el Deploy Hook (`RENDER_DEPLOY_HOOK=… python -m despliegue.render ghcr.io/gamero29/fitmanage:sha-<commit>`). El workflow de Despliegue solo corre después de un CI exitoso en `main`, así que no sirve para elegir una versión vieja; el pipeline sí hace ese retroceso solo cuando la verificación falla.
 - **Datos:** no se ejecuta una migración hacia atrás si borra datos (la 0003 borra la auditoría). Una restauración desde respaldo pierde todo lo posterior al respaldo: antes de hacerla hay que saber qué pagos y eventos se perderían y cómo se reconciliarían.
 - **Respaldos:** la base gratuita de Render no tiene copias automáticas. Mientras no se cambie de plan (hito H1), el respaldo es un `pg_dump` manual por la *External Database URL*.
