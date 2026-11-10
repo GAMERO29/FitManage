@@ -17,7 +17,7 @@ from apoyo_api import CLAVE, ID_PAGO_JORGE, sembrar
 from django.db import connection, connections
 from django.test import Client
 
-from infraestructura.persistencia.models import PagoModelo
+from infraestructura.persistencia.models import EventoAuditoriaModelo, PagoModelo
 from infraestructura.persistencia.repositorios import PagoRepositorioORM
 
 pytestmark = pytest.mark.skipif(
@@ -84,6 +84,9 @@ def test_d01_dos_anulaciones_del_mismo_pago_solo_una_tiene_exito(datos):
     assert sorted(codigos) == [200, 409]  # RN-07: la anulación ocurre una sola vez
     fila = PagoModelo.objects.get(id=ID_PAGO_JORGE)
     assert fila.estado == "ANULADO"
+    # Guía II-03: el rastro también queda una sola vez, con el motivo que sí se guardó.
+    (evento,) = EventoAuditoriaModelo.objects.filter(tipo="PAGO_ANULADO")
+    assert evento.detalle["motivo"] == fila.motivo_anulacion
 
 
 def test_d02_dos_pagos_del_mismo_socio_al_tiempo_no_se_superponen(datos):
@@ -118,6 +121,7 @@ def test_d02_dos_pagos_del_mismo_socio_al_tiempo_no_se_superponen(datos):
     )
     # RN-04: el segundo pago empieza el día siguiente al vencimiento del primero.
     assert inicios == ["2026-10-22", "2026-11-21"]
+    assert EventoAuditoriaModelo.objects.filter(tipo="PAGO_REGISTRADO").count() == 2
 
 
 def test_anular_y_pagar_al_tiempo_deja_un_resultado_que_existe_en_algun_orden(datos):
