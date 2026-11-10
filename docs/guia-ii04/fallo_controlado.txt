@@ -1,0 +1,7 @@
+Antes: pago 30ba0d88-7284-4fdb-b208-d1b1981de04a = VIGENTE · eventos PAGO_ANULADO = 3
+Mientras espera: sesiones de la app bloqueadas en el INSERT del evento = 1
+SIGKILL al worker 13596
+Respuesta HTTP recibida por el cliente: 000
+Después: pago = VIGENTE · motivo = '' · eventos PAGO_ANULADO = 3
+El servicio responde de nuevo: {"estado": "ok", "hora": "2026-11-09T22:50:00-05:00", "version": "c07c2d3"}
+Reintento: HTTP 200 · pago = ANULADO · eventos PAGO_ANULADO = 4

@@ -163,3 +163,33 @@ def test_anular_y_pagar_al_tiempo_deja_un_resultado_que_existe_en_algun_orden(da
     else:  # primero se pagó: el anterior ya no es el último y no se anula
         assert codigo_anular == 409
         assert str(nuevo.fecha_inicio) == "2026-10-22"
+
+
+def test_cambiar_de_plan_y_anular_el_mismo_pago_al_tiempo(datos):
+    """Guía II-01, comprobación 3 pendiente; Guía II-04: solo una de las dos operaciones gana."""
+    carlos = _token("carlos@gimnasio-demo.co")
+    encabezado = {"HTTP_AUTHORIZATION": f"Bearer {carlos}"}
+    ruta = f"/api/v1/pagos/{ID_PAGO_JORGE}"
+
+    def anular():
+        return Client().patch(
+            ruta,
+            json.dumps({"estado": "ANULADO", "motivo": "Plan equivocado"}),
+            "application/json",
+            **encabezado,
+        )
+
+    def cambiar():
+        return Client().post(
+            f"{ruta}/cambio-de-plan",
+            json.dumps(
+                {"planId": str(datos["diario"].id), "medio": "EFECTIVO", "motivo": "Diario"}
+            ),
+            "application/json",
+            **encabezado,
+        )
+
+    codigos = _a_la_vez(anular, cambiar)
+
+    assert sorted(codigos) in ([200, 409], [201, 409])
+    assert EventoAuditoriaModelo.objects.count() == 1

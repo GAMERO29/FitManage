@@ -1,0 +1,10 @@
+Línea base (sin mutar, SQLite): 36 passed in 0.84s
+M1 MUERTA    · Rango de 31 días: > pasa a >= · SQLite · 1 failed, 9 passed in 0.66s
+M2 MUERTA    · El cambio de plan también registra PAGO_ANULADO · SQLite · 1 failed, 7 passed in 0.61s
+M3 MUERTA    · El «hoy» de la recepcionista se cuenta en UTC · SQLite · 2 failed, 16 passed in 0.10s
+M4 MUERTA    · La consulta ordena del más antiguo al más reciente · SQLite · 1 failed, 9 passed in 0.65s
+M5 MUERTA    · Anular ya no bloquea al socio · PostgreSQL · 2 failed, 1 passed in 2.47s
+M6 MUERTA    · El disparador de PostgreSQL solo rechaza UPDATE · PostgreSQL · 1 failed, 7 passed in 0.39s
+M7 MUERTA    · El evento de pago ya no se registra · SQLite · 2 failed, 6 passed in 0.61s
+M8 MUERTA    · La página pasa de 50 a 500 eventos · SQLite · 1 failed, 9 passed in 0.64s
+M9 MUERTA    · El evento deja de guardar el medio de pago · SQLite · 1 failed, 17 passed in 0.85s

@@ -14,6 +14,7 @@ from dominio.errores import (
     UltimoPlanActivo,
 )
 from dominio.modelos import Plan, Rol, Usuario
+from dominio.puertos import SinAuditoria
 
 CARLOS = Usuario("Carlos", "carlos@gimnasio-demo.co", Rol.ADMINISTRADOR)
 LAURA = Usuario("Laura", "laura@gimnasio-demo.co", Rol.RECEPCIONISTA)
@@ -96,3 +97,9 @@ def test_desactivar_un_plan_ya_inactivo_no_cuenta_como_el_ultimo(mensual, diario
     servicio = GestionPlanesService(planes)
     servicio.cambiar(diario.id, CARLOS, activo=False)
     assert servicio.cambiar(diario.id, CARLOS, activo=False).activo is False
+
+
+def test_auditoria_sin_reloj_es_un_error_de_composicion():
+    """Guía II-04: la única línea de `aplicacion/` sin cubrir. Sin reloj no hay fecha del evento."""
+    with pytest.raises(ValueError, match="reloj"):
+        GestionPlanesService(PlanesEnMemoria(), auditoria=SinAuditoria())
