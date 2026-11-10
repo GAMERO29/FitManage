@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.6.0
+  version: 1.7.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -40,6 +40,8 @@ tags:
     description: Ingresos por medio de pago. Solo administrador.
   - name: Recordatorios
     description: Próximos vencimientos con el enlace de WhatsApp.
+  - name: Auditoría
+    description: Rastro de solo inserción de pagos, anulaciones, cambios de plan y cambios de planes (ADR N.° 19). Solo administrador.
 
 paths:
   /salud:
@@ -991,6 +993,78 @@ paths:
         '403':
           $ref: '#/components/responses/SinPermiso'
 
+  /auditoria:
+    get:
+      tags: [Auditoría]
+      operationId: consultarAuditoria
+      summary: Rastro de operaciones de dinero y de planes en un periodo
+      description: |
+        Solo administrador (ADR N.° 19). Los eventos se guardan en la misma transacción de la
+        operación y la base rechaza modificarlos o borrarlos. Del más reciente al más antiguo,
+        50 por página. El evento no guarda datos personales; el nombre y el documento enmascarado
+        del socio se agregan al consultar.
+      parameters:
+        - name: desde
+          in: query
+          required: true
+          description: Primer día del periodo (inclusive, hora de Bogotá).
+          schema:
+            type: string
+            format: date
+          example: '2026-11-01'
+        - name: hasta
+          in: query
+          required: true
+          description: Último día del periodo (inclusive). Máximo 31 días después de `desde`.
+          schema:
+            type: string
+            format: date
+          example: '2026-11-10'
+        - name: pagina
+          in: query
+          required: false
+          description: Número de página, desde 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: Una página de eventos del periodo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaAuditoria'
+              example:
+                desde: '2026-11-01'
+                hasta: '2026-11-10'
+                pagina: 1
+                porPagina: 50
+                total: 1
+                eventos:
+                  - id: 18
+                    ocurridoEl: '2026-11-09T21:50:12-05:00'
+                    tipo: PLAN_CAMBIADO
+                    actor: Diana Demo
+                    entidadId: 5e2d8c1a-0b7f-4a93-9c64-1f3e7a2b8d44
+                    socio:
+                      nombre: Ana Prueba Demo
+                      documentoEnmascarado: CC ******0011
+                    detalle:
+                      planNuevo: Diario
+                      valorAnterior: 75000
+                      valorNuevo: 8000
+                      diferencia: -67000
+                      registroDelAnulado: Laura Demo
+                      motivo: La socia pidió un plan más corto
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+
   /vencimientos:
     get:
       tags: [Recordatorios]
@@ -1420,6 +1494,68 @@ components:
           type: string
           format: date-time
 
+    PaginaAuditoria:
+      type: object
+      additionalProperties: false
+      required: [desde, hasta, pagina, porPagina, total, eventos]
+      properties:
+        desde:
+          type: string
+          format: date
+        hasta:
+          type: string
+          format: date
+        pagina:
+          type: integer
+          minimum: 1
+        porPagina:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+          description: Eventos del periodo en todas las páginas.
+        eventos:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventoAuditoria'
+    EventoAuditoria:
+      type: object
+      additionalProperties: false
+      required: [id, ocurridoEl, tipo, actor, entidadId, detalle]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        ocurridoEl:
+          type: string
+          format: date-time
+        tipo:
+          type: string
+          enum: [PAGO_REGISTRADO, PAGO_ANULADO, PLAN_CAMBIADO, PRECIO_CAMBIADO, PLAN_CREADO, PLAN_DESACTIVADO, PLAN_REACTIVADO]
+        actor:
+          type: string
+          description: Nombre de quien lo hizo al momento del evento, o «Sistema».
+        entidadId:
+          type: string
+          format: uuid
+          description: El pago o el plan afectado.
+        socio:
+          type: object
+          additionalProperties: false
+          required: [nombre, documentoEnmascarado]
+          properties:
+            nombre:
+              type: string
+            documentoEnmascarado:
+              type: string
+        detalle:
+          type: object
+          description: Valores del negocio según el tipo (plan, valor, motivo, diferencia, precio anterior y nuevo).
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: integer
     ReporteIngresos:
       type: object
       additionalProperties: false
