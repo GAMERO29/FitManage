@@ -1,3 +1,3 @@
 TOTAL                                                                    1632      2    244      2    99%
 XFAIL tests/integracion/api/test_api_pagos.py::test_la_misma_clave_de_otra_persona_no_repite_su_pago - DT-23: la clave de idempotencia es global, no por usuario
-377 passed, 1 xfailed in 24.33s
+378 passed, 1 xfailed in 24.03s
