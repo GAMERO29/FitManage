@@ -1,0 +1,29 @@
+== 0. Línea base: el destino corre la versión anterior
+23:03:57 salud: {"estado": "ok", "hora": "2026-11-09T23:03:57-05:00", "version": "992ddc7"}
+23:03:57 pago con la versión anterior: HTTP 201 · migración: 0002_credenciales_renovacion_idempotencia
+== 1. Respaldo antes de cambiar, y prueba de que sirve
+23:03:58 respaldo: 20K · pagos en la copia de verificación: 1
+== 2. Ventana de cambio: parada controlada, migración, versión nueva
+23:03:58 se detiene la versión anterior
+23:04:00 migración aplicada: 0003_auditoria_y_coherencia_de_anulacion
+23:04:01 versión nueva en línea: {"estado": "ok", "hora": "2026-11-09T23:04:01-05:00", "version": "359aaeb"} · servicio detenido 3.4 s
+== 3. Verificación funcional con datos ficticios
+23:04:01 pago nuevo: HTTP 201
+23:04:02 anulación del último: HTTP 200
+23:04:02 auditoría de hoy: 2 eventos: PAGO_ANULADO, PAGO_REGISTRADO
+23:04:02 la recepcionista consulta la auditoría: HTTP 403
+23:04:02 estado de la socia: ACTIVO hasta 2026-12-08
+23:04:02 pagos en la base: 2 · eventos: 2
+== 4. Incidente controlado: la base de datos se cae
+23:04:02 PostgreSQL detenido
+23:04:02 /salud responde 503 (detectado en 0.0 s) · una consulta de estado responde HTTP 500
+23:04:05 diagnóstico: el log de gunicorn muestra 1 líneas de error de conexión
+23:04:05 acción: arrancar PostgreSQL de nuevo
+23:04:05 servicio recuperado: ok · de la acción al servicio: 0.1 s · caída total (incluye 3 s de diagnóstico a propósito): 3.2 s
+23:04:05 operación después de recuperar: pago HTTP 201 · pagos 3 · eventos 3
+== 5. Restauración del respaldo previo en un destino separado
+23:04:05 restaurada: pagos 1 (vivos 3) · migración 0002_credenciales_renovacion_idempotencia · tabla auditoria: f
+23:04:06 se perderían si se restaurara: 2 pagos y 3 eventos (todo lo posterior al respaldo)
+== 6. ¿Se puede volver a la versión anterior con el esquema nuevo?
+23:04:08 versión anterior sobre el esquema 0003: ok 992ddc7
+23:04:08 pago con la versión anterior: HTTP 201 · eventos antes 3, después 3
