@@ -51,7 +51,7 @@ jobs:
           docker compose --profile observabilidad ps -a --format 'table {{.Service}}\t{{.Status}}'
       - name: Sembrar 2.000 socios y 20.000 pagos (el volumen de QA-01)
         run: docker compose --profile pruebas run --rm pruebas python pruebas_carga/sembrar.py
-      - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+      - uses: grafana/setup-k6-action@c47136d33d365efbeb9ae7266908b5dcf98cdece # v1.3.0
         with:
           k6-version: "1.5.0"
       - name: Chromium para las capturas

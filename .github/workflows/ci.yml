@@ -246,7 +246,7 @@ jobs:
           if docker logs render 2>&1 | grep -q "ERROR"; then docker logs render; exit 1; fi
           docker logs render 2>&1 | head -5
           docker rm -f render
-      - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+      - uses: grafana/setup-k6-action@c47136d33d365efbeb9ae7266908b5dcf98cdece # v1.3.0
         with:
           k6-version: "1.5.0"
       - name: Humo de rendimiento con k6 (30 s, 5 VUs, mismos umbrales que QA-01)
