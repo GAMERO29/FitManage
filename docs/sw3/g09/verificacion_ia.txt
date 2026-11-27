@@ -1,0 +1,4 @@
+$ python3 docs/sw3/g09/verificar_propuesta.py
+FALLA SMTP, precondición: exige más que el contrato: Dominio no permitido
+FALLA Nulo, poscondición: enviar() devolvió True y no salió ningún mensaje
+FALLA Consola, precondición: destinatario vacío devolvió True

@@ -1,4 +1,4 @@
-$ python3 docs/sw3/g08/invariante_pago.py   # commit 84963e2, antes
+$ python3 docs/sw3/g08/invariante_pago.py   # antes: código al cerrar la Guía 07
 SE CREÓ: duración pagada 30 días, cobertura 90 días (7 oct 2026 → 4 ene 2027)
 
 $ python3 docs/sw3/g08/invariante_pago.py   # con Periodo y la invariante en Pago

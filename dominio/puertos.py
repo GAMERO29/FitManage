@@ -11,6 +11,7 @@ from typing import Protocol
 from uuid import UUID
 
 from dominio.auditoria import EventoAuditoria
+from dominio.errores import DatosInvalidos
 from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
@@ -55,7 +56,10 @@ class UsuarioRepositorio(Protocol):
 class CorreoSaliente(Protocol):
     """Frontera con el servidor de correo (SMTP del hosting, DAD 8.2).
 
-    Lanza `CorreoNoDisponible` si el servidor no acepta el mensaje.
+    Precondición: `destinatario` es una dirección con «@»; si no, `DatosInvalidos` sin enviar.
+    Poscondición: si `enviar` retorna, el servidor aceptó el mensaje para ese destinatario.
+    Si no responde o no lo acepta, `CorreoNoDisponible`. Ninguna variante declara éxito sin
+    entregar (Software III, Guía 09; lo prueba tests/integracion/test_contrato_correo.py).
     """
 
     def enviar(self, destinatario: str, asunto: str, cuerpo: str) -> None: ...
@@ -80,3 +84,11 @@ class Reloj(Protocol):
     def hoy(self) -> date: ...
 
     def ahora(self) -> datetime: ...
+
+
+def exigir_destinatario(destinatario: str) -> str:
+    """Precondición común de toda variante de `CorreoSaliente`."""
+    limpio = destinatario.strip()
+    if "@" not in limpio:
+        raise DatosInvalidos("El correo del destinatario no es válido.")
+    return limpio

@@ -1,0 +1,18 @@
+$ pytest -rA tests/integracion/test_contrato_correo.py tests/integracion/api/test_api_correo.py   # con el contrato cumplido
+PASSED tests/integracion/api/test_api_correo.py::test_envia_un_enlace_firmado_que_vence_en_30_minutos
+PASSED tests/integracion/api/test_api_correo.py::test_si_el_smtp_esta_caido_responde_503_y_la_cuenta_no_cambia
+PASSED tests/integracion/api/test_api_correo.py::test_si_el_servidor_no_entrega_nada_no_se_responde_enviado
+PASSED tests/integracion/api/test_api_correo.py::test_cuenta_inexistente_es_404
+PASSED tests/integracion/api/test_api_correo.py::test_la_recepcionista_no_puede_restablecer
+PASSED tests/integracion/test_contrato_correo.py::test_si_retorna_el_mensaje_salio_para_ese_destinatario[memoria]
+PASSED tests/integracion/test_contrato_correo.py::test_si_retorna_el_mensaje_salio_para_ese_destinatario[django]
+PASSED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[memoria-]
+PASSED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[memoria-   ]
+PASSED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[memoria-laura.demo.local]
+PASSED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[django-]
+PASSED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[django-   ]
+PASSED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[django-laura.demo.local]
+PASSED tests/integracion/test_contrato_correo.py::test_un_servidor_que_no_acepta_el_mensaje_nunca_es_exito[memoria-caido]
+PASSED tests/integracion/test_contrato_correo.py::test_un_servidor_que_no_acepta_el_mensaje_nunca_es_exito[django-caido]
+PASSED tests/integracion/test_contrato_correo.py::test_un_servidor_que_no_acepta_el_mensaje_nunca_es_exito[django-no-entrega]
+PASSED tests/integracion/api/test_api_correo.py::test_las_pruebas_nunca_usan_el_smtp_real

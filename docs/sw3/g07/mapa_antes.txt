@@ -1,4 +1,4 @@
-$ python3 docs/sw3/g07/mapa_dependencias.py   # commit 3f23906, antes
+$ python3 docs/sw3/g07/mapa_dependencias.py   # antes: código al cerrar la Guía 06
 Módulos: 47 · aristas internas: 87
 Dependencias entre paquetes:
   aplicacion → dominio

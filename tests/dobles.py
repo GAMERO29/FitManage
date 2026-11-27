@@ -8,6 +8,7 @@ from uuid import UUID
 
 from dominio.errores import CorreoNoDisponible, DocumentoDuplicado, SocioConPagos
 from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
+from dominio.puertos import exigir_destinatario
 
 
 class SociosEnMemoria:
@@ -107,6 +108,7 @@ class CorreoEnMemoria:
         self.enviados: list[Mensaje] = []
 
     def enviar(self, destinatario: str, asunto: str, cuerpo: str) -> None:
+        destinatario = exigir_destinatario(destinatario)  # la misma precondición del adaptador
         if self.falla:
             raise CorreoNoDisponible("El servidor de correo no respondió.")
         self.enviados.append(Mensaje(destinatario, asunto, cuerpo))

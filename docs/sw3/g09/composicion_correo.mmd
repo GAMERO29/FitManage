@@ -1,0 +1,12 @@
+flowchart LR
+  S["RestablecimientoClaveService<br/>(consumidor)"] --> P{{"CorreoSaliente<br/>pre: destinatario con @<br/>post: si retorna, salió"}}
+  P -.implementa.- D["CorreoDjango<br/>exige send_mail(...) == 1"]
+  P -.implementa.- M["CorreoEnMemoria<br/>(doble que guarda, no descarta)"]
+  D --> B["EMAIL_BACKEND (configuración)"]
+  B --> B1["smtp: producción (hito H2)"]
+  B --> B2["locmem: pruebas"]
+  B --> B3["CorreoCaido: servidor caído"]
+  B --> B4["CorreoQueNoEntrega: 0 enviados"]
+  C["contenedor.correo()<br/>raíz de composición"] -. elige .-> D
+  T["test_contrato_correo.py<br/>mismas expectativas para todas"] -. prueba .-> D
+  T -. prueba .-> M

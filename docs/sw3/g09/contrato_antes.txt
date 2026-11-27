@@ -1,0 +1,16 @@
+$ pytest -rA tests/integracion/test_contrato_correo.py   # contrato nuevo, adaptadores sin cambiar
+PASSED tests/integracion/test_contrato_correo.py::test_si_retorna_el_mensaje_salio_para_ese_destinatario[memoria]
+PASSED tests/integracion/test_contrato_correo.py::test_si_retorna_el_mensaje_salio_para_ese_destinatario[django]
+PASSED tests/integracion/test_contrato_correo.py::test_un_servidor_que_no_acepta_el_mensaje_nunca_es_exito[memoria-caido]
+PASSED tests/integracion/test_contrato_correo.py::test_un_servidor_que_no_acepta_el_mensaje_nunca_es_exito[django-caido]
+FAILED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[memoria-]
+FAILED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[memoria-   ]
+FAILED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[memoria-laura.demo.local]
+FAILED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[django-]
+FAILED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[django-   ]
+FAILED tests/integracion/test_contrato_correo.py::test_sin_destinatario_valido_no_hay_exito[django-laura.demo.local]
+FAILED tests/integracion/test_contrato_correo.py::test_un_servidor_que_no_acepta_el_mensaje_nunca_es_exito[django-no-entrega]
+  (las 7 fallas son «DID NOT RAISE»: la variante declaró éxito)
+$ pytest tests/integracion/api/test_api_correo.py -k no_entrega   # antes: código al cerrar la Guía 08
+FAILED tests/integracion/api/test_api_correo.py::test_si_el_servidor_no_entrega_nada_no_se_responde_enviado
+  E       assert (202 == 503): la API respondió 202 «enviadoA» con cero mensajes enviados
