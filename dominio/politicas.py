@@ -10,7 +10,8 @@ from datetime import date
 from typing import Protocol
 
 from dominio.errores import PermisoDenegado
-from dominio.modelos import ZONA_HORARIA, Pago, Usuario
+from dominio.especificaciones import PUEDE_ANULAR, SolicitudAnulacion
+from dominio.modelos import Pago, Usuario
 
 
 class PoliticaAnulacion(Protocol):
@@ -26,11 +27,10 @@ class PoliticaAnulacion(Protocol):
 class RecepcionistaCorrigeSuDia:
     """ADR N.° 18, vigente: el administrador anula cualquiera; la recepcionista, lo suyo de hoy."""
 
+    criterio = PUEDE_ANULAR  # Software III, Guía 13: la regla es una especificación
+
     def exigir(self, pago: Pago, usuario: Usuario, hoy: date) -> None:
-        if usuario.es_administrador():
-            return
-        registrado_hoy = pago.registrado_en.astimezone(ZONA_HORARIA).date() == hoy
-        if pago.registrado_por.id != usuario.id or not registrado_hoy:
+        if not self.criterio.es_satisfecha_por(SolicitudAnulacion(pago, usuario, hoy)):
             raise PermisoDenegado(
                 "La recepcionista solo puede anular los pagos que ella registró hoy."
             )

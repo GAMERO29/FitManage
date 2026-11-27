@@ -183,7 +183,11 @@ def historial_socio(
     socio, estado, vence, pagos = consultas.historial(
         TipoDocumento(tipoDocumento), numeroDocumento, hoy
     )
-    filas = [presentacion.pago(p, _nombre_plan(p.plan_id)) for p in pagos]
+    anulable = contenedor.anulacion_pago().anulable_para(socio, pagos, request.usuario)
+    filas = [
+        presentacion.pago(p, _nombre_plan(p.plan_id)) | {"puedeAnular": p.id == anulable}
+        for p in pagos
+    ]
     return JsonResponse(presentacion.historial(socio, estado, vence, hoy, filas))
 
 

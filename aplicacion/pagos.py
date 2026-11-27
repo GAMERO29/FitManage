@@ -228,6 +228,22 @@ class AnulacionPagoService:
             self._exigir_permiso(pago, usuario)
         return pago
 
+    def anulable_para(self, socio: Socio, pagos: list[Pago], usuario: Usuario) -> UUID | None:
+        """El id del pago que `usuario` puede anular hoy en este historial, o None.
+
+        Mismas reglas que `anular`, sin cambiar nada; el historial lo manda a la pantalla para que
+        no repita la regla (Software III, Guía 13).
+        """
+        ultimo = HistorialPagos(socio, pagos).ultimo_vigente()
+        if ultimo is None:
+            return None
+        try:
+            self._exigir_personal(usuario)
+            self._exigir_permiso(ultimo, usuario)
+        except PermisoDenegado:
+            return None
+        return ultimo.id
+
     @staticmethod
     def _exigir_personal(usuario: Usuario) -> None:
         if not usuario.activo or usuario.rol not in (Rol.ADMINISTRADOR, Rol.RECEPCIONISTA):

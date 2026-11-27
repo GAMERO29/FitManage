@@ -1,0 +1,3 @@
+$ node captura_anulacion.js despues   # con PUEDE_ANULAR y puedeAnular en el historial
+Laura Demo B (no lo registró): botón deshabilitado
+Laura Demo A (registró el pago): botón HABILITADO

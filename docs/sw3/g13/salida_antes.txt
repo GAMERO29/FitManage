@@ -1,0 +1,4 @@
+$ node captura_anulacion.js antes     # código al cerrar la Guía 12: la pantalla comparaba nombres
+Laura Demo B (no lo registró): botón HABILITADO
+  al confirmar, la pantalla muestra: Su rol no puede hacer esto. La recepcionista solo puede anular los pagos que ella registró hoy.
+Laura Demo A (registró el pago): botón HABILITADO

@@ -1,0 +1,7 @@
+$ TZ=UTC python3 docs/sw3/g13/verificar_propuesta.py   # el servidor corre en UTC, como Render
+FALLA IA Laura, su pago de hoy a las 8 p. m.: False (esperado True) · FitManage: True
+FALLA IA Laura, su pago de ayer a las 8 p. m.: True (esperado False) · FitManage: False
+FALLA IA Otra Laura (mismo nombre), pago de Laura hoy: True (esperado False) · FitManage: False
+PASA  IA Administrador, pago de ayer: True (esperado True) · FitManage: True
+
+La IA falla 3 de 4 casos.

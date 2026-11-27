@@ -97,9 +97,9 @@ const cuando = (iso) => { const n = diasHasta(iso); return n === 0 ? "Hoy" : n =
 const mayuscula = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const nombrePlan = (id) => (planes.find((p) => p.id === id) || {}).nombre;
 const esAdmin = () => sesion && sesion.rol === "ADMINISTRADOR";
-const diaBogota = (fecha) => fecha.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
-// ADR N.° 18: la recepcionista anula solo lo que ella registró hoy. Es una ayuda en pantalla; decide el servidor.
-const puedeAnular = (pago) => esAdmin() || (pago.registradoPor === sesion.nombre && diaBogota(new Date(pago.registradoEl)) === diaBogota(new Date()));
+// ADR N.° 18 y Software III, Guía 13: el historial dice qué pago se puede anular (especificación PUEDE_ANULAR).
+// La pantalla ya no repite la regla; antes comparaba nombres y la hora del navegador.
+const puedeAnular = (pago) => pago.puedeAnular === true;
 
 /* --- API ---------------------------------------------------------------------------------- */
 let servidorCaido = false;
