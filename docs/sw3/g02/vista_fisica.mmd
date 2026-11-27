@@ -9,8 +9,8 @@ flowchart LR
     pg[("Servicio PostgreSQL 16<br/>plan gratuito · sin respaldos (DT-18)")]
   end
   gh["Nodo: GitHub<br/>Actions + GHCR"]
-  graf["Nodo: Grafana Cloud<br/>colector OTLP"]
+  graf["Nodo: Grafana Cloud<br/>métricas y alertas<br/>(trazas OTLP aún no se envían)"]
   nav -- "HTTPS 443" --> cont
   cont -- "protocolo PostgreSQL sobre TCP<br/>DATABASE_URL" --> pg
-  cont -- "OTLP sobre HTTPS<br/>OTEL_EXPORTER_OTLP_ENDPOINT" --> graf
+  graf -- "lee /metrics por HTTPS<br/>formato Prometheus (ADR N.° 13)" --> cont
   gh -- "Deploy Hook HTTPS<br/>imagen sha-&lt;commit&gt;" --> render
