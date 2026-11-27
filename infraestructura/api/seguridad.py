@@ -39,6 +39,30 @@ def _solicitud_invalida(errores: list[dict]) -> JsonResponse:
     return problema(400, "SOLICITUD_INVALIDA", "Solicitud inválida", errores=errores)
 
 
+def _atender(
+    vista: Callable, roles: tuple[Rol, ...] | None, request: HttpRequest, *args, **kwargs
+) -> JsonResponse:
+    """Autenticación, rol, validación con el contrato y traducción de errores de dominio."""
+    if roles is not None:
+        usuario = _usuario_del_token(request)
+        if usuario is None:
+            return no_autenticado()
+        if usuario.rol not in roles:
+            return problema(403, "SIN_PERMISO", "Su rol no puede hacer esto")
+        request.usuario = usuario
+    falta_credencial, errores = contrato.revisar(request)
+    if falta_credencial:
+        return no_autenticado()
+    if errores:
+        return _solicitud_invalida(errores)
+    try:
+        return vista(request, *args, **kwargs)
+    except SolicitudInvalida as error:
+        return _solicitud_invalida(error.errores)
+    except ErrorDeDominio as error:
+        return respuesta_de_error(error)
+
+
 def endpoint(roles: tuple[Rol, ...] | None) -> Callable:
     """`roles=None` solo para los endpoints que el contrato declara con otra seguridad."""
 
@@ -48,7 +72,7 @@ def endpoint(roles: tuple[Rol, ...] | None) -> Callable:
             # Software III, Guías 02 y 06: si la base no responde, es una falla técnica y no un
             # error de negocio; el consumidor recibe 503 en problem+json, no la página HTML del 500.
             try:
-                return _atender(request, *args, **kwargs)
+                return _atender(vista, roles, request, *args, **kwargs)
             except (OperationalError, InterfaceError):
                 registro.warning("base de datos no disponible", extra={"evento": "base_caida"})
                 return problema(
@@ -58,26 +82,6 @@ def endpoint(roles: tuple[Rol, ...] | None) -> Callable:
                     detalle="La base de datos no responde. Intente de nuevo en un minuto.",
                     encabezados={"Retry-After": "60"},
                 )
-
-        def _atender(request: HttpRequest, *args, **kwargs) -> JsonResponse:
-            if roles is not None:
-                usuario = _usuario_del_token(request)
-                if usuario is None:
-                    return no_autenticado()
-                if usuario.rol not in roles:
-                    return problema(403, "SIN_PERMISO", "Su rol no puede hacer esto")
-                request.usuario = usuario
-            falta_credencial, errores = contrato.revisar(request)
-            if falta_credencial:
-                return no_autenticado()
-            if errores:
-                return _solicitud_invalida(errores)
-            try:
-                return vista(request, *args, **kwargs)
-            except SolicitudInvalida as error:
-                return _solicitud_invalida(error.errores)
-            except ErrorDeDominio as error:
-                return respuesta_de_error(error)
 
         return envoltura
 
