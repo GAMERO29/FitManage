@@ -51,3 +51,11 @@ CVE-2026-119379 exp:2027-02-01
 # webpack-dev-middleware (otro producto, que no está en la imagen): falso positivo de datos.
 CVE-2026-85091 exp:2027-02-01
 CVE-2026-76844 exp:2027-02-01
+
+# Revisión del 27/11/2026 (Software III): dos fallas nuevas de OpenSSL 3.5.7 (libssl3t64, openssl,
+# openssl-provider-legacy), las dos de denegación de servicio en QUIC. Debian aplazó la corrección
+# (fix_deferred). FitManage no usa QUIC: gunicorn atiende HTTP/1.1 sobre TCP detrás del proxy de
+# Render, que termina el TLS, y psycopg habla con PostgreSQL por TLS sobre TCP. Ningún proceso de la
+# imagen abre conexiones QUIC ni HTTP/3.
+CVE-2026-107494 exp:2027-02-01
+CVE-2026-124709 exp:2027-02-01
