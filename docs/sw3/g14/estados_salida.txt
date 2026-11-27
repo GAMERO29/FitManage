@@ -1,0 +1,4 @@
+$ node captura_estados.js
+1. motivo «x»: Escriba el motivo (al menos 5 caracteres) para poder anular.
+2. base detenida: El sistema no puede consultar ni guardar datos en este momento. Anote la atención en la hoja de papel y avise al administrador; puede volver a intentar en un minuto.
+3. base de vuelta, mismo clic: Pago anulado y guardado con el motivo. La membresía ya se recalculó; si hace falta, registre el plan correcto.

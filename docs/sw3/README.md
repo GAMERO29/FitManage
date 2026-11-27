@@ -16,7 +16,12 @@ Todo se ejecuta en un laboratorio local con datos ficticios (Ana Prueba Demo, CC
 | `g07/` | `mapa_dependencias.py` (ciclos y nombres privados), el ciclo api ↔ consultas antes y después, y el contrato compartido doble/ORM. |
 | `g08/` | Objeto de valor `Periodo`, la invariante del pago antes y después, diagramas de clases y de secuencia. |
 | `g09/` | Prueba de contrato de `CorreoSaliente` para todas sus variantes: las 7 fallas de «éxito falso» y su corrección. |
-| ADR N.° 20 | Decisión pendiente de la Guía 01: bloquear TRUNCATE sobre la auditoría (DEF-03). |
+| `g10/` | Requisitos v1.3 congelados, matriz trazable (la vigila `tests/nucleo/test_trazabilidad.py`), revisión simulada con CR-02 y la matriz de la IA con 5 referencias inexistentes. |
+| `g11/` | Glosario, invariantes I-1 a I-6, el agregado `HistorialPagos` y su prueba de atomicidad. |
+| `g12/` | Experimento Transaction Script contra Domain Model con casos equivalentes, impacto de CR-02 y ADR N.° 21. |
+| `g13/` | Especificación `PUEDE_ANULAR`, opciones y capturas antes y después del botón «Anular» para dos recepcionistas homónimas. |
+| `g14/` | Anulación de extremo a extremo: estados de la pantalla, migración 0004 (TRUNCATE) y pruebas de atomicidad, repetición y permanencia tras reinicio. |
+| ADR N.° 20 | Bloquear TRUNCATE sobre la auditoría (DEF-03). Propuesto en la Guía 01 y aceptado en la Guía 14. |
 
 ## Línea base
 

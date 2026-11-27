@@ -8,7 +8,7 @@ Guía II-06 · 10/11/2026 · Responsable del producto, del soporte y de la decis
 
 1. **H1:** base de datos paga con copias de seguridad. La gratuita vence cerca del 2/12/2026 y no tiene respaldos.
 2. **DT-10:** aviso de privacidad y autorización de tratamiento de datos aprobados (Ley 1581 de 2012). Sin eso no se puede registrar un socio real.
-3. **DEF-03:** quien tenga las credenciales de la base puede vaciar la auditoría con `TRUNCATE`. Hay que bloquearlo o separar las credenciales antes de que el rastro importe.
+3. **DEF-03:** ~~quien tenga las credenciales de la base puede vaciar la auditoría con `TRUNCATE`~~. **Cerrado para la aplicación y para `psql` el 27/11/2026** con la migración 0004 (ADR N.° 20, Software III · Guía 14). Sigue abierto frente al dueño de la base, que puede desactivar el disparador; eso se resuelve separando roles en el hito H1.
 4. **Validación:** al menos tres sesiones con recepcionistas del perfil (`docs/validacion/protocolo.md`) sin bloqueos en T1 a T3.
 
 DEF-05 (un 403 no registra quién lo intentó) también debe corregirse antes del piloto, pero no lo bloquea: no hay riesgo de perder datos.

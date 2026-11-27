@@ -43,6 +43,6 @@ Los secretos (Deploy Hook de Render, claves de la base, `DJANGO_SECRET_KEY`, `JW
 
 - Ningún usuario del perfil ha usado el sistema. La validación está pendiente (`docs/validacion/protocolo.md`).
 - Sin respaldos en producción hasta el hito H1; la base gratuita vence cerca del 2/12/2026.
-- DEF-03 y DEF-05 abiertos; DT-10 sin resolver: no se cargan datos reales.
+- DEF-05 abierto; DEF-03 cerrado para la aplicación (ADR N.° 20) y abierto frente al dueño de la base hasta H1; DT-10 sin resolver: no se cargan datos reales.
 - Sin funcionamiento sin conexión (QA-02, H4) ni correo saliente (DT-26).
 - Un gimnasio por instalación: no hay separación entre gimnasios en el modelo de datos.

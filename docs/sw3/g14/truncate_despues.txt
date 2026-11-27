@@ -1,0 +1,3 @@
+$ pytest -rA tests/integracion/test_auditoria_base.py   # con la migración 0004 y el ajuste del conftest
+PASSED tests/integracion/test_auditoria_base.py::test_la_base_rechaza_vaciar_la_auditoria_con_truncate
+PASSED tests/integracion/test_auditoria_base.py::test_solo_la_sesion_de_las_pruebas_puede_vaciarla

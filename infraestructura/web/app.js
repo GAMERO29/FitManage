@@ -518,6 +518,7 @@ async function cargarHistorial() {
 async function anularUltimo(pago, boton) {
   const H = S.hist;
   if (H.motivo.trim().length < 5) { H.falta = true; return render(); }
+  H.falta = false; H.error = null; // Software III, Guía 14: no dejar el aviso del motivo corto junto a otro error
   ocupado(boton, true); // D-07 (Guía II-01): un doble clic ya no envía dos PATCH
   const r = await llamar(`/pagos/${encodeURIComponent(pago.id)}`, { metodo: "PATCH", cuerpo: { estado: "ANULADO", motivo: H.motivo.trim() } });
   ocupado(boton, false);
