@@ -1,0 +1,4 @@
+$ pytest -rA tests/integracion/test_auditoria_base.py   # antes de la migración 0004
+E       Failed: DID NOT RAISE DatabaseError
+FAILED tests/integracion/test_auditoria_base.py::test_la_base_rechaza_vaciar_la_auditoria_con_truncate
+PASSED tests/integracion/test_auditoria_base.py::test_solo_la_sesion_de_las_pruebas_puede_vaciarla

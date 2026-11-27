@@ -1,0 +1,7 @@
+$ python3 docs/sw3/g14/persistencia.py   # laboratorio con el código de esta rama
+PASA  1. repetir POST /pagos con la misma clave: HTTP 201 y 201, mismo id = True, filas en pagos = 1
+   estado inicial: VIGENTE | - · eventos PAGO_ANULADO = 0
+PASA  2. repetir la anulación: HTTP 200 y luego 409 NO_ES_EL_ULTIMO_PAGO; estado = ANULADO | Prueba de la guía 14; eventos PAGO_ANULADO = 1
+PASA  3. permanencia tras reiniciar la aplicación y la base: psql = ANULADO | Prueba de la guía 14; la API dice ANULADO con motivo «Prueba de la guía 14»
+PASA  4. TRUNCATE auditoria desde psql: filas antes = 2, después = 2; psql: ERROR:  La auditoría no se puede vaciar: TRUNCATE no está permitido
+código de salida: 0

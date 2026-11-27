@@ -105,3 +105,37 @@ def test_un_pago_anulado_completo_se_acepta(base_de_pago):
         motivo_anulacion="Plan equivocado",
     )
     assert pago.estado == "ANULADO"
+
+
+# Software III, Guía 14 (ADR N.° 20, DEF-03): TRUNCATE tampoco vacía el rastro. Solo PostgreSQL:
+# SQLite no tiene TRUNCATE y su DELETE sin condición ya lo frena el disparador de fila.
+solo_postgres = pytest.mark.skipif(
+    "postgresql" not in __import__("os").environ.get("DATABASE_URL", ""),
+    reason="TRUNCATE solo existe en PostgreSQL",
+)
+
+
+def _truncar_con(ajuste: str) -> None:
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SET CONSTRAINTS ALL IMMEDIATE"
+        )  # las llaves diferidas del evento recién creado
+        cursor.execute("SET LOCAL fitmanage.permitir_vaciado = %s", [ajuste])
+        cursor.execute("TRUNCATE auditoria")
+
+
+@solo_postgres
+def test_la_base_rechaza_vaciar_la_auditoria_con_truncate(evento):
+    with pytest.raises(DatabaseError, match="no se puede vaciar"), transaction.atomic():
+        _truncar_con("no")
+    assert EventoAuditoriaModelo.objects.filter(id=evento.id).exists()
+
+
+@solo_postgres
+def test_solo_la_sesion_de_las_pruebas_puede_vaciarla(evento):
+    """Es lo que usa pytest-django entre pruebas con transacciones reales (conftest.py)."""
+    with transaction.atomic():
+        _truncar_con("si")
+        assert not EventoAuditoriaModelo.objects.exists()

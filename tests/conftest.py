@@ -26,6 +26,23 @@ from dominio.modelos import (  # noqa: E402
 AUTORIZACION = bogota(2026, 6, 8, 9, 14)
 
 
+def _permitir_vaciado(sender, connection, **kwargs):
+    """ADR N.° 20: solo las conexiones de las pruebas pueden vaciar la auditoría con TRUNCATE.
+
+    pytest-django lo necesita entre pruebas con transacciones reales (concurrencia, Pact). Si se
+    borra esta función, esas pruebas fallan al limpiar la base, y el fallo se ve.
+    """
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SET fitmanage.permitir_vaciado = 'si'")
+
+
+def pytest_configure(config):
+    from django.db.backends.signals import connection_created
+
+    connection_created.connect(_permitir_vaciado, dispatch_uid="fitmanage-permitir-vaciado")
+
+
 @pytest.fixture
 def ana() -> Socio:
     return Socio(TipoDocumento.CC, "1090123456", "Ana", "Pérez", "3000000005", AUTORIZACION)

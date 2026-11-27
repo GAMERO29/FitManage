@@ -1,0 +1,14 @@
+# Ensayo de la migración 0004 hacia adelante sobre una base con datos ficticios (laboratorio)
+$ (código de main, hasta la 0003) recorrido_base.py   → crea socios, pagos y eventos
+$ psql -c 'SELECT … conteos'
+socios=1 pagos=1 auditoria=2
+$ python3 manage.py migrate persistencia   # código de esta rama
+  Applying persistencia.0004_auditoria_sin_truncate... OK
+$ psql -c 'SELECT … conteos y disparadores'
+socios=1 pagos=1 auditoria=2
+auditoria_sin_cambios
+auditoria_sin_truncate
+$ python3 manage.py migrate persistencia 0003   # y de vuelta (reversible)
+  Unapplying persistencia.0004_auditoria_sin_truncate... OK
+0
+  Applying persistencia.0004_auditoria_sin_truncate... OK
