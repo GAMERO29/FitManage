@@ -19,6 +19,7 @@ TABLA: dict[type[e.ErrorDeDominio], tuple[int, str, str]] = {
     e.UsuarioNoEncontrado: (404, "NO_ENCONTRADO", "La cuenta no existe"),
     e.ReferenciaDuplicada: (409, "COMPROBANTE_DUPLICADO", "Comprobante duplicado"),
     e.DocumentoDuplicado: (409, "DOCUMENTO_DUPLICADO", "Documento ya registrado"),
+    e.SocioConPagos: (409, "SOCIO_CON_PAGOS", "El socio tiene pagos y sus datos no se suprimen"),
     e.CorreoDuplicado: (409, "CORREO_DUPLICADO", "Ya hay una cuenta con ese correo"),
     e.PlanDuplicado: (409, "PLAN_DUPLICADO", "Ya hay un plan con ese nombre"),
     e.UltimoPlanActivo: (409, "ULTIMO_PLAN_ACTIVO", "Debe quedar al menos un plan activo"),

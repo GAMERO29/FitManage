@@ -1,0 +1,61 @@
+archivo	módulo importado	nombres
+infraestructura/api/autenticacion.py	dominio.acceso	PoliticaBloqueo
+infraestructura/api/autenticacion.py	dominio.modelos	ZONA_HORARIA
+infraestructura/api/autenticacion.py	infraestructura.api	tokens
+infraestructura/api/autenticacion.py	infraestructura.persistencia.models	RenovacionModelo, UsuarioModelo
+infraestructura/api/autenticacion.py	infraestructura.persistencia.repositorios	_a_usuario
+infraestructura/api/contenedor.py	aplicacion.acceso	RestablecimientoClaveService
+infraestructura/api/contenedor.py	aplicacion.pagos	AnulacionPagoService, CambioPlanService, RegistroPagoService
+infraestructura/api/contenedor.py	aplicacion.planes	GestionPlanesService
+infraestructura/api/contenedor.py	aplicacion.socios	ConsultaEstadoService, RegistroSocioService
+infraestructura/api/contenedor.py	dominio.puertos	CorreoSaliente, Reloj
+infraestructura/api/contenedor.py	infraestructura.correo	CorreoDjango
+infraestructura/api/contenedor.py	infraestructura.persistencia.auditoria	AuditoriaORM
+infraestructura/api/contenedor.py	infraestructura.persistencia.repositorios	PagoRepositorioORM, PlanRepositorioORM, SocioRepositorioORM, UsuarioRepositorioORM
+infraestructura/api/contenedor.py	infraestructura.reloj	RelojBogota
+infraestructura/api/errores.py	dominio	errores
+infraestructura/api/errores.py	infraestructura.api.http	problema
+infraestructura/api/presentacion.py	dominio.modelos	EstadoMembresia, Pago, Plan, Socio, TipoDocumento
+infraestructura/api/seguridad.py	dominio.errores	ErrorDeDominio
+infraestructura/api/seguridad.py	dominio.modelos	Rol, Usuario
+infraestructura/api/seguridad.py	infraestructura.api	contrato, tokens
+infraestructura/api/seguridad.py	infraestructura.api.errores	respuesta_de_error
+infraestructura/api/seguridad.py	infraestructura.api.http	SolicitudInvalida, no_autenticado, problema
+infraestructura/api/seguridad.py	infraestructura.persistencia.repositorios	UsuarioRepositorioORM
+infraestructura/api/tokens.py	dominio.modelos	Usuario
+infraestructura/api/urls.py	infraestructura.api	vistas
+infraestructura/api/vistas.py	dominio.errores	DocumentoDuplicado, SocioNoEncontrado
+infraestructura/api/vistas.py	dominio.modelos	Rol, SolicitudPago, TipoDocumento
+infraestructura/api/vistas.py	infraestructura	consultas, cuentas
+infraestructura/api/vistas.py	infraestructura.api	autenticacion, contenedor, presentacion
+infraestructura/api/vistas.py	infraestructura.api.http	SolicitudInvalida, leer_json, no_autenticado, problema
+infraestructura/api/vistas.py	infraestructura.api.seguridad	SOLO_ADMINISTRADOR, TODO_EL_PERSONAL, endpoint
+infraestructura/api/vistas.py	infraestructura.observabilidad	telemetria
+infraestructura/api/vistas.py	infraestructura.observabilidad.privacidad	seudonimo
+infraestructura/api/vistas.py	infraestructura.persistencia.bloqueos	bloquear_socio_del_pago, bloquear_socio_por_documento
+infraestructura/api/vistas.py	infraestructura.persistencia.models	IdempotenciaModelo
+aplicacion/acceso.py	dominio.errores	PermisoDenegado, UsuarioNoEncontrado
+aplicacion/acceso.py	dominio.modelos	Usuario
+aplicacion/acceso.py	dominio.puertos	CorreoSaliente, UsuarioRepositorio
+aplicacion/pagos.py	dominio.auditoria	EventoAuditoria, TipoEvento, datos_del_pago
+aplicacion/pagos.py	dominio.calculadora	CalculadoraMembresia
+aplicacion/pagos.py	dominio.errores	DatosInvalidos, MedioPagoInvalido, PagoNoAnulable, PagoNoEncontrado, PermisoDenegado, PlanNoDisponible, ReferenciaDuplicada, ReferenciaRequerida, SocioNoEncontrado
+aplicacion/pagos.py	dominio.modelos	MedioPago, Pago, Plan, Rol, Socio, SolicitudPago, TipoDocumento, Usuario
+aplicacion/pagos.py	dominio.politicas	PoliticaAnulacion, RecepcionistaCorrigeSuDia
+aplicacion/pagos.py	dominio.puertos	PagoRepositorio, PlanRepositorio, RegistroAuditoria, Reloj, SinAuditoria, SocioRepositorio
+aplicacion/planes.py	dominio.auditoria	EventoAuditoria, TipoEvento
+aplicacion/planes.py	dominio.errores	PermisoDenegado, PlanDuplicado, PlanNoDisponible, UltimoPlanActivo
+aplicacion/planes.py	dominio.modelos	Plan, Usuario
+aplicacion/planes.py	dominio.puertos	PlanRepositorio, RegistroAuditoria, Reloj, SinAuditoria
+aplicacion/socios.py	dominio.calculadora	CalculadoraMembresia
+aplicacion/socios.py	dominio.errores	SocioNoEncontrado
+aplicacion/socios.py	dominio.modelos	EstadoMembresia, Socio, TipoDocumento
+aplicacion/socios.py	dominio.puertos	PagoRepositorio, Reloj, SocioRepositorio
+dominio/acceso.py	dominio.modelos	exigir_zona_horaria
+dominio/auditoria.py	dominio.modelos	Pago, Usuario, exigir_zona_horaria
+dominio/calculadora.py	dominio.modelos	EstadoMembresia, Pago
+dominio/modelos.py	dominio.errores	DatosInvalidos, MotivoRequerido, PagoNoAnulable
+dominio/politicas.py	dominio.errores	PermisoDenegado
+dominio/politicas.py	dominio.modelos	ZONA_HORARIA, Pago, Usuario
+dominio/puertos.py	dominio.auditoria	EventoAuditoria
+dominio/puertos.py	dominio.modelos	Pago, Plan, Socio, TipoDocumento, Usuario

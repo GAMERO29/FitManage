@@ -21,6 +21,10 @@ class DocumentoDuplicado(ErrorDeDominio):
     """Ya hay un socio con ese tipo y número de documento (CU-02)."""
 
 
+class SocioConPagos(ErrorDeDominio):
+    """Los datos de un socio con pagos no se suprimen: los pagos son registros contables."""
+
+
 class PlanNoDisponible(ErrorDeDominio):
     """El plan no existe o está desactivado (RN-09)."""
 

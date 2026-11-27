@@ -24,6 +24,9 @@ class SociosEnMemoria:
             raise DocumentoDuplicado()  # igual que la restricción única de la base
         self._socios[clave] = socio
 
+    def eliminar(self, socio: Socio) -> None:
+        self._socios.pop((socio.tipo_documento, socio.numero_documento), None)
+
 
 class PlanesEnMemoria:
     def __init__(self, *planes: Plan) -> None:
@@ -54,6 +57,9 @@ class PagosEnMemoria:
 
     def guardar(self, pago: Pago) -> None:
         self._pagos[pago.id] = pago
+
+    def tiene_pagos(self, socio: Socio) -> bool:
+        return any(p.socio.id == socio.id for p in self._pagos.values())
 
     def todos(self) -> list[Pago]:
         return list(self._pagos.values())

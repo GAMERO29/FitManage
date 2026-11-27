@@ -5,8 +5,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
 
-from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada
+from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada, SocioConPagos
 from dominio.modelos import (
     ZONA_HORARIA,
     EstadoPago,
@@ -104,6 +105,13 @@ class SocioRepositorioORM:
                 raise DocumentoDuplicado() from error
             raise
 
+    def eliminar(self, socio: Socio) -> None:
+        """La regla la revisa el servicio; la llave PROTECT de `pagos` es la segunda barrera."""
+        try:
+            SocioModelo.objects.filter(id=socio.id).delete()
+        except ProtectedError as error:
+            raise SocioConPagos() from error
+
 
 class PlanRepositorioORM:
     def obtener(self, plan_id: UUID) -> Plan | None:
@@ -131,6 +139,9 @@ class PlanRepositorioORM:
 
 
 class PagoRepositorioORM:
+    def tiene_pagos(self, socio: Socio) -> bool:
+        return PagoModelo.objects.filter(socio_id=socio.id).exists()
+
     def vigentes_de(self, socio: Socio) -> list[Pago]:
         consulta = PagoModelo.objects.select_related(
             "socio", "registrado_por", "anulado_por"

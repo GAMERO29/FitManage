@@ -103,3 +103,29 @@ def test_auditoria_sin_reloj_es_un_error_de_composicion():
     """Guía II-04: la única línea de `aplicacion/` sin cubrir. Sin reloj no hay fecha del evento."""
     with pytest.raises(ValueError, match="reloj"):
         GestionPlanesService(PlanesEnMemoria(), auditoria=SinAuditoria())
+
+
+# --- Software III, Guía 05: la regla de qué planes se ven vive en el servicio, no en la vista ---
+
+
+def test_la_lista_ofrece_solo_los_activos_ordenados_por_duracion(mensual, diario):
+    viejo = Plan("Semestral", 180, Decimal("380000"), activo=False)
+    servicio = GestionPlanesService(PlanesEnMemoria(mensual, viejo, diario))
+    assert [p.nombre for p in servicio.listar(LAURA)] == ["Diario", "Mensual"]
+
+
+def test_solo_el_administrador_ve_los_planes_desactivados(mensual):
+    viejo = Plan("Semestral", 180, Decimal("380000"), activo=False)
+    servicio = GestionPlanesService(PlanesEnMemoria(mensual, viejo))
+    assert [p.nombre for p in servicio.listar(CARLOS, incluir_inactivos=True)] == [
+        "Mensual",
+        "Semestral",
+    ]
+    with pytest.raises(PermisoDenegado):
+        servicio.listar(LAURA, incluir_inactivos=True)
+
+
+def test_los_nombres_incluyen_los_planes_desactivados(mensual):
+    viejo = Plan("Semestral", 180, Decimal("380000"), activo=False)
+    nombres = GestionPlanesService(PlanesEnMemoria(mensual, viejo)).nombres()
+    assert nombres == {mensual.id: "Mensual", viejo.id: "Semestral"}

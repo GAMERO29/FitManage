@@ -1,0 +1,7 @@
+# Regla: los controladores no consultan modelos del ORM (salvo IdempotenciaModelo)
+## Con la vista de la línea base (1790310)
+>       assert importados - MODELOS_PERMITIDOS_EN_CONTROLADORES == set()
+E       AssertionError: assert {'PlanModelo'} == set()
+1 failed, 4 deselected in 0.05s
+## Con la vista refactorizada
+1 passed, 4 deselected in 0.04s

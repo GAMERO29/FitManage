@@ -53,6 +53,24 @@ def test_los_controladores_no_hacen_el_trabajo_de_los_casos_de_uso():
     assert fugas == []
 
 
+# Software III, Guía 05: la regla anterior miraba módulos y dejó pasar `PlanModelo`, importado desde
+# `infraestructura.persistencia.models`: la vista consultaba el ORM y decidía qué planes ver. Ahora
+# se revisan los nombres. La única excepción es la tabla de idempotencia, que es un detalle del
+# protocolo HTTP (la cabecera Idempotency-Key), no del negocio.
+MODELOS_PERMITIDOS_EN_CONTROLADORES = {"IdempotenciaModelo"}
+
+
+def test_los_controladores_no_consultan_modelos_del_orm():
+    vistas = RAIZ / "infraestructura" / "api" / "vistas.py"
+    importados = {
+        alias.name
+        for nodo in ast.walk(ast.parse(vistas.read_text(encoding="utf-8")))
+        if isinstance(nodo, ast.ImportFrom) and nodo.module == "infraestructura.persistencia.models"
+        for alias in nodo.names
+    }
+    assert importados - MODELOS_PERMITIDOS_EN_CONTROLADORES == set()
+
+
 # Guía II-01 (D-01, D-02) y II-03: todo controlador que escribe pagos bloquea al socio y abre una
 # transacción, para que el evento de auditoría y la operación queden juntos o no queden.
 ESCRIBEN_PAGOS = {"registro_pago", "anulacion_pago", "cambio_plan"}

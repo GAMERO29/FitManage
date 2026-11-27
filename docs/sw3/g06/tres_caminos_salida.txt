@@ -1,0 +1,5 @@
+# 2026-11-27T11:40:00-05:00 · rama sw3-unidad2 · laboratorio local
+Estado inicial: filas de 1090000022 = 1 · de 1090000033 = 1
+PASA  1. éxito: HTTP 204; filas después = 0
+PASA  2. rechazo por regla: HTTP 409 SOCIO_CON_PAGOS; filas después = 1
+PASA  3. base no disponible: HTTP 503 application/problem+json SERVICIO_NO_DISPONIBLE; filas al volver la base = 1

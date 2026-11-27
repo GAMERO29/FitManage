@@ -10,10 +10,10 @@ from decimal import Decimal
 from django.conf import settings
 from django.core import signing
 from django.db import IntegrityError, connection, transaction
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from dominio.errores import DocumentoDuplicado, PermisoDenegado, SocioNoEncontrado
+from dominio.errores import DocumentoDuplicado, SocioNoEncontrado
 from dominio.modelos import Rol, SolicitudPago, TipoDocumento
 from infraestructura import consultas, cuentas
 from infraestructura.api import autenticacion, contenedor, presentacion
@@ -25,7 +25,7 @@ from infraestructura.persistencia.bloqueos import (
     bloquear_socio_del_pago,
     bloquear_socio_por_documento,
 )
-from infraestructura.persistencia.models import IdempotenciaModelo, PlanModelo
+from infraestructura.persistencia.models import IdempotenciaModelo
 
 COOKIE_RENOVACION = "fm_renovacion"
 RUTA_RENOVACION = "/api/v1/auth/renovacion"
@@ -187,6 +187,23 @@ def historial_socio(
     return JsonResponse(presentacion.historial(socio, estado, vence, hoy, filas))
 
 
+@require_http_methods(["DELETE"])
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def suprimir_socio(
+    request: HttpRequest,
+    tipoDocumento: str,  # noqa: N803
+    numeroDocumento: str,  # noqa: N803
+) -> HttpResponse:
+    """Software III, Guía 06: derecho de supresión (Ley 1581) de un socio sin pagos."""
+    with transaction.atomic():
+        # El mismo bloqueo que registrar un pago: un pago y la supresión no se cruzan.
+        bloquear_socio_por_documento(tipoDocumento, numeroDocumento)
+        contenedor.supresion_socio().suprimir(
+            TipoDocumento(tipoDocumento), numeroDocumento, request.usuario
+        )
+    return HttpResponse(status=204)
+
+
 # --- Recepción ---------------------------------------------------------------------------
 @require_GET
 @endpoint(roles=TODO_EL_PERSONAL)
@@ -263,24 +280,8 @@ def listar_planes(request: HttpRequest) -> JsonResponse:
         respuesta["Location"] = f"/api/v1/planes/{plan.id}"
         return respuesta
     todos = request.GET.get("todos") == "true"
-    if todos and not request.usuario.es_administrador():
-        raise PermisoDenegado("Solo el administrador ve los planes desactivados.")
-    planes = PlanModelo.objects.order_by("duracion_dias", "nombre")
-    if not todos:
-        planes = planes.filter(activo=True)
-    return JsonResponse(
-        [
-            {
-                "id": str(p.id),
-                "nombre": p.nombre,
-                "duracionDias": p.duracion_dias,
-                "precio": int(p.precio),
-                "activo": p.activo,
-            }
-            for p in planes
-        ],
-        safe=False,
-    )
+    planes = contenedor.gestion_planes().listar(request.usuario, incluir_inactivos=todos)
+    return JsonResponse([presentacion.plan(p) for p in planes], safe=False)
 
 
 @require_http_methods(["PATCH"])
@@ -434,6 +435,6 @@ def consultar_auditoria(request: HttpRequest) -> JsonResponse:
 @endpoint(roles=TODO_EL_PERSONAL)
 def listar_vencimientos(request: HttpRequest) -> JsonResponse:
     dias = int(request.GET.get("dias", "3"))
-    nombres = {p.id: p.nombre for p in PlanModelo.objects.all()}
+    nombres = contenedor.gestion_planes().nombres()
     filas = consultas.vencimientos(contenedor.reloj().hoy(), dias, nombres)
     return JsonResponse(filas, safe=False)

@@ -132,3 +132,13 @@ def test_el_unico_telefono_expuesto_es_el_de_los_recordatorios(spec):
 def test_la_contrasena_nunca_se_devuelve(spec):
     credenciales = spec["components"]["schemas"]["Credenciales"]["properties"]["contrasena"]
     assert credenciales["writeOnly"] is True
+
+
+def test_toda_operacion_que_toca_la_base_declara_503(spec):
+    """Software III, Guías 02 y 06: si la base no responde, el contrato lo dice (no un 500 HTML)."""
+    faltan = [
+        f"{verbo.upper()} {ruta}"
+        for ruta, verbo, op in operaciones(spec)
+        if "503" not in op["responses"]
+    ]
+    assert faltan == []
