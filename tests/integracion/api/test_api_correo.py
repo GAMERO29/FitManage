@@ -47,6 +47,14 @@ def test_si_el_smtp_esta_caido_responde_503_y_la_cuenta_no_cambia(
     assert mail.outbox == []
 
 
+def test_si_el_servidor_no_entrega_nada_no_se_responde_enviado(administracion, gimnasio, settings):
+    """Regresión de la Guía 09 de SW3: antes era 202 «enviadoA» con cero mensajes enviados."""
+    settings.EMAIL_BACKEND = "correo_caido.CorreoQueNoEntrega"
+    r = administracion.post(RUTA.format(gimnasio["laura"].id))
+    assert r.status_code == 503 and r.json()["codigo"] == "CORREO_NO_DISPONIBLE"
+    assert mail.outbox == []
+
+
 def test_cuenta_inexistente_es_404(administracion):
     assert administracion.post(RUTA.format(uuid.uuid4())).status_code == 404
     assert mail.outbox == []

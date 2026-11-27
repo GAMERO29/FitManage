@@ -102,10 +102,11 @@ def entorno(ana, maria, mensual, trimestral, diario):
     """Repositorios en memoria con dos socios y tres planes."""
 
     def _crear(ahora: datetime, *pagos: Pago):
+        repo_pagos = PagosEnMemoria(*pagos)
         return {
-            "socios": SociosEnMemoria(ana, maria),
+            "socios": SociosEnMemoria(ana, maria, pagos=repo_pagos),
             "planes": PlanesEnMemoria(mensual, trimestral, diario),
-            "pagos": PagosEnMemoria(*pagos),
+            "pagos": repo_pagos,
             "reloj": RelojFijo(ahora),
         }
 

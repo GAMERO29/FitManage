@@ -1,0 +1,21 @@
+flowchart LR
+  subgraph Antes["Antes (al cerrar la Guía 06)"]
+    direction TB
+    V1["api/vistas.py"] -- "api → consultas" --> C1["consultas.py"]
+    C1 -- "consultas → api: ciclo (documento_enmascarado)" --> P1["api/presentacion.py"]
+    A1["api/autenticacion.py"] -. "_a_usuario (privada)" .-> R1["persistencia/repositorios.py"]
+    C1 -. "_a_pago, _a_socio (privadas)" .-> R1
+  end
+  subgraph Despues["Después"]
+    direction TB
+    V2["api/vistas.py"] --> C2["consultas.py"]
+    P2["api/presentacion.py"] --> D2["dominio/privacidad.py"]
+    C2 --> D2
+    A2["api/autenticacion.py"] --> M2["persistencia/mapeo.py"]
+    C2 --> M2
+    R2["persistencia/repositorios.py"] --> M2
+  end
+  style P1 fill:#fde2e2,stroke:#b42318
+  style C1 fill:#fde2e2,stroke:#b42318
+  style D2 fill:#e3f4e8,stroke:#1f7a3f
+  style M2 fill:#e3f4e8,stroke:#1f7a3f

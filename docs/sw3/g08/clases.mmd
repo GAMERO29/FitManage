@@ -1,0 +1,53 @@
+classDiagram
+  direction LR
+  class Pago {
+    <<entidad>>
+    +id: UUID
+    +duracion_dias: int
+    +valor: Decimal
+    +estado: EstadoPago
+    +periodo: Periodo
+    +esta_vigente() bool
+    +anular(motivo, anulado_por, ahora)
+  }
+  class Periodo {
+    <<objeto de valor, inmutable>>
+    +inicia: date
+    +vence: date
+    +de_plan(inicia, duracion_dias)$ Periodo
+    +dias: int
+    +cubre(dia) bool
+  }
+  class Socio {
+    <<entidad>>
+    +id: UUID
+    +tipo_documento
+    +numero_documento
+  }
+  class Usuario {
+    <<entidad>>
+    +id: UUID
+    +rol: Rol
+    +es_administrador() bool
+  }
+  class PoliticaAnulacion {
+    <<interfaz>>
+    +exigir(pago, usuario, hoy)
+  }
+  class RecepcionistaCorrigeSuDia
+  class AnulacionPagoService {
+    <<caso de uso>>
+    +anular(pago_id, usuario, motivo)
+  }
+  class CalculadoraMembresia {
+    <<servicio de dominio>>
+    +calcular_vencimiento(inicio, dias) date
+    +estado_de(pagos, hoy)
+  }
+  Pago --> Socio : de
+  Pago --> Usuario : registrado_por / anulado_por
+  Pago *-- Periodo : cubre
+  CalculadoraMembresia ..> Periodo : de_plan
+  AnulacionPagoService --> PoliticaAnulacion
+  PoliticaAnulacion <|.. RecepcionistaCorrigeSuDia
+  AnulacionPagoService ..> Pago : anular()

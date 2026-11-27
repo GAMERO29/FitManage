@@ -1,0 +1,6 @@
+$ psql fm_sw3 -c "SELECT count(*) AS pagos, count(*) FILTER (WHERE fecha_vencimiento <> fecha_inicio + duracion_dias - 1) AS incoherentes FROM pagos;"
+ pagos | incoherentes 
+-------+--------------
+     1 |            0
+(1 row)
+

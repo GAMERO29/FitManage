@@ -7,6 +7,7 @@ from datetime import date, datetime
 from django.utils.crypto import salted_hmac
 
 from dominio.modelos import EstadoMembresia, Pago, Plan, Socio, TipoDocumento
+from dominio.privacidad import documento_enmascarado
 
 
 def nombre_corto(nombres: str, apellidos: str) -> str:
@@ -14,10 +15,6 @@ def nombre_corto(nombres: str, apellidos: str) -> str:
     primer_nombre = nombres.split()[0]
     inicial = apellidos.strip()[:1].upper()
     return f"{primer_nombre} {inicial}." if inicial else primer_nombre
-
-
-def documento_enmascarado(tipo: TipoDocumento, numero: str) -> str:
-    return f"{tipo.value} {'*' * (len(numero) - 4)}{numero[-4:]}"
 
 
 def correo_enmascarado(correo: str) -> str:

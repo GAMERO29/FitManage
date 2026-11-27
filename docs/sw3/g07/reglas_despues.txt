@@ -1,0 +1,9 @@
+$ pytest tests/nucleo/test_arquitectura.py -rA   # después
+PASSED tests/nucleo/test_arquitectura.py::test_el_nucleo_no_importa_infraestructura[aplicacion]
+PASSED tests/nucleo/test_arquitectura.py::test_el_nucleo_no_importa_infraestructura[dominio]
+PASSED tests/nucleo/test_arquitectura.py::test_los_controladores_no_hacen_el_trabajo_de_los_casos_de_uso
+PASSED tests/nucleo/test_arquitectura.py::test_los_controladores_no_consultan_modelos_del_orm
+PASSED tests/nucleo/test_arquitectura.py::test_toda_escritura_de_pagos_bloquea_al_socio_dentro_de_una_transaccion
+PASSED tests/nucleo/test_arquitectura.py::test_ningun_modulo_importa_nombres_privados_de_otro
+PASSED tests/nucleo/test_arquitectura.py::test_los_paquetes_de_infraestructura_no_forman_ciclos
+código de salida: 0

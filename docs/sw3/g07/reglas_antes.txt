@@ -1,0 +1,11 @@
+$ pytest tests/nucleo/test_arquitectura.py   # antes: código al cerrar la Guía 06, con las reglas nuevas
+E       AssertionError: assert ['infraestruc...repositorios'] == []
+E         
+E         Left contains 3 more items, first extra item: 'infraestructura.consultas importa _a_pago de infraestructura.persistencia.repositorios'
+E         Use -v to get more diff
+E       AssertionError: assert ['infraestruc...ra.consultas'] == []
+E         
+E         Left contains 2 more items, first extra item: 'infraestructura.api'
+E         Use -v to get more diff
+FAILED tests/nucleo/test_arquitectura.py::test_ningun_modulo_importa_nombres_privados_de_otro
+FAILED tests/nucleo/test_arquitectura.py::test_los_paquetes_de_infraestructura_no_forman_ciclos
