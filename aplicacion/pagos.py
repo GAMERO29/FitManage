@@ -20,7 +20,6 @@ from dominio.errores import (
     SocioNoEncontrado,
 )
 from dominio.modelos import (
-    ZONA_HORARIA,
     MedioPago,
     Pago,
     Plan,
@@ -30,6 +29,7 @@ from dominio.modelos import (
     TipoDocumento,
     Usuario,
 )
+from dominio.politicas import PoliticaAnulacion, RecepcionistaCorrigeSuDia
 from dominio.puertos import (
     PagoRepositorio,
     PlanRepositorio,
@@ -183,14 +183,20 @@ class AnulacionPagoService:
     El administrador anula cualquier último pago vigente. La recepcionista solo anula los pagos
     que ella misma registró hoy, para corregir un error en el momento: así no puede cobrar en
     efectivo un día y anular el pago después. Para cambiar el plan del socio no tiene ese límite.
+    Quién puede anular lo decide la `PoliticaAnulacion` que se inyecta (Software III, Guía 03).
     """
 
     def __init__(
-        self, pagos: PagoRepositorio, reloj: Reloj, auditoria: RegistroAuditoria | None = None
+        self,
+        pagos: PagoRepositorio,
+        reloj: Reloj,
+        auditoria: RegistroAuditoria | None = None,
+        politica: PoliticaAnulacion | None = None,
     ) -> None:
         self._pagos = pagos
         self._reloj = reloj
         self._auditoria = auditoria or SinAuditoria()
+        self._politica = politica or RecepcionistaCorrigeSuDia()
 
     def anular_ultimo(self, socio: Socio, usuario: Usuario, motivo: str) -> Pago:
         self._exigir_personal(usuario)
@@ -230,13 +236,7 @@ class AnulacionPagoService:
             raise PermisoDenegado("Su rol no puede anular pagos ni cambiar planes.")
 
     def _exigir_permiso(self, pago: Pago, usuario: Usuario) -> None:
-        if usuario.es_administrador():
-            return
-        registrado_hoy = pago.registrado_en.astimezone(ZONA_HORARIA).date() == self._reloj.hoy()
-        if pago.registrado_por.id != usuario.id or not registrado_hoy:
-            raise PermisoDenegado(
-                "La recepcionista solo puede anular los pagos que ella registró hoy."
-            )
+        self._politica.exigir(pago, usuario, self._reloj.hoy())
 
     def _ultimo_vigente(self, socio: Socio) -> Pago | None:
         vigentes = self._pagos.vigentes_de(socio)

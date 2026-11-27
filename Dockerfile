@@ -61,11 +61,12 @@ ENV PATH=/opt/venv/bin:$PATH \
 #   - fuera el pip de Python del sistema: en ejecución nadie instala paquetes;
 #   - ningún ejecutable con setuid/setgid (mount, umount, su, passwd, chfn...): aunque alguien tome
 #     el proceso, no tiene un binario de root con qué escalar. Mitiga los CVE de util-linux;
-#   - el parche de apt (3.0.4, CVE-2026-109518) que Debian publicó antes que una imagen base nueva.
-#     Solo esos paquetes, no un upgrade general, para que la imagen siga siendo reproducible; se
-#     quita cuando Dependabot traiga una base que ya lo incluya.
+#   - el parche de apt (3.0.4, CVE-2026-109518) y el de zstd (1.5.7+dfsg-1+deb13u1, CVE-2026-124851,
+#     visto el 27/11/2026) que Debian publicó antes que una imagen base nueva. Solo esos paquetes,
+#     no un upgrade general, para que la imagen siga siendo reproducible; se quitan cuando
+#     Dependabot traiga una base que ya los incluya.
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends --only-upgrade apt libapt-pkg7.0 \
+    && apt-get install --yes --no-install-recommends --only-upgrade apt libapt-pkg7.0 libzstd1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin fitmanage \
     && python -m pip uninstall --yes --root-user-action=ignore pip \

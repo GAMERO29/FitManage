@@ -1,0 +1,8 @@
+# commit base 1790310, antes de introducir PoliticaAnulacion
+tests/nucleo/test_anulacion.py::test_la_recepcionista_anula_lo_que_ella_registro_hoy PASSED
+tests/nucleo/test_anulacion.py::test_la_recepcionista_no_anula_un_pago_de_ayer PASSED
+tests/nucleo/test_anulacion.py::test_la_recepcionista_no_anula_lo_que_registro_otra_persona PASSED
+tests/nucleo/test_anulacion.py::test_frontera_del_dia_para_la_recepcionista[un-segundo-antes-de-medianoche] PASSED
+tests/nucleo/test_anulacion.py::test_frontera_del_dia_para_la_recepcionista[primer-segundo-del-dia] PASSED
+tests/nucleo/test_anulacion.py::test_frontera_del_dia_para_la_recepcionista[noche-en-utc-es-otro-dia] PASSED
+======================= 6 passed, 12 deselected in 0.06s =======================

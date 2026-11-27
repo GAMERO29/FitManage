@@ -1,0 +1,12 @@
+# 2026-11-27T11:21:08-05:00 · rama sw3-unidad1 · laboratorio local
+== Condición 1: nominal
+11:21:08.346 /salud: 200 · consulta de estado: 200 0.005551s · SIN_MEMBRESIA
+== Condición 2: la base de datos no está disponible
+11:21:08.493 PostgreSQL detenido
+11:21:08.495 /salud: 503 · consulta de estado: 500 0.006203s · tipo de cuerpo: <!doctype html…
+11:21:08.518 registro del servidor (solo nivel y mensaje, sin datos de la consulta):
+      1     ERROR · django.request · Internal Server Error: /api/v1/estados/{tipoDocumento}/{nume · 	Is the server running on that host and accepting TCP/IP connections?
+      1     ERROR · django.request · Service Unavailable: /api/v1/salud · 
+11:21:10.660 PostgreSQL arrancado de nuevo
+== Condición 3: recuperación sin reiniciar la aplicación
+11:21:10.661 /salud: 200 · consulta de estado: 200 0.008507s

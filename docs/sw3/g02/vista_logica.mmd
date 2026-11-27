@@ -1,0 +1,19 @@
+flowchart LR
+  subgraph navegador["Navegador del personal"]
+    web["Presentación<br/>infraestructura/web<br/>app.js · app.css"]
+  end
+  subgraph proceso["Proceso Django (un solo despliegue)"]
+    api["Adaptador HTTP<br/>infraestructura/api<br/>vistas · seguridad · contrato"]
+    app["Aplicación<br/>aplicacion/<br/>RegistroPagoService · AnulacionPagoService<br/>CambioPlanService · ConsultaEstadoService"]
+    dom["Dominio<br/>dominio/<br/>Socio · Plan · Pago · CalculadoraMembresia<br/>PoliticaAnulacion · puertos"]
+    per["Persistencia<br/>infraestructura/persistencia<br/>repositorios ORM · AuditoriaORM"]
+    obs["Observabilidad<br/>infraestructura/observabilidad"]
+  end
+  bd[("Base de datos<br/>PostgreSQL 16")]
+  web -- "HTTP JSON /api/v1 (contrato OpenAPI 1.7.0)" --> api
+  api -- "llamada en proceso" --> app
+  app -- "llamada en proceso" --> dom
+  per -. "implementa los puertos" .-> dom
+  app -- "usa los puertos" --> per
+  per -- "SQL" --> bd
+  api -- "trazas y métricas" --> obs

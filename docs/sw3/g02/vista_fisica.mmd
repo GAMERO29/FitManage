@@ -1,0 +1,16 @@
+flowchart LR
+  subgraph equipo["Nodo: equipo de la recepción (PC o celular)"]
+    nav["Navegador web<br/>artefacto: app.js servido por Django"]
+  end
+  subgraph render["Nodo: Render (PaaS) · región de Render"]
+    subgraph svc["Servicio web fitmanage · 1 instancia"]
+      cont["Contenedor Docker<br/>ghcr.io/gamero29/fitmanage:sha-&lt;commit&gt;<br/>gunicorn 1 proceso · 4 hilos · usuario 10001"]
+    end
+    pg[("Servicio PostgreSQL 16<br/>plan gratuito · sin respaldos (DT-18)")]
+  end
+  gh["Nodo: GitHub<br/>Actions + GHCR"]
+  graf["Nodo: Grafana Cloud<br/>métricas y alertas<br/>(trazas OTLP aún no se envían)"]
+  nav -- "HTTPS 443" --> cont
+  cont -- "protocolo PostgreSQL sobre TCP<br/>DATABASE_URL" --> pg
+  graf -- "lee /metrics por HTTPS<br/>formato Prometheus (ADR N.° 13)" --> cont
+  gh -- "Deploy Hook HTTPS<br/>imagen sha-&lt;commit&gt;" --> render
