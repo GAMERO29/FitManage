@@ -1,0 +1,23 @@
+classDiagram
+  class AnulacionPagoService {
+    -politica: PoliticaAnulacion
+    +anular(pago_id, usuario, motivo) Pago
+    +anular_ultimo(socio, usuario, motivo) Pago
+  }
+  class PoliticaAnulacion {
+    <<Protocol>>
+    +exigir(pago, usuario, hoy) None
+  }
+  class RecepcionistaCorrigeSuDia {
+    +exigir(pago, usuario, hoy) None
+  }
+  class SoloAdministradorAnula {
+    +exigir(pago, usuario, hoy) None
+  }
+  class contenedor {
+    +anulacion() AnulacionPagoService
+  }
+  AnulacionPagoService --> PoliticaAnulacion : exige el permiso
+  PoliticaAnulacion <|.. RecepcionistaCorrigeSuDia : vigente, ADR 18
+  PoliticaAnulacion <|.. SoloAdministradorAnula : alternativa A del ADR 18
+  contenedor ..> AnulacionPagoService : crea con la política por defecto

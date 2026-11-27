@@ -1,0 +1,11 @@
+flowchart TB
+  subgraph antes["Antes (línea base 1790310)"]
+    V1["vistas.listar_planes<br/>(adaptador HTTP)"] -- "PlanModelo.objects… ✗" --> M1[("ORM: PlanModelo")]
+    V1 -. "decide quién ve los desactivados ✗" .-> V1
+  end
+  subgraph despues["Después"]
+    V2["vistas.listar_planes"] -- "listar(usuario, incluir_inactivos)" --> S2["GestionPlanesService<br/>(aplicación)"]
+    S2 -- "PlanRepositorio.todos()" --> P2["Puerto del dominio"]
+    R2["PlanRepositorioORM<br/>(persistencia)"] -. "implementa" .-> P2
+    R2 --> M2[("ORM: PlanModelo")]
+  end

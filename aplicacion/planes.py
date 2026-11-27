@@ -78,6 +78,20 @@ class GestionPlanesService:
             self._registrar(tipo, solicitante, nuevo, {})
         return nuevo
 
+    def listar(self, solicitante: Usuario, incluir_inactivos: bool = False) -> list[Plan]:
+        """Los planes que se ofrecen al cobrar; los desactivados, solo para el administrador.
+
+        Software III, Guía 05: esta regla vivía en el controlador, que consultaba el ORM directo.
+        """
+        if incluir_inactivos and not solicitante.es_administrador():
+            raise PermisoDenegado("Solo el administrador ve los planes desactivados.")
+        planes = sorted(self._planes.todos(), key=lambda p: (p.duracion_dias, p.nombre))
+        return planes if incluir_inactivos else [p for p in planes if p.activo]
+
+    def nombres(self) -> dict[UUID, str]:
+        """Nombre de cada plan, activo o no: los pagos viejos pueden ser de un plan desactivado."""
+        return {p.id: p.nombre for p in self._planes.todos()}
+
     def _registrar(self, tipo: TipoEvento, actor: Usuario, plan: Plan, extra: dict) -> None:
         if self._reloj is None:  # solo pasa con SinAuditoria: pruebas que no miran el rastro
             return
