@@ -10,7 +10,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core import signing
 from django.db import IntegrityError, connection, transaction
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from dominio.errores import DocumentoDuplicado, SocioNoEncontrado
@@ -185,6 +185,23 @@ def historial_socio(
     )
     filas = [presentacion.pago(p, _nombre_plan(p.plan_id)) for p in pagos]
     return JsonResponse(presentacion.historial(socio, estado, vence, hoy, filas))
+
+
+@require_http_methods(["DELETE"])
+@endpoint(roles=SOLO_ADMINISTRADOR)
+def suprimir_socio(
+    request: HttpRequest,
+    tipoDocumento: str,  # noqa: N803
+    numeroDocumento: str,  # noqa: N803
+) -> HttpResponse:
+    """Software III, Guía 06: derecho de supresión (Ley 1581) de un socio sin pagos."""
+    with transaction.atomic():
+        # El mismo bloqueo que registrar un pago: un pago y la supresión no se cruzan.
+        bloquear_socio_por_documento(tipoDocumento, numeroDocumento)
+        contenedor.supresion_socio().suprimir(
+            TipoDocumento(tipoDocumento), numeroDocumento, request.usuario
+        )
+    return HttpResponse(status=204)
 
 
 # --- Recepción ---------------------------------------------------------------------------

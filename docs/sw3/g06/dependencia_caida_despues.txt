@@ -1,0 +1,13 @@
+# 2026-11-27T11:40:07-05:00 · rama sw3-unidad2: el mismo script de la Guía 02 después de la corrección
+== Condición 1: nominal
+11:40:08.060 /salud: 200 · consulta de estado: 200 0.007105s · SIN_MEMBRESIA
+== Condición 2: la base de datos no está disponible
+11:40:08.221 PostgreSQL detenido
+11:40:08.223 /salud: 503 · consulta de estado: 503 0.003010s · tipo de cuerpo: {"type": "https…
+11:40:08.246 registro del servidor (solo nivel y mensaje, sin datos de la consulta):
+      1     ERROR · django.request · Service Unavailable: /api/v1/estados/{tipoDocumento}/{numero · 
+      1     ERROR · django.request · Service Unavailable: /api/v1/salud · 
+      1     WARNING · fitmanage.api · base de datos no disponible · 
+11:40:10.386 PostgreSQL arrancado de nuevo
+== Condición 3: recuperación sin reiniciar la aplicación
+11:40:10.387 /salud: 200 · consulta de estado: 200 0.009249s

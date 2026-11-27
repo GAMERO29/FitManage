@@ -169,6 +169,9 @@ class ClienteAPI:
             )
         )
 
+    def delete(self, ruta: str, encabezados: dict | None = None):
+        return self._validar(self._client.delete(ruta, **self._encabezados(encabezados)))
+
     def patch(self, ruta: str, cuerpo: dict, encabezados: dict | None = None):
         return self._validar(
             self._client.patch(

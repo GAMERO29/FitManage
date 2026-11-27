@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from functools import wraps
 from uuid import UUID
 
+from django.db import InterfaceError, OperationalError
 from django.http import HttpRequest, JsonResponse
 
 from dominio.errores import ErrorDeDominio
@@ -17,6 +19,7 @@ from infraestructura.persistencia.repositorios import UsuarioRepositorioORM
 
 TODO_EL_PERSONAL = (Rol.RECEPCIONISTA, Rol.ADMINISTRADOR)
 SOLO_ADMINISTRADOR = (Rol.ADMINISTRADOR,)
+registro = logging.getLogger("fitmanage.api")
 
 
 def _usuario_del_token(request: HttpRequest) -> Usuario | None:
@@ -42,6 +45,21 @@ def endpoint(roles: tuple[Rol, ...] | None) -> Callable:
     def decorador(vista: Callable) -> Callable:
         @wraps(vista)
         def envoltura(request: HttpRequest, *args, **kwargs) -> JsonResponse:
+            # Software III, Guías 02 y 06: si la base no responde, es una falla técnica y no un
+            # error de negocio; el consumidor recibe 503 en problem+json, no la página HTML del 500.
+            try:
+                return _atender(request, *args, **kwargs)
+            except (OperationalError, InterfaceError):
+                registro.warning("base de datos no disponible", extra={"evento": "base_caida"})
+                return problema(
+                    503,
+                    "SERVICIO_NO_DISPONIBLE",
+                    "Servicio no disponible",
+                    detalle="La base de datos no responde. Intente de nuevo en un minuto.",
+                    encabezados={"Retry-After": "60"},
+                )
+
+        def _atender(request: HttpRequest, *args, **kwargs) -> JsonResponse:
             if roles is not None:
                 usuario = _usuario_del_token(request)
                 if usuario is None:

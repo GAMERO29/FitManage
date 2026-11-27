@@ -23,6 +23,7 @@ class TipoEvento(Enum):
     PLAN_CREADO = "PLAN_CREADO"
     PLAN_DESACTIVADO = "PLAN_DESACTIVADO"
     PLAN_REACTIVADO = "PLAN_REACTIVADO"
+    SOCIO_SUPRIMIDO = "SOCIO_SUPRIMIDO"  # Software III, Guía 06: sin datos personales en el detalle
 
 
 Detalle = dict[str, str | int | None]

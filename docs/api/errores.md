@@ -10,6 +10,7 @@ Todos los errores salen como `application/problem+json` (RFC 9457) con `type`, `
 | <a id="sin-permiso"></a>sin-permiso | `SIN_PERMISO` | 403 | El rol no puede hacer esto (el entrenador en pagos, la recepcionista en reportes). Queda en la auditoría. |
 | <a id="no-encontrado"></a>no-encontrado | `NO_ENCONTRADO` | 404 | No existe el socio, el plan o el pago. |
 | <a id="documento-duplicado"></a>documento-duplicado | `DOCUMENTO_DUPLICADO` | 409 | Ya hay un socio con ese tipo y número (RN-01). |
+| <a id="socio-con-pagos"></a>socio-con-pagos | `SOCIO_CON_PAGOS` | 409 | Se pidió suprimir los datos de un socio que tiene pagos, vigentes o anulados. Los pagos son registros contables y se conservan. |
 | <a id="correo-duplicado"></a>correo-duplicado | `CORREO_DUPLICADO` | 409 | Ya hay una cuenta del personal con ese correo (sin importar mayúsculas). |
 | <a id="plan-duplicado"></a>plan-duplicado | `PLAN_DUPLICADO` | 409 | Ya hay un plan con ese nombre (sin importar mayúsculas). |
 | <a id="ultimo-plan-activo"></a>ultimo-plan-activo | `ULTIMO_PLAN_ACTIVO` | 409 | Se intentó desactivar el único plan activo; sin planes activos no se puede cobrar. |

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.7.0
+  version: 1.8.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -145,6 +145,8 @@ paths:
                 codigo: CUENTA_BLOQUEADA
         '429':
           $ref: '#/components/responses/DemasiadasSolicitudes'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
 
   /auth/renovacion:
     post:
@@ -172,6 +174,8 @@ paths:
                 nombre: Laura
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
 
   /personal:
     get:
@@ -197,6 +201,8 @@ paths:
                   bloqueada: false
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
     post:
@@ -233,6 +239,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '409':
@@ -282,7 +290,7 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '503':
-          description: El servidor de correo no respondió. La cuenta queda igual y se puede reintentar.
+          description: El servidor de correo no respondió (`CORREO_NO_DISPONIBLE`) o la base de datos no responde (`SERVICIO_NO_DISPONIBLE`). La cuenta queda igual y se puede reintentar.
           content:
             application/problem+json:
               schema:
@@ -317,6 +325,8 @@ paths:
                 $ref: '#/components/schemas/Cuenta'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -363,6 +373,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '409':
@@ -377,6 +389,41 @@ paths:
                 status: 409
                 codigo: DOCUMENTO_DUPLICADO
 
+  /socios/{tipoDocumento}/{numeroDocumento}:
+    delete:
+      tags: [Socios]
+      operationId: suprimirSocio
+      summary: Suprimir los datos de un socio sin pagos
+      description: |
+        Solo administrador. Derecho de supresión de la Ley 1581 de 2012 (Software III, Guía 06).
+        Si el socio tiene pagos, vigentes o anulados, no se suprime nada: los pagos son registros
+        contables. Queda el evento `SOCIO_SUPRIMIDO` en la auditoría, sin el nombre ni el documento.
+        Repetir la orden después de suprimir responde 404.
+      parameters:
+        - $ref: '#/components/parameters/TipoDocumento'
+        - $ref: '#/components/parameters/NumeroDocumento'
+      responses:
+        '204':
+          description: Los datos del socio se suprimieron.
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: El socio tiene pagos y sus datos no se suprimen.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#socio-con-pagos
+                title: El socio tiene pagos y sus datos no se suprimen
+                status: 409
+                codigo: SOCIO_CON_PAGOS
   /socios/{tipoDocumento}/{numeroDocumento}/pagos:
     get:
       tags: [Membresías y cobros]
@@ -399,6 +446,8 @@ paths:
                 $ref: '#/components/schemas/HistorialSocio'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -448,6 +497,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
 
@@ -478,6 +529,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -522,6 +575,8 @@ paths:
                   activo: true
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
     post:
@@ -555,6 +610,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '409':
@@ -614,6 +671,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -683,6 +742,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -745,6 +806,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -810,6 +873,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -857,6 +922,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -921,6 +988,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
         '404':
@@ -990,6 +1059,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
 
@@ -1062,6 +1133,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
 
@@ -1108,6 +1181,8 @@ paths:
           $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
         '403':
           $ref: '#/components/responses/SinPermiso'
 
@@ -1163,6 +1238,23 @@ components:
             title: Demasiadas solicitudes
             status: 429
             codigo: DEMASIADAS_SOLICITUDES
+    ServicioNoDisponible:
+      description: La base de datos no responde. Es una falla técnica, no un error de negocio; se puede reintentar.
+      headers:
+        Retry-After:
+          description: Segundos sugeridos antes de reintentar.
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problema'
+          example:
+            type: https://github.com/GAMERO29/FitManage/blob/main/docs/api/errores.md#servicio-no-disponible
+            title: Servicio no disponible
+            status: 503
+            codigo: SERVICIO_NO_DISPONIBLE
+            detail: La base de datos no responde. Intente de nuevo en un minuto.
     SolicitudInvalida:
       description: Falta un campo, sobra uno o alguno no cumple el formato.
       content:
@@ -1532,14 +1624,14 @@ components:
           format: date-time
         tipo:
           type: string
-          enum: [PAGO_REGISTRADO, PAGO_ANULADO, PLAN_CAMBIADO, PRECIO_CAMBIADO, PLAN_CREADO, PLAN_DESACTIVADO, PLAN_REACTIVADO]
+          enum: [PAGO_REGISTRADO, PAGO_ANULADO, PLAN_CAMBIADO, PRECIO_CAMBIADO, PLAN_CREADO, PLAN_DESACTIVADO, PLAN_REACTIVADO, SOCIO_SUPRIMIDO]
         actor:
           type: string
           description: Nombre de quien lo hizo al momento del evento, o «Sistema».
         entidadId:
           type: string
           format: uuid
-          description: El pago o el plan afectado.
+          description: El pago, el plan o el socio afectado.
         socio:
           type: object
           additionalProperties: false

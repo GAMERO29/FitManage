@@ -525,6 +525,16 @@ async function anularUltimo(pago, boton) {
   else if (r.estado === 409) { H.confirmando = false; H.error = `${mensajeDe(r)} El historial ya muestra el estado actual.`; await cargarHistorial(); }
   else { H.error = mensajeDe(r); render(); }
 }
+/* Software III, Guía 06: supresión de datos (Ley 1581). Solo administrador y solo sin pagos; el
+   servidor decide (409 si tiene pagos), la pantalla solo evita ofrecer lo que no se puede. */
+async function suprimirSocio(boton) {
+  const H = S.hist;
+  ocupado(boton, true);
+  const r = await llamar(`/socios${ruta(H.tipo, H.numero.trim())}`, { metodo: "DELETE" });
+  ocupado(boton, false);
+  if (r.estado === 204) { const nombre = H.datos.socio.nombreCompleto; H.datos = null; H.suprimir = false; H.numero = ""; H.suprimido = nombre; render(); }
+  else { H.suprimir = false; H.error = mensajeDe(r); render(); }
+}
 /* Cambio de plan: anula el último pago y registra el plan nuevo desde el mismo día (un solo paso). */
 function abrirCambio(ultimo) {
   const H = S.hist;
@@ -591,8 +601,9 @@ function panelCambio() {
 function pHistorial() {
   const H = S.hist;
   if (H.numero && !H.datos && !H.error) una("hist", cargarHistorial);
-  const buscar = buscadorDoc(H, () => { H.datos = null; H.error = null; H.aviso = null; void cargarHistorial(); }, "Ver historial");
-  if (!H.datos) return marco(h("div", {}, h("h1", {}, "Socios e historial"), h("div", { class: "sub mt-6" }, "Pagos vigentes y anulados de un socio. Desde aquí se cambia el plan o se anula el último pago.")), buscar, H.error ? aviso("mal", H.error) : null);
+  const buscar = buscadorDoc(H, () => { H.datos = null; H.error = null; H.aviso = null; H.suprimido = null; void cargarHistorial(); }, "Ver historial");
+  if (!H.datos) return marco(h("div", {}, h("h1", {}, "Socios e historial"), h("div", { class: "sub mt-6" }, "Pagos vigentes y anulados de un socio. Desde aquí se cambia el plan o se anula el último pago.")), buscar, H.error ? aviso("mal", H.error) : null,
+    H.suprimido ? aviso("ok", `Se suprimieron los datos de ${H.suprimido}. Ya no aparece en las consultas.`) : null);
   const d = H.datos, e = d.estado;
   const vigentes = d.pagos.filter((p) => p.estado === "VIGENTE");
   const ultimo = vigentes.slice().sort((a, b) => (a.inicia < b.inicia ? 1 : a.inicia > b.inicia ? -1 : a.registradoEl < b.registradoEl ? 1 : -1))[0];
@@ -613,7 +624,13 @@ function pHistorial() {
           h("button", { type: "button", class: "btn-sec", disabled: !ultimo || !!H.cambio, onclick: () => abrirCambio(ultimo) }, "Cambiar plan"),
           h("button", { type: "button", class: "btn-sec peligro", disabled: !ultimo || H.confirmando || !puedeAnular(ultimo), title: ultimo && !puedeAnular(ultimo) ? "Solo puede anular los pagos que usted registró hoy" : null, onclick: () => { H.confirmando = true; H.cambio = null; H.aviso = null; H.cambiado = null; render(); const t = document.getElementById("motivo"); if (t) t.focus(); } }, "Anular último pago"))),
       ultimo && !puedeAnular(ultimo) ? h("p", { class: "sub peq mt-8 sin-margen" }, "Usted puede anular solo los pagos que registró hoy. Para anular este pago, pídaselo al administrador; cambiar el plan sí lo puede hacer.") : null,
-      d.pagos.length ? h("div", { class: "mt-12" }, tabla(["Plan", "Periodo", "Medio", "Referencia", ">Valor", "Registró", "Estado"], filas)) : h("p", { class: "vacio" }, "Todavía no tiene pagos.")),
+      d.pagos.length ? h("div", { class: "mt-12" }, tabla(["Plan", "Periodo", "Medio", "Referencia", ">Valor", "Registró", "Estado"], filas)) : h("p", { class: "vacio" }, "Todavía no tiene pagos."),
+      !d.pagos.length && esAdmin() && !H.suprimir ? h("button", { type: "button", class: "btn-sec peligro mt-12", onclick: () => { H.suprimir = true; render(); } }, "Suprimir datos del socio") : null),
+    H.suprimir ? h("section", { class: "hoja pila anular", "aria-labelledby": "t-sup" },
+      h("h2", { id: "t-sup" }, `¿Suprimir los datos de ${d.socio.nombreCompleto}?`),
+      h("p", { class: "sub peq sin-margen" }, "Se borran el nombre, el documento y el celular. Hágalo solo si el socio lo pidió (Ley 1581). Queda en la auditoría quién lo hizo y cuándo, sin sus datos."),
+      h("div", { class: "fila" }, h("button", { type: "button", class: "btn btn-peligro", onclick: (e) => suprimirSocio(e.currentTarget) }, "Suprimir datos"),
+        h("button", { type: "button", class: "btn-sec", onclick: () => { H.suprimir = false; render(); } }, "No suprimir"))) : null,
     H.cambio && ultimo ? panelCambio() : null,
     H.confirmando && ultimo ? h("section", { class: "hoja pila anular", "aria-labelledby": "t-an" },
       h("h2", { id: "t-an" }, `¿Anular el pago ${ultimo.plan} del ${corta(ultimo.inicia)} al ${corta(ultimo.vence)}?`),
@@ -683,6 +700,7 @@ function quePaso(e) {
     case "PLAN_CREADO": return `Creó el plan ${d.plan}: ${d.duracionDias} días por ${pesos(d.precio)}.`;
     case "PLAN_DESACTIVADO": return `Desactivó el plan ${d.plan}.`;
     case "PLAN_REACTIVADO": return `Volvió a activar el plan ${d.plan}.`;
+    case "SOCIO_SUPRIMIDO": return "Suprimió los datos de un socio sin pagos, a pedido del socio (Ley 1581).";
     default: return e.tipo;
   }
 }

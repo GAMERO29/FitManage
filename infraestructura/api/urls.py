@@ -12,6 +12,7 @@ urlpatterns = [
     path("personal/<str:usuarioId>/restablecimiento", vistas.restablecer_clave),
     path("personal/<str:usuarioId>/desbloqueo", vistas.desbloquear_cuenta),
     path("socios", vistas.registrar_socio),
+    path("socios/<str:tipoDocumento>/<str:numeroDocumento>", vistas.suprimir_socio),
     path("socios/<str:tipoDocumento>/<str:numeroDocumento>/pagos", vistas.historial_socio),
     path("estados", vistas.listar_estados),
     path("estados/<str:tipoDocumento>/<str:numeroDocumento>", vistas.consultar_estado),

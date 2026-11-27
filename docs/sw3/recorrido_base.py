@@ -35,40 +35,87 @@ def paso(n, nombre, estado, esperado, detalle=""):
     ok = estado == esperado
     if not ok:
         fallas.append(n)
-    print(f"R{n:02d} {'PASA ' if ok else 'FALLA'} {nombre}: HTTP {estado} (esperado {esperado}) {detalle}")
+    print(
+        f"R{n:02d} {'PASA ' if ok else 'FALLA'} {nombre}: HTTP {estado} (esperado {esperado}) {detalle}"
+    )
 
 
 def token(correo):
-    return api("/auth/token", "POST", cuerpo={"correo": correo, "contrasena": CLAVE})[1]["tokenAcceso"]
+    return api("/auth/token", "POST", cuerpo={"correo": correo, "contrasena": CLAVE})[1][
+        "tokenAcceso"
+    ]
 
 
 s, salud = api("/salud")
 paso(1, "salud y versión", s, 200, f"version={salud['version']}")
 admin = token("admin@demo.local")
-s, _ = api("/personal", "POST", admin, {"nombre": "Laura Demo", "correo": "laura@demo.local",
-                                         "rol": "RECEPCIONISTA", "contrasena": CLAVE})
+s, _ = api(
+    "/personal",
+    "POST",
+    admin,
+    {
+        "nombre": "Laura Demo",
+        "correo": "laura@demo.local",
+        "rol": "RECEPCIONISTA",
+        "contrasena": CLAVE,
+    },
+)
 paso(2, "el administrador crea a la recepcionista", s, 201)
 laura = token("laura@demo.local")
 s, _ = api(f"/estados/CC/{DOC}", token=laura)
 paso(3, "consulta de un documento sin registrar", s, 404)
-s, _ = api("/socios", "POST", laura, {"tipoDocumento": "CC", "numeroDocumento": DOC, "nombres": "Ana",
-                                       "apellidos": "Prueba Demo", "telefono": "3001234567",
-                                       "autorizaTratamientoDatos": True})
+s, _ = api(
+    "/socios",
+    "POST",
+    laura,
+    {
+        "tipoDocumento": "CC",
+        "numeroDocumento": DOC,
+        "nombres": "Ana",
+        "apellidos": "Prueba Demo",
+        "telefono": "3001234567",
+        "autorizaTratamientoDatos": True,
+    },
+)
 paso(4, "registrar socia (RF-01)", s, 201)
 s, e = api(f"/estados/CC/{DOC}", token=laura)
 paso(5, "consulta sin pagos (RF-04)", s, 200, f"estado={e['estado']}")
 mensual = next(p["id"] for p in api("/planes", token=laura)[1] if p["nombre"] == "Mensual")
-s, v = api(f"/pagos/vista-previa?tipoDocumento=CC&numeroDocumento={DOC}&planId={mensual}", token=laura)
+s, v = api(
+    f"/pagos/vista-previa?tipoDocumento=CC&numeroDocumento={DOC}&planId={mensual}", token=laura
+)
 paso(6, "vista previa del periodo (RN-03)", s, 200, f"{v.get('inicia')} → {v.get('vence')}")
-s, pago = api("/pagos", "POST", laura, {"tipoDocumento": "CC", "numeroDocumento": DOC,
-                                         "planId": mensual, "medio": "NEQUI", "referencia": "M123456"})
+s, pago = api(
+    "/pagos",
+    "POST",
+    laura,
+    {
+        "tipoDocumento": "CC",
+        "numeroDocumento": DOC,
+        "planId": mensual,
+        "medio": "NEQUI",
+        "referencia": "M123456",
+    },
+)
 paso(7, "registrar pago Mensual por Nequi (RF-03)", s, 201, f"vence {pago.get('vence')}")
-s, _ = api("/pagos", "POST", laura, {"tipoDocumento": "CC", "numeroDocumento": DOC,
-                                      "planId": mensual, "medio": "NEQUI", "referencia": "M123456"})
+s, _ = api(
+    "/pagos",
+    "POST",
+    laura,
+    {
+        "tipoDocumento": "CC",
+        "numeroDocumento": DOC,
+        "planId": mensual,
+        "medio": "NEQUI",
+        "referencia": "M123456",
+    },
+)
 paso(8, "mismo comprobante otra vez (RN-06)", s, 409)
 s, e = api(f"/estados/CC/{DOC}", token=laura)
 paso(9, "consulta después del pago", s, 200, f"estado={e['estado']} vence={e.get('venceEl')}")
-s, _ = api(f"/pagos/{pago['id']}", "PATCH", laura, {"estado": "ANULADO", "motivo": "Prueba del recorrido"})
+s, _ = api(
+    f"/pagos/{pago['id']}", "PATCH", laura, {"estado": "ANULADO", "motivo": "Prueba del recorrido"}
+)
 paso(10, "anular el último pago con motivo (RF-10)", s, 200)
 s, e = api(f"/estados/CC/{DOC}", token=laura)
 paso(11, "consulta después de anular", s, 200, f"estado={e['estado']}")
