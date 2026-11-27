@@ -1,0 +1,7 @@
+$ python3 docs/sw3/g08/verificar_propuesta.py
+FALLA IA, RN-03: vence 2026-11-06
+FALLA IA, 6 nov ya vencida: entra el 6 de noviembre
+PASA  FitManage, RN-03: vence 2026-11-05
+PASA  FitManage, 6 nov ya vencida: no entra el 6
+FALLA IA, transición validada: set_estado aceptó 'ACTIVA-PREMIUM'
+FALLA IA, RN-05: esta_activa(7 oct) = True aunque nada dice si el pago sigue vigente o se anuló

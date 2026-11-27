@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from uuid import UUID, uuid4
@@ -148,6 +148,35 @@ class SolicitudPago:
     referencia: str | None = None
 
 
+@dataclass(frozen=True)
+class Periodo:
+    """Objeto de valor: los días que cubre un pago. Dos periodos con las mismas fechas son iguales.
+
+    RN-03: el día del vencimiento cuenta. Un plan de 30 días que inicia el 7 de octubre vence el
+    5 de noviembre, y el socio entra ese 5 de noviembre; el 6 ya no (Software III, Guía 08).
+    """
+
+    inicia: date
+    vence: date
+
+    def __post_init__(self) -> None:
+        if self.vence < self.inicia:
+            raise DatosInvalidos("El vencimiento no puede ser anterior al inicio.")
+
+    @classmethod
+    def de_plan(cls, inicia: date, duracion_dias: int) -> Periodo:
+        if duracion_dias <= 0:
+            raise DatosInvalidos("La duración debe ser mayor que cero.")
+        return cls(inicia, inicia + timedelta(days=duracion_dias - 1))
+
+    @property
+    def dias(self) -> int:
+        return (self.vence - self.inicia).days + 1
+
+    def cubre(self, dia: date) -> bool:
+        return self.inicia <= dia <= self.vence
+
+
 @dataclass
 class Pago:
     socio: Socio
@@ -167,9 +196,15 @@ class Pago:
     id: UUID = field(default_factory=uuid4)
 
     def __post_init__(self) -> None:
-        if self.fecha_vencimiento < self.fecha_inicio:
-            raise DatosInvalidos("El vencimiento no puede ser anterior al inicio.")
+        # Guía 08 de SW3: antes solo se revisaba que el vencimiento no fuera anterior al inicio y
+        # un pago de 30 días podía guardarse con 90 días de cobertura.
+        if self.periodo.dias != self.duracion_dias:
+            raise DatosInvalidos("Las fechas no corresponden a la duración del plan.")
         exigir_zona_horaria(self.registrado_en, "La fecha de registro")
+
+    @property
+    def periodo(self) -> Periodo:
+        return Periodo(self.fecha_inicio, self.fecha_vencimiento)
 
     def esta_vigente(self) -> bool:
         return self.estado is EstadoPago.VIGENTE and self.fecha_anulacion is None

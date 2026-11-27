@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import date, timedelta
 
-from dominio.modelos import EstadoMembresia, Pago
+from dominio.modelos import EstadoMembresia, Pago, Periodo
 
 UN_DIA = timedelta(days=1)
 
@@ -13,7 +13,7 @@ UN_DIA = timedelta(days=1)
 class CalculadoraMembresia:
     def calcular_vencimiento(self, fecha_inicio: date, duracion_dias: int) -> date:
         """RN-03: vencimiento = inicio + duración − 1 (el último día cuenta)."""
-        return fecha_inicio + timedelta(days=duracion_dias - 1)
+        return Periodo.de_plan(fecha_inicio, duracion_dias).vence
 
     def calcular_fecha_inicio(self, pagos: Iterable[Pago], hoy: date) -> date:
         """RN-04: si el socio renueva antes de vencer, no pierde los días que le quedan."""

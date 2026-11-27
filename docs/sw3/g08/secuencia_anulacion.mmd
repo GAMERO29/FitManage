@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  actor R as Recepcionista
+  participant V as api/vistas.anular_pago
+  participant S as AnulacionPagoService
+  participant Repo as PagoRepositorio
+  participant Pol as PoliticaAnulacion
+  participant P as Pago (entidad)
+  participant A as RegistroAuditoria
+  R->>V: PATCH /pagos/{pagoId} {motivo}
+  V->>S: anular(pago_id, usuario, motivo)
+  S->>Repo: obtener(pago_id)
+  Repo-->>S: pago VIGENTE
+  Note over S: ¿es el último vigente del socio?<br/>si no, PagoNoAnulable
+  S->>Pol: exigir(pago, usuario, hoy)
+  Note over Pol: suyo y registrado hoy en Bogotá,<br/>si no PermisoDenegado
+  S->>P: anular(motivo, usuario, ahora)
+  Note over P: VIGENTE → ANULADO<br/>ANULADO → PagoNoAnulable<br/>motivo vacío → MotivoRequerido
+  S->>Repo: guardar(pago)
+  S->>A: registrar(PAGO_ANULADO)
+  S-->>V: pago ANULADO (mismo id)
+  V-->>R: 200 con el pago anulado

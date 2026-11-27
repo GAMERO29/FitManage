@@ -156,3 +156,32 @@ def test_los_paquetes_de_infraestructura_no_forman_ciclos():
 
     ciclos = sorted(p for p in grafo if alcanza(p, p, {p}))
     assert ciclos == []
+
+
+# Software III, Guía 08: el estado de un pago o de un plan cambia solo con sus métodos (anular,
+# desactivar), que revisan la transición. Fuera del dominio nadie asigna esos atributos.
+ATRIBUTOS_DE_ESTADO = {
+    "estado",
+    "fecha_anulacion",
+    "anulado_por",
+    "motivo_anulacion",
+    "activo",
+    "fecha_inicio",
+    "fecha_vencimiento",
+}
+
+
+def test_fuera_del_dominio_nadie_cambia_el_estado_asignando_atributos():
+    fugas = []
+    for capa in ("aplicacion", "infraestructura"):
+        for archivo in sorted((RAIZ / capa).rglob("*.py")):
+            for nodo in ast.walk(ast.parse(archivo.read_text(encoding="utf-8"))):
+                if isinstance(nodo, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
+                    destinos = nodo.targets if isinstance(nodo, ast.Assign) else [nodo.target]
+                    for d in destinos:
+                        for hoja in ast.walk(d):
+                            if isinstance(hoja, ast.Attribute) and hoja.attr in ATRIBUTOS_DE_ESTADO:
+                                fugas.append(
+                                    f"{archivo.relative_to(RAIZ)}:{nodo.lineno} .{hoja.attr}"
+                                )
+    assert fugas == []
