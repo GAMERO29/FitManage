@@ -22,6 +22,7 @@ def administracion(api):
 def test_suprime_los_datos_de_una_socia_sin_pagos(administracion):
     r = administracion.delete(MARIA)
     assert r.status_code == 204
+    assert r.content == b""  # auditoría de IA de la Guía 06: no se devuelve el socio suprimido
     assert not SocioModelo.objects.filter(numero_documento="25789456").exists()
     assert administracion.get("/api/v1/estados/PPT/25789456").status_code == 404
     evento = EventoAuditoriaModelo.objects.get(tipo="SOCIO_SUPRIMIDO")
