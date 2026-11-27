@@ -1,0 +1,15 @@
+# después de PoliticaAnulacion (rama sw3-unidad1), mismas pruebas sin cambios
+tests/nucleo/test_anulacion.py::test_la_recepcionista_anula_lo_que_ella_registro_hoy PASSED
+tests/nucleo/test_anulacion.py::test_la_recepcionista_no_anula_un_pago_de_ayer PASSED
+tests/nucleo/test_anulacion.py::test_la_recepcionista_no_anula_lo_que_registro_otra_persona PASSED
+tests/nucleo/test_anulacion.py::test_frontera_del_dia_para_la_recepcionista[un-segundo-antes-de-medianoche] PASSED
+tests/nucleo/test_anulacion.py::test_frontera_del_dia_para_la_recepcionista[primer-segundo-del-dia] PASSED
+tests/nucleo/test_anulacion.py::test_frontera_del_dia_para_la_recepcionista[noche-en-utc-es-otro-dia] PASSED
+======================= 6 passed, 12 deselected in 0.05s =======================
+# variante y cláusulas comunes
+tests/nucleo/test_politica_anulacion.py::test_toda_politica_deja_anular_al_administrador[RecepcionistaCorrigeSuDia] PASSED
+tests/nucleo/test_politica_anulacion.py::test_toda_politica_deja_anular_al_administrador[SoloAdministradorAnula] PASSED
+tests/nucleo/test_politica_anulacion.py::test_ninguna_politica_deja_anular_lo_ajeno_de_otro_dia[RecepcionistaCorrigeSuDia] PASSED
+tests/nucleo/test_politica_anulacion.py::test_ninguna_politica_deja_anular_lo_ajeno_de_otro_dia[SoloAdministradorAnula] PASSED
+tests/nucleo/test_politica_anulacion.py::test_la_variante_cambia_la_regla_sin_cambiar_el_servicio PASSED
+============================== 5 passed in 0.05s ===============================
