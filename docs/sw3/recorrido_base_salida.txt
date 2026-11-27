@@ -1,0 +1,14 @@
+# 2026-11-27T11:18:01-05:00 · commit 1790310 (base 1790310) · base nueva fm_sw3
+R01 PASA  salud y versión: HTTP 200 (esperado 200) version=1790310
+R02 PASA  el administrador crea a la recepcionista: HTTP 201 (esperado 201) 
+R03 PASA  consulta de un documento sin registrar: HTTP 404 (esperado 404) 
+R04 PASA  registrar socia (RF-01): HTTP 201 (esperado 201) 
+R05 PASA  consulta sin pagos (RF-04): HTTP 200 (esperado 200) estado=SIN_MEMBRESIA
+R06 PASA  vista previa del periodo (RN-03): HTTP 200 (esperado 200) 2026-11-27 → 2026-12-26
+R07 PASA  registrar pago Mensual por Nequi (RF-03): HTTP 201 (esperado 201) vence 2026-12-26
+R08 PASA  mismo comprobante otra vez (RN-06): HTTP 409 (esperado 409) 
+R09 PASA  consulta después del pago: HTTP 200 (esperado 200) estado=ACTIVO vence=2026-12-26
+R10 PASA  anular el último pago con motivo (RF-10): HTTP 200 (esperado 200) 
+R11 PASA  consulta después de anular: HTTP 200 (esperado 200) estado=SIN_MEMBRESIA
+R12 PASA  auditoría del administrador (ADR N.° 19): HTTP 200 (esperado 200) eventos=['PAGO_ANULADO', 'PAGO_REGISTRADO']
+Resumen: 12 de 12 pasos dan lo esperado.
