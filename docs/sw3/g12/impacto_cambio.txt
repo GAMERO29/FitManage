@@ -1,0 +1,9 @@
+$ git diff --stat <experimento v1> <CR-02> -- dominio docs/sw3/g12/experimento/transaction_script.py tests/nucleo
+ docs/sw3/g12/experimento/transaction_script.py | 12 ++++++------
+ dominio/modelos.py                             |  7 +++++--
+ tests/nucleo/test_anulacion.py                 | 15 +++++++++++++++
+ 3 files changed, 26 insertions(+), 8 deletions(-)
+
+$ grep -c "CR-02" en cada versión
+transaction_script.py: 3 lugares
+dominio/: 1 lugar
