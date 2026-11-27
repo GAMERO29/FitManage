@@ -21,10 +21,10 @@ from dominio.modelos import (
     Socio,
     TipoDocumento,
 )
+from dominio.privacidad import documento_enmascarado
 from dominio.recordatorio import texto_recordatorio
-from infraestructura.api.presentacion import documento_enmascarado
+from infraestructura.persistencia.mapeo import a_pago, a_socio
 from infraestructura.persistencia.models import EventoAuditoriaModelo, PagoModelo, SocioModelo
-from infraestructura.persistencia.repositorios import _a_pago, _a_socio
 
 CALCULADORA = CalculadoraMembresia()
 
@@ -35,7 +35,7 @@ def _vigentes_por_socio() -> dict:
     )
     agrupados: dict = defaultdict(list)
     for m in pagos:
-        agrupados[m.socio_id].append(_a_pago(m))
+        agrupados[m.socio_id].append(a_pago(m))
     return agrupados
 
 
@@ -55,7 +55,7 @@ def estados(
     filas = []
     for m in socios.distinct().order_by("apellidos", "nombres"):
         estado, vence = CALCULADORA.estado_de(vigentes.get(m.id, []), hoy)
-        filas.append((_a_socio(m), estado, vence))
+        filas.append((a_socio(m), estado, vence))
     return filas
 
 
@@ -129,13 +129,13 @@ def historial(
     if modelo is None:
         raise SocioNoEncontrado(f"No hay socio con documento {tipo.value} {numero}.")
     pagos = [
-        _a_pago(m)
+        a_pago(m)
         for m in PagoModelo.objects.select_related("socio", "registrado_por", "anulado_por")
         .filter(socio_id=modelo.id)
         .order_by("-fecha_inicio", "-registrado_en")
     ]
     estado, vence = CALCULADORA.estado_de(pagos, hoy)
-    return _a_socio(modelo), estado, vence, pagos
+    return a_socio(modelo), estado, vence, pagos
 
 
 # --- Auditoría (ADR N.° 19) ------------------------------------------------------------------

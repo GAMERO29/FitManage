@@ -97,3 +97,62 @@ def test_toda_escritura_de_pagos_bloquea_al_socio_dentro_de_una_transaccion():
         if "atomic" not in llamadas or not any(n.startswith("bloquear_socio") for n in llamadas):
             fugas.append(funcion.name)
     assert revisadas >= 3 and fugas == []
+
+
+# Software III, Guía 07. Dos reglas que antes nadie revisaba:
+# 1) Ningún módulo importa un nombre privado (_x) de otro. autenticacion.py y consultas.py usaban
+#    `_a_usuario`, `_a_pago` y `_a_socio` de repositorios.py; ahora viven en persistencia/mapeo.py.
+# 2) Los paquetes de infraestructura no forman ciclos. consultas.py importaba de api/presentacion.py
+#    mientras api/vistas.py importaba consultas.py; la máscara del documento pasó a dominio/.
+def _modulos() -> dict[str, Path]:
+    salida = {}
+    for capa in ("dominio", "aplicacion", "infraestructura"):
+        for archivo in (RAIZ / capa).rglob("*.py"):
+            if "migrations" not in archivo.parts:
+                partes = archivo.relative_to(RAIZ).with_suffix("").parts
+                salida[".".join(p for p in partes if p != "__init__")] = archivo
+    return salida
+
+
+def _desde(archivo: Path):
+    for nodo in ast.walk(ast.parse(archivo.read_text(encoding="utf-8"))):
+        if isinstance(nodo, ast.ImportFrom) and nodo.module:
+            yield nodo.module, [alias.name for alias in nodo.names]
+
+
+def test_ningun_modulo_importa_nombres_privados_de_otro():
+    fugas = [
+        f"{nombre} importa {n} de {origen}"
+        for nombre, archivo in _modulos().items()
+        for origen, nombres in _desde(archivo)
+        for n in nombres
+        if n.startswith("_") and not n.startswith("__") and origen != "__future__"
+    ]
+    assert fugas == []
+
+
+def test_los_paquetes_de_infraestructura_no_forman_ciclos():
+    modulos = _modulos()
+
+    def paquete(m: str) -> str:
+        partes = m.split(".")
+        return ".".join(partes[:2]) if partes[0] == "infraestructura" else partes[0]
+
+    grafo: dict[str, set[str]] = {}
+    for nombre, archivo in modulos.items():
+        for origen, nombres in _desde(archivo):
+            destinos = {f"{origen}.{n}" if f"{origen}.{n}" in modulos else origen for n in nombres}
+            for d in destinos:
+                if d in modulos and paquete(d) != paquete(nombre):
+                    grafo.setdefault(paquete(nombre), set()).add(paquete(d))
+
+    def alcanza(desde: str, hasta: str, vistos: set[str]) -> bool:
+        for siguiente in grafo.get(desde, ()):
+            if siguiente == hasta or (
+                siguiente not in vistos and alcanza(siguiente, hasta, vistos | {siguiente})
+            ):
+                return True
+        return False
+
+    ciclos = sorted(p for p in grafo if alcanza(p, p, {p}))
+    assert ciclos == []

@@ -23,8 +23,9 @@ class EventosEnMemoria:
 
 
 def preparar(socio, *pagos):
-    socios, eventos = SociosEnMemoria(socio), EventosEnMemoria()
-    servicio = SupresionSocioService(socios, PagosEnMemoria(*pagos), RelojFijo(AHORA), eventos)
+    repo_pagos = PagosEnMemoria(*pagos)
+    socios, eventos = SociosEnMemoria(socio, pagos=repo_pagos), EventosEnMemoria()
+    servicio = SupresionSocioService(socios, repo_pagos, RelojFijo(AHORA), eventos)
     return socios, eventos, servicio
 
 

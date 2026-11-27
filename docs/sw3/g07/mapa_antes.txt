@@ -1,0 +1,20 @@
+$ python3 docs/sw3/g07/mapa_dependencias.py   # commit 3f23906, antes
+Módulos: 47 · aristas internas: 87
+Dependencias entre paquetes:
+  aplicacion → dominio
+  dominio → 
+  infraestructura.api → aplicacion, dominio, infraestructura.consultas, infraestructura.correo, infraestructura.cuentas, infraestructura.observabilidad, infraestructura.persistencia, infraestructura.reloj
+  infraestructura.consultas → dominio, infraestructura.api, infraestructura.persistencia
+  infraestructura.correo → dominio
+  infraestructura.cuentas → dominio, infraestructura.persistencia
+  infraestructura.observabilidad → 
+  infraestructura.persistencia → dominio
+  infraestructura.reloj → dominio
+Ciclos entre paquetes: [['infraestructura.api', 'infraestructura.consultas']]
+  arista del ciclo: infraestructura.api.vistas → infraestructura.consultas
+  arista del ciclo: infraestructura.consultas → infraestructura.api.presentacion
+Nombres privados importados desde otro módulo: 3
+  infraestructura.api.autenticacion importa _a_usuario de infraestructura.persistencia.repositorios
+  infraestructura.consultas importa _a_pago de infraestructura.persistencia.repositorios
+  infraestructura.consultas importa _a_socio de infraestructura.persistencia.repositorios
+código de salida: 1

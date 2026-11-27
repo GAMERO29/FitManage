@@ -1,0 +1,7 @@
+$ python3 docs/sw3/g07/verificar_propuesta.py
+FALLA doble de la IA: 'Laura@Gimnasio-Demo.co' encuentra la cuenta = False
+PASA  doble corregido: 'Laura@Gimnasio-Demo.co' encuentra la cuenta = True
+código de salida: 0
+
+$ pytest tests/integracion/api/test_api_acceso.py -rA   # el adaptador real
+PASSED tests/integracion/api/test_api_acceso.py::test_el_correo_no_distingue_mayusculas

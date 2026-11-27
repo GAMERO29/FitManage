@@ -11,8 +11,8 @@ from django.db import transaction
 from dominio.acceso import PoliticaBloqueo
 from dominio.modelos import ZONA_HORARIA
 from infraestructura.api import tokens
+from infraestructura.persistencia.mapeo import a_usuario
 from infraestructura.persistencia.models import RenovacionModelo, UsuarioModelo
-from infraestructura.persistencia.repositorios import _a_usuario
 
 # Hash de una clave que nadie conoce: compararla con correos inexistentes iguala los tiempos.
 _HASH_FICTICIO = make_password("cuenta-que-no-existe")
@@ -43,7 +43,7 @@ def _abrir_sesion(cuenta: UsuarioModelo) -> Sesion:
     RenovacionModelo.objects.create(
         usuario=cuenta, huella=huella, vence=tokens.ahora_real() + tokens.VIGENCIA_RENOVACION
     )
-    usuario = _a_usuario(cuenta)
+    usuario = a_usuario(cuenta)
     return Sesion(tokens.emitir_acceso(usuario), token, usuario.rol.value, usuario.nombre)
 
 

@@ -11,7 +11,7 @@ from dobles import PagosEnMemoria, PlanesEnMemoria, RelojFijo, SociosEnMemoria, 
 from fechas import bogota
 
 from aplicacion.pagos import RegistroPagoService
-from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada
+from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada, SocioConPagos
 from dominio.modelos import MedioPago, Socio, SolicitudPago, TipoDocumento
 from infraestructura.persistencia.repositorios import (
     PagoRepositorioORM,
@@ -25,7 +25,8 @@ from infraestructura.persistencia.repositorios import (
 def repos(request, ana, maria, mensual, laura, carlos):
     """Los mismos escenarios contra los dobles y contra Django ORM."""
     if request.param == "memoria":
-        return SociosEnMemoria(ana, maria), PlanesEnMemoria(mensual), PagosEnMemoria()
+        pagos = PagosEnMemoria()
+        return SociosEnMemoria(ana, maria, pagos=pagos), PlanesEnMemoria(mensual), pagos
     request.getfixturevalue("db")
     for usuario in (laura, carlos):
         UsuarioRepositorioORM().guardar(usuario)
@@ -193,3 +194,31 @@ def test_otro_error_de_integridad_no_se_disfraza_de_documento_duplicado(ana, mon
     monkeypatch.setattr(repositorios.SocioModelo.objects, "update_or_create", falla)
     with pytest.raises(IntegrityError):
         SocioRepositorioORM().guardar(ana)
+
+
+# Software III, Guía 07: cláusulas del puerto que agregó la supresión de datos (Guía 06), probadas
+# igual contra el doble y contra el ORM. La tercera prueba falló con el doble: borraba al socio
+# aunque tuviera pagos, mientras la base lo impide con la llave foránea PROTECT. Ahora el doble
+# recibe el repositorio de pagos y responde igual.
+def test_suprimir_un_socio_sin_pagos_lo_quita(repos, maria):
+    socios, _, pagos = repos
+    assert not pagos.tiene_pagos(maria)
+    socios.eliminar(maria)
+    assert socios.buscar_por_documento(maria.tipo_documento, maria.numero_documento) is None
+
+
+def test_un_pago_anulado_tambien_cuenta_como_pago(repos, ana, mensual, laura, carlos, fabrica_pago):
+    _, _, pagos = repos
+    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    pagos.guardar(pago)
+    pago.anular("Plan equivocado", carlos, bogota(2026, 10, 7, 19, 0))
+    pagos.guardar(pago)
+    assert pagos.tiene_pagos(ana)
+
+
+def test_el_adaptador_no_suprime_un_socio_con_pagos(repos, ana, mensual, laura, fabrica_pago):
+    socios, _, pagos = repos
+    pagos.guardar(fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura))
+    with pytest.raises(SocioConPagos):
+        socios.eliminar(ana)
+    assert socios.buscar_por_documento(ana.tipo_documento, ana.numero_documento).id == ana.id

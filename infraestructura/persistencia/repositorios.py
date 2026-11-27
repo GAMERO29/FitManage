@@ -9,56 +9,18 @@ from django.db.models import ProtectedError
 
 from dominio.errores import DocumentoDuplicado, ReferenciaDuplicada, SocioConPagos
 from dominio.modelos import (
-    ZONA_HORARIA,
     EstadoPago,
-    MedioPago,
     Pago,
     Plan,
-    Rol,
     Socio,
     TipoDocumento,
     Usuario,
 )
+from infraestructura.persistencia.mapeo import a_pago, a_socio, a_usuario
 from infraestructura.persistencia.models import PagoModelo, PlanModelo, SocioModelo, UsuarioModelo
 
 RESTRICCION_REFERENCIA = "referencia_vigente_unica"
 RESTRICCION_DOCUMENTO = "socio_documento_unico"  # RN-01
-
-
-def _a_socio(m: SocioModelo) -> Socio:
-    return Socio(
-        tipo_documento=TipoDocumento(m.tipo_documento),
-        numero_documento=m.numero_documento,
-        nombres=m.nombres,
-        apellidos=m.apellidos,
-        telefono=m.telefono,
-        autorizacion_datos=m.autorizacion_datos.astimezone(ZONA_HORARIA),
-        id=m.id,
-    )
-
-
-def _a_usuario(m: UsuarioModelo) -> Usuario:
-    return Usuario(nombre=m.nombre, correo=m.correo, rol=Rol(m.rol), activo=m.activo, id=m.id)
-
-
-def _a_pago(m: PagoModelo) -> Pago:
-    return Pago(
-        socio=_a_socio(m.socio),
-        plan_id=m.plan_id,
-        valor=m.valor,
-        duracion_dias=m.duracion_dias,
-        medio=MedioPago(m.medio),
-        referencia=m.referencia,
-        fecha_inicio=m.fecha_inicio,
-        fecha_vencimiento=m.fecha_vencimiento,
-        registrado_por=_a_usuario(m.registrado_por),
-        registrado_en=m.registrado_en.astimezone(ZONA_HORARIA),
-        estado=EstadoPago(m.estado),
-        fecha_anulacion=m.fecha_anulacion.astimezone(ZONA_HORARIA) if m.fecha_anulacion else None,
-        anulado_por=_a_usuario(m.anulado_por) if m.anulado_por else None,
-        motivo_anulacion=m.motivo_anulacion,
-        id=m.id,
-    )
 
 
 class UsuarioRepositorioORM:
@@ -66,7 +28,7 @@ class UsuarioRepositorioORM:
 
     def obtener(self, usuario_id: UUID) -> Usuario | None:
         m = UsuarioModelo.objects.filter(id=usuario_id).first()
-        return _a_usuario(m) if m else None
+        return a_usuario(m) if m else None
 
     def guardar(self, usuario: Usuario) -> None:
         UsuarioModelo.objects.update_or_create(
@@ -83,7 +45,7 @@ class UsuarioRepositorioORM:
 class SocioRepositorioORM:
     def buscar_por_documento(self, tipo: TipoDocumento, numero: str) -> Socio | None:
         m = SocioModelo.objects.filter(tipo_documento=tipo.value, numero_documento=numero).first()
-        return _a_socio(m) if m else None
+        return a_socio(m) if m else None
 
     def guardar(self, socio: Socio) -> None:
         try:
@@ -146,7 +108,7 @@ class PagoRepositorioORM:
         consulta = PagoModelo.objects.select_related(
             "socio", "registrado_por", "anulado_por"
         ).filter(socio_id=socio.id, estado=EstadoPago.VIGENTE.value)
-        return [_a_pago(m) for m in consulta]
+        return [a_pago(m) for m in consulta]
 
     def existe_referencia_vigente(self, referencia: str) -> bool:
         return PagoModelo.objects.filter(
@@ -159,7 +121,7 @@ class PagoRepositorioORM:
             .filter(id=pago_id)
             .first()
         )
-        return _a_pago(m) if m else None
+        return a_pago(m) if m else None
 
     def guardar(self, pago: Pago) -> None:
         try:

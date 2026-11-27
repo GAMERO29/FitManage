@@ -1,0 +1,8 @@
+$ pytest -rA tests/integracion/test_repositorios_orm.py   # antes de corregir el doble; se muestran las pruebas nuevas
+E       Failed: DID NOT RAISE SocioConPagos
+PASSED tests/integracion/test_repositorios_orm.py::test_suprimir_un_socio_sin_pagos_lo_quita[memoria]
+PASSED tests/integracion/test_repositorios_orm.py::test_suprimir_un_socio_sin_pagos_lo_quita[orm]
+PASSED tests/integracion/test_repositorios_orm.py::test_un_pago_anulado_tambien_cuenta_como_pago[memoria]
+PASSED tests/integracion/test_repositorios_orm.py::test_un_pago_anulado_tambien_cuenta_como_pago[orm]
+PASSED tests/integracion/test_repositorios_orm.py::test_el_adaptador_no_suprime_un_socio_con_pagos[orm]
+FAILED tests/integracion/test_repositorios_orm.py::test_el_adaptador_no_suprime_un_socio_con_pagos[memoria]

@@ -6,13 +6,16 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from uuid import UUID
 
-from dominio.errores import CorreoNoDisponible, DocumentoDuplicado
+from dominio.errores import CorreoNoDisponible, DocumentoDuplicado, SocioConPagos
 from dominio.modelos import Pago, Plan, Socio, TipoDocumento, Usuario
 
 
 class SociosEnMemoria:
-    def __init__(self, *socios: Socio) -> None:
+    """Con `pagos` imita la llave foránea PROTECT: no suprime a quien tiene pagos (SW3-07)."""
+
+    def __init__(self, *socios: Socio, pagos: PagosEnMemoria | None = None) -> None:
         self._socios = {(s.tipo_documento, s.numero_documento): s for s in socios}
+        self.pagos = pagos
 
     def buscar_por_documento(self, tipo: TipoDocumento, numero: str) -> Socio | None:
         return self._socios.get((tipo, numero))
@@ -25,6 +28,8 @@ class SociosEnMemoria:
         self._socios[clave] = socio
 
     def eliminar(self, socio: Socio) -> None:
+        if self.pagos is not None and self.pagos.tiene_pagos(socio):
+            raise SocioConPagos()
         self._socios.pop((socio.tipo_documento, socio.numero_documento), None)
 
 

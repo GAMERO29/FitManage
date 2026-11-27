@@ -1,0 +1,15 @@
+$ python3 docs/sw3/g07/mapa_dependencias.py   # después del cambio
+Módulos: 49 · aristas internas: 92
+Dependencias entre paquetes:
+  aplicacion → dominio
+  dominio → 
+  infraestructura.api → aplicacion, dominio, infraestructura.consultas, infraestructura.correo, infraestructura.cuentas, infraestructura.observabilidad, infraestructura.persistencia, infraestructura.reloj
+  infraestructura.consultas → dominio, infraestructura.persistencia
+  infraestructura.correo → dominio
+  infraestructura.cuentas → dominio, infraestructura.persistencia
+  infraestructura.observabilidad → 
+  infraestructura.persistencia → dominio
+  infraestructura.reloj → dominio
+Ciclos entre paquetes: ninguno
+Nombres privados importados desde otro módulo: 0
+código de salida: 0
