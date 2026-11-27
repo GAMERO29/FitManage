@@ -1,0 +1,10 @@
+$ pytest -rA tests/nucleo/test_historial_pagos.py tests/integracion/api/test_api_auditoria_pagos.py::test_si_la_auditoria_falla_la_anulacion_se_revierte
+PASSED tests/integracion/api/test_api_auditoria_pagos.py::test_si_la_auditoria_falla_la_anulacion_se_revierte
+PASSED tests/nucleo/test_historial_pagos.py::test_anular_el_ultimo_hace_ultimo_al_anterior
+PASSED tests/nucleo/test_historial_pagos.py::test_con_el_mismo_inicio_el_ultimo_es_el_registrado_despues
+PASSED tests/nucleo/test_historial_pagos.py::test_no_se_anula_un_pago_que_no_es_el_ultimo
+PASSED tests/nucleo/test_historial_pagos.py::test_un_pago_ya_anulado_no_pasa_la_revision
+PASSED tests/nucleo/test_historial_pagos.py::test_el_siguiente_periodo_no_se_solapa_con_los_vigentes[hoy0-inicia0]
+PASSED tests/nucleo/test_historial_pagos.py::test_el_siguiente_periodo_no_se_solapa_con_los_vigentes[hoy1-inicia1]
+PASSED tests/nucleo/test_historial_pagos.py::test_el_siguiente_periodo_no_se_solapa_con_los_vigentes[hoy2-inicia2]
+PASSED tests/nucleo/test_historial_pagos.py::test_el_historial_ignora_pagos_de_otro_socio

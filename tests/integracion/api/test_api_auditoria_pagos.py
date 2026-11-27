@@ -132,3 +132,24 @@ def test_si_la_operacion_se_revierte_el_evento_tampoco_queda(recepcion, monkeypa
         pagar(recepcion)
     assert PagoModelo.objects.count() == antes
     assert eventos() == []
+
+
+def test_si_la_auditoria_falla_la_anulacion_se_revierte(administracion, monkeypatch):
+    """Software III, Guía 11: anular y auditar van en la misma transacción (agregado + evento).
+
+    Se inyecta un fallo justo después de guardar el pago anulado y antes de escribir el evento.
+    """
+    from infraestructura.persistencia import auditoria as modulo_auditoria
+
+    def falla(*_):
+        raise RuntimeError("fallo inyectado entre el pago anulado y el evento")
+
+    monkeypatch.setattr(modulo_auditoria.AuditoriaORM, "registrar", falla)
+    with pytest.raises(RuntimeError):
+        administracion.patch(
+            f"/api/v1/pagos/{ID_PAGO_JORGE}",
+            {"estado": "ANULADO", "motivo": "Prueba de atomicidad"},
+        )
+    fila = PagoModelo.objects.get(id=ID_PAGO_JORGE)
+    assert (fila.estado, fila.motivo_anulacion, fila.anulado_por_id) == ("VIGENTE", None, None)
+    assert eventos() == []
