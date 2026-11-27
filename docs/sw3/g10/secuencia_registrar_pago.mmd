@@ -1,0 +1,29 @@
+sequenceDiagram
+  autonumber
+  actor R as Recepcionista
+  participant W as app.js (pantalla de pago)
+  participant E as seguridad.endpoint
+  participant V as vistas.registrar_pago
+  participant S as RegistroPagoService
+  participant C as CalculadoraMembresia
+  participant Repo as PagoRepositorioORM
+  participant A as AuditoriaORM
+  R->>W: elige plan y medio, confirma
+  W->>E: POST /pagos + Idempotency-Key
+  E->>E: JWT, rol y contrato OpenAPI
+  E->>V: solicitud válida
+  V->>V: transaction.atomic()
+  V->>V: crea IdempotenciaModelo(clave, usuario)
+  alt la clave ya existe
+    V-->>W: la respuesta guardada (sin pago nuevo)
+  end
+  V->>V: bloquea la fila del socio
+  V->>S: registrar_pago(solicitud, usuario)
+  S->>S: socio existe, plan activo, RN-06 referencia
+  S->>C: calcular_fecha_inicio(vigentes, hoy) RN-04
+  S->>C: calcular_vencimiento(inicio, días) RN-03
+  S->>Repo: guardar(pago)
+  S->>A: registrar(PAGO_REGISTRADO)
+  V->>V: guarda 201 y el cuerpo con la clave
+  V-->>W: 201 + pago
+  Note over V,A: un error antes del final revierte el pago, el evento y la clave

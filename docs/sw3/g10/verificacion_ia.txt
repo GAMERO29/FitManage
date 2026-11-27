@@ -1,0 +1,25 @@
+$ python3 docs/sw3/g10/verificar_matriz.py docs/sw3/g10/matriz_ia.md
+PASA  RF-03: componente `aplicacion/pagos.py`
+PASA  RF-03: operación registrarPago
+PASA  RF-03: prueba test_registra_pago_en_efectivo_sin_referencia
+PASA  RF-03: componente `dominio/calculadora.py`
+PASA  RF-03: operación registrarPago
+PASA  RF-03: prueba test_vencimiento_es_inicio_mas_duracion_menos_uno
+FALLA RF-10: componente `aplicacion/anulacion.py`
+PASA  RF-10: operación anularPago
+FALLA RF-10: prueba test_solo_el_administrador_puede_anular
+PASA  RF-10: componente `aplicacion/pagos.py`
+FALLA RF-10: operación anularUltimoPago
+PASA  RF-10: prueba test_anular_el_ultimo_pago_recalcula_la_membresia
+FALLA RNF-05: componente `infraestructura/api/permisos.py`
+PASA  RNF-05: operación reporteIngresos
+PASA  RNF-05: prueba test_la_recepcionista_no_ve_ingresos
+PASA  RNF-05: componente `infraestructura/api/seguridad.py`
+PASA  RNF-05: operación anularPago
+FALLA RNF-05: prueba test_la_recepcionista_recibe_403_al_anular
+
+5 referencias que no existen
+código de salida: 1
+
+$ python3 docs/sw3/g10/verificar_matriz.py docs/sw3/g10/matriz.md
+0 referencias que no existen
