@@ -148,6 +148,9 @@ class SolicitudPago:
     referencia: str | None = None
 
 
+MOTIVO_MINIMO = 5  # el contrato y la pantalla ya lo exigían (Software III, Guía 10, H-10-02)
+
+
 @dataclass(frozen=True)
 class Periodo:
     """Objeto de valor: los días que cubre un pago. Dos periodos con las mismas fechas son iguales.
@@ -213,8 +216,8 @@ class Pago:
         """RN-07: la anulación es lógica, ocurre una sola vez y exige motivo."""
         if not self.esta_vigente():
             raise PagoNoAnulable("El pago ya está anulado.")
-        if not motivo or not motivo.strip():
-            raise MotivoRequerido("Indique el motivo de la anulación.")
+        if len((motivo or "").strip()) < MOTIVO_MINIMO:  # CR-02, RN-07 v1.4
+            raise MotivoRequerido(f"Explique el motivo con al menos {MOTIVO_MINIMO} caracteres.")
         exigir_zona_horaria(ahora, "La fecha de anulación")
         self.estado = EstadoPago.ANULADO
         self.fecha_anulacion = ahora

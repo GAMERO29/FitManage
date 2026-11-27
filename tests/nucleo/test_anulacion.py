@@ -75,6 +75,21 @@ def test_anulacion_sin_motivo_se_rechaza(ana, mensual, laura, carlos, fabrica_pa
         servicio.anular_ultimo(ana, carlos, "")
 
 
+@pytest.mark.parametrize(("motivo", "anula"), [("  Err ", False), ("Error", True)])
+def test_un_motivo_de_menos_de_5_caracteres_no_anula(
+    ana, mensual, laura, carlos, fabrica_pago, motivo, anula
+):
+    """CR-02 (Software III, Guías 10 y 12): la regla vive en Pago.anular, no solo en la API."""
+    pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
+    _, servicio = preparar(pago)
+    if anula:
+        servicio.anular_ultimo(ana, carlos, motivo)
+    else:
+        with pytest.raises(MotivoRequerido, match="al menos 5"):
+            servicio.anular_ultimo(ana, carlos, motivo)
+    assert pago.esta_vigente() is not anula
+
+
 def test_el_pago_anulado_no_se_borra(ana, mensual, laura, carlos, fabrica_pago):
     pago = fabrica_pago(ana, mensual, date(2026, 10, 7), date(2026, 11, 5), laura)
     repo, servicio = preparar(pago)

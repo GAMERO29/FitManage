@@ -27,8 +27,8 @@ def anular_ultimo(filas: list[dict], socio_id, usuario: dict, motivo: str, ahora
         fila["registrado_por_id"] != usuario["id"] or fila["registrado_en"].date() != ahora.date()
     ):
         raise PermisoDenegado("Solo puede anular los pagos que usted registró hoy.")
-    if not motivo or not motivo.strip():  # regla del motivo, copia 1 de 3
-        raise MotivoRequerido("Indique el motivo de la anulación.")
+    if len((motivo or "").strip()) < 5:  # regla del motivo, copia 1 de 3 (CR-02)
+        raise MotivoRequerido("Explique el motivo con al menos 5 caracteres.")
     fila.update(
         estado="ANULADO", motivo=motivo.strip(), anulado_por_id=usuario["id"], anulado_en=ahora
     )
@@ -51,8 +51,8 @@ def anular_por_id(filas: list[dict], pago_id, usuario: dict, motivo: str, ahora:
         fila["registrado_por_id"] != usuario["id"] or fila["registrado_en"].date() != ahora.date()
     ):
         raise PermisoDenegado("Solo puede anular los pagos que usted registró hoy.")
-    if not motivo or not motivo.strip():  # regla del motivo, copia 2 de 3
-        raise MotivoRequerido("Indique el motivo de la anulación.")
+    if len((motivo or "").strip()) < 5:  # regla del motivo, copia 2 de 3 (CR-02)
+        raise MotivoRequerido("Explique el motivo con al menos 5 caracteres.")
     fila.update(
         estado="ANULADO", motivo=motivo.strip(), anulado_por_id=usuario["id"], anulado_en=ahora
     )
@@ -73,8 +73,8 @@ def anular_para_cambio_de_plan(
     vigentes = [f for f in filas if f["socio_id"] == fila["socio_id"] and f["estado"] == "VIGENTE"]
     if max(vigentes, key=lambda f: (f["inicia"], f["registrado_en"]))["id"] != pago_id:
         raise PagoNoAnulable("Solo se puede anular el último pago vigente del socio.")
-    if not motivo or not motivo.strip():  # regla del motivo, copia 3 de 3
-        raise MotivoRequerido("Indique el motivo de la anulación.")
+    if len((motivo or "").strip()) < 5:  # regla del motivo, copia 3 de 3 (CR-02)
+        raise MotivoRequerido("Explique el motivo con al menos 5 caracteres.")
     fila.update(
         estado="ANULADO", motivo=motivo.strip(), anulado_por_id=usuario["id"], anulado_en=ahora
     )
