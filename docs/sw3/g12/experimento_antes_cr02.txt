@@ -1,0 +1,13 @@
+$ pytest -rA docs/sw3/g12/experimento   # antes de CR-02
+PASSED docs/sw3/g12/experimento/test_equivalencia.py::test_caso_1_el_administrador_anula_el_ultimo[transaction-script]
+PASSED docs/sw3/g12/experimento/test_equivalencia.py::test_caso_1_el_administrador_anula_el_ultimo[domain-model]
+PASSED docs/sw3/g12/experimento/test_equivalencia.py::test_caso_2_no_se_anula_un_pago_que_no_es_el_ultimo[transaction-script]
+PASSED docs/sw3/g12/experimento/test_equivalencia.py::test_caso_2_no_se_anula_un_pago_que_no_es_el_ultimo[domain-model]
+PASSED docs/sw3/g12/experimento/test_equivalencia.py::test_caso_3_la_recepcionista_no_anula_su_pago_de_ayer_pero_si_lo_cambia_de_plan[transaction-script]
+PASSED docs/sw3/g12/experimento/test_equivalencia.py::test_caso_3_la_recepcionista_no_anula_su_pago_de_ayer_pero_si_lo_cambia_de_plan[domain-model]
+FAILED docs/sw3/g12/experimento/test_equivalencia.py::test_cr02_un_motivo_de_menos_de_5_caracteres_no_anula[transaction-script-anular_ultimo]
+FAILED docs/sw3/g12/experimento/test_equivalencia.py::test_cr02_un_motivo_de_menos_de_5_caracteres_no_anula[transaction-script-anular]
+FAILED docs/sw3/g12/experimento/test_equivalencia.py::test_cr02_un_motivo_de_menos_de_5_caracteres_no_anula[transaction-script-anular_para_cambio]
+FAILED docs/sw3/g12/experimento/test_equivalencia.py::test_cr02_un_motivo_de_menos_de_5_caracteres_no_anula[domain-model-anular_ultimo]
+FAILED docs/sw3/g12/experimento/test_equivalencia.py::test_cr02_un_motivo_de_menos_de_5_caracteres_no_anula[domain-model-anular]
+FAILED docs/sw3/g12/experimento/test_equivalencia.py::test_cr02_un_motivo_de_menos_de_5_caracteres_no_anula[domain-model-anular_para_cambio]

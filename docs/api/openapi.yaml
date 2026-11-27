@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de FitManage
-  version: 1.8.0
+  version: 1.9.0
   description: |
     Contrato escrito **antes** de los controladores. Cubre un endpoint o más por cada
     contexto delimitado de la FPI-21 que expone datos fuera del servidor.
@@ -1559,6 +1559,12 @@ components:
           format: date-time
         anulacion:
           $ref: '#/components/schemas/DetalleAnulacion'
+        puedeAnular:
+          type: boolean
+          description: |
+            Solo en el historial. `true` en el pago que quien consulta puede anular hoy: el último
+            vigente, si es administrador o si lo registró él mismo hoy en Bogotá (RF-10 v1.3). La
+            pantalla lo usa para habilitar el botón; el servidor vuelve a decidir al anular.
 
     Anulacion:
       type: object

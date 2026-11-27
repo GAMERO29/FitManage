@@ -86,6 +86,27 @@ def test_la_recepcionista_tambien_ve_el_historial(recepcion):
     assert recepcion.get("/api/v1/socios/CC/1090123456/pagos").status_code == 200
 
 
+def test_el_historial_dice_que_pago_puede_anular_quien_consulta(administracion, recepcion):
+    """Software III, Guía 13: la pantalla ya no repite la regla de anulación; se la da la API."""
+    ana = "/api/v1/socios/CC/1090123456/pagos"
+    assert [p["puedeAnular"] for p in administracion.get(ana).json()["pagos"]] == [True]
+    assert [p["puedeAnular"] for p in recepcion.get(ana).json()["pagos"]] == [
+        False
+    ]  # de septiembre
+    recepcion.post(
+        "/api/v1/pagos",
+        {
+            "tipoDocumento": "PPT",
+            "numeroDocumento": "25789456",
+            "planId": str(ID_MENSUAL),
+            "medio": "EFECTIVO",
+        },
+        {"Idempotency-Key": str(uuid.uuid4())},
+    )
+    maria = recepcion.get("/api/v1/socios/PPT/25789456/pagos").json()["pagos"]
+    assert [p["puedeAnular"] for p in maria] == [True]  # Laura lo registró hoy
+
+
 def test_historial_de_un_socio_que_no_existe(administracion):
     assert administracion.get("/api/v1/socios/CC/1111111111/pagos").status_code == 404
 

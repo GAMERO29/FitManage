@@ -74,6 +74,9 @@ def test_los_controladores_no_consultan_modelos_del_orm():
 # Guía II-01 (D-01, D-02) y II-03: todo controlador que escribe pagos bloquea al socio y abre una
 # transacción, para que el evento de auditoría y la operación queden juntos o no queden.
 ESCRIBEN_PAGOS = {"registro_pago", "anulacion_pago", "cambio_plan"}
+# Software III, Guía 13: el historial pide a `anulacion_pago()` solo `anulable_para` (no escribe).
+# La regla mira además el método: estos son los que cambian pagos.
+METODOS_QUE_ESCRIBEN = {"registrar_pago", "anular", "anular_ultimo", "cambiar"}
 
 
 def _llamadas(funcion: ast.FunctionDef) -> set[str]:
@@ -91,7 +94,7 @@ def test_toda_escritura_de_pagos_bloquea_al_socio_dentro_de_una_transaccion():
     for funcion in (n for n in arbol.body if isinstance(n, ast.FunctionDef)):
         llamadas = _llamadas(funcion)
         servicios = llamadas & ESCRIBEN_PAGOS
-        if not servicios or funcion.name.startswith("vista_previa"):  # la vista previa solo lee
+        if not servicios or not llamadas & METODOS_QUE_ESCRIBEN:  # la vista previa solo lee
             continue
         revisadas += 1
         if "atomic" not in llamadas or not any(n.startswith("bloquear_socio") for n in llamadas):

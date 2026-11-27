@@ -1,0 +1,15 @@
+flowchart TB
+  subgraph AG["Agregado: historial de pagos de un socio · candado: fila del socio"]
+    H["HistorialPagos (raíz)<br/>I-1 último vigente · I-2 sin solapes"]
+    P1["Pago (entidad)<br/>I-3 periodo = duración · I-4 anulación completa"]
+    P2["Pago"]
+    V["Periodo (objeto de valor)"]
+    H --> P1
+    H --> P2
+    P1 --> V
+  end
+  S["Socio (entidad)"] -. "identidad" .- H
+  PL["Plan (otro agregado)"] -. "plan_id" .- P1
+  U["Usuario (otro agregado)"] -. "registrado_por / anulado_por" .- P1
+  IDX[("Índice único parcial<br/>I-5 referencia vigente")] -. "cruza socios" .- P1
+  SVC["AnulacionPagoService / RegistroPagoService<br/>cargan, invocan la raíz, guardan y auditan (I-6)"] --> H

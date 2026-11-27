@@ -19,6 +19,7 @@ from dominio.errores import (
     ReferenciaRequerida,
     SocioNoEncontrado,
 )
+from dominio.historial import HistorialPagos
 from dominio.modelos import (
     MedioPago,
     Pago,
@@ -141,10 +142,9 @@ class RegistroPagoService:
         return VistaPreviaPago(plan, inicia, vence)
 
     def _periodo(self, socio: Socio, plan: Plan) -> tuple[date, date]:
-        inicia = self._calculadora.calcular_fecha_inicio(
-            self._pagos.vigentes_de(socio), self._reloj.hoy()
-        )
-        return inicia, self._calculadora.calcular_vencimiento(inicia, plan.duracion_dias)
+        historial = HistorialPagos(socio, self._pagos.vigentes_de(socio))
+        periodo = historial.periodo_del_siguiente(self._reloj.hoy(), plan.duracion_dias)
+        return periodo.inicia, periodo.vence
 
     def _buscar_socio(self, tipo: TipoDocumento, numero: str) -> Socio:
         socio = self._socios.buscar_por_documento(tipo, numero.strip())
@@ -221,14 +221,28 @@ class AnulacionPagoService:
         pago = self._pagos.obtener(pago_id)
         if pago is None:
             raise PagoNoEncontrado(f"No existe el pago {pago_id}.")
-        if not pago.esta_vigente():
-            raise PagoNoAnulable("El pago ya está anulado.")
-        ultimo = self._ultimo_vigente(pago.socio)
-        if ultimo is None or ultimo.id != pago.id:
-            raise PagoNoAnulable("Solo se puede anular el último pago vigente del socio.")
+        HistorialPagos(pago.socio, self._pagos.vigentes_de(pago.socio)).exigir_que_sea_el_ultimo(
+            pago
+        )
         if not para_cambio_de_plan:
             self._exigir_permiso(pago, usuario)
         return pago
+
+    def anulable_para(self, socio: Socio, pagos: list[Pago], usuario: Usuario) -> UUID | None:
+        """El id del pago que `usuario` puede anular hoy en este historial, o None.
+
+        Mismas reglas que `anular`, sin cambiar nada; el historial lo manda a la pantalla para que
+        no repita la regla (Software III, Guía 13).
+        """
+        ultimo = HistorialPagos(socio, pagos).ultimo_vigente()
+        if ultimo is None:
+            return None
+        try:
+            self._exigir_personal(usuario)
+            self._exigir_permiso(ultimo, usuario)
+        except PermisoDenegado:
+            return None
+        return ultimo.id
 
     @staticmethod
     def _exigir_personal(usuario: Usuario) -> None:
@@ -239,8 +253,7 @@ class AnulacionPagoService:
         self._politica.exigir(pago, usuario, self._reloj.hoy())
 
     def _ultimo_vigente(self, socio: Socio) -> Pago | None:
-        vigentes = self._pagos.vigentes_de(socio)
-        return max(vigentes, key=lambda p: (p.fecha_inicio, p.registrado_en), default=None)
+        return HistorialPagos(socio, self._pagos.vigentes_de(socio)).ultimo_vigente()
 
     def _anular(
         self, pago: Pago, usuario: Usuario, motivo: str, registrar_evento: bool = True
