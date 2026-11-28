@@ -21,6 +21,9 @@ Todo se ejecuta en un laboratorio local con datos ficticios (Ana Prueba Demo, CC
 | `g12/` | Experimento Transaction Script contra Domain Model con casos equivalentes, impacto de CR-02 y ADR N.° 21. |
 | `g13/` | Especificación `PUEDE_ANULAR`, opciones y capturas antes y después del botón «Anular» para dos recepcionistas homónimas. |
 | `g14/` | Anulación de extremo a extremo: estados de la pantalla, migración 0004 (TRUNCATE) y pruebas de atomicidad, repetición y permanencia tras reinicio. |
+| `g15/` | Características NIST aplicadas a FitManage, costos local frente a Render con fuentes y fecha, RTO y RPO, carga nominal y QA-01 con k6, y la auditoría de las promesas de la IA. |
+| `g16/` | Escenarios por modelo de despliegue y de servicio, matriz de responsabilidades IaaS/PaaS/SaaS, diagrama de despliegue, procedimiento de puesta en marcha y el script de despliegue y restauración reproducibles con su salida. |
+| ADR N.° 22 | FitManage sigue en un PaaS público (Render), con la base en un plan pago antes del 2/12/2026 y un respaldo propio fuera del proveedor (Guía 16). |
 | ADR N.° 20 | Bloquear TRUNCATE sobre la auditoría (DEF-03). Propuesto en la Guía 01 y aceptado en la Guía 14. |
 
 ## Línea base

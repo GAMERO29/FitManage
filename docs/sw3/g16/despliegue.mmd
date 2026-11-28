@@ -1,0 +1,31 @@
+%% Software III · Guía 16 · Diagrama de despliegue de FitManage (ADR N.° 22)
+flowchart LR
+  subgraph GYM["Gimnasio (sede)"]
+    PC["PC de recepción<br/>navegador"]
+    CEL["Celular del administrador<br/>navegador"]
+    PAPEL["Plan B en papel<br/>(runbook)"]
+  end
+  subgraph GH["GitHub (SaaS)"]
+    REPO["Repositorio<br/>GAMERO29/FitManage"]
+    CI["Actions: CI → deploy.yml"]
+    GHCR[("GHCR<br/>imagen sha-&lt;commit&gt;<br/>y etiqueta estable")]
+  end
+  subgraph RENDER["Render · nube pública · PaaS"]
+    WEB["Web Service<br/>contenedor de la imagen<br/>arrancar.sh: migraciones + gunicorn"]
+    PG[("Render Postgres<br/>hoy Free (vence 2/12)<br/>decisión: 0.1c-256mb, PITR 3 días")]
+  end
+  subgraph GRAF["Grafana Cloud (SaaS)"]
+    OBS["Métricas, alertas del SLO"]
+  end
+  subgraph LAB["Laboratorio del equipo (contenedor Linux)"]
+    DUMP[("pg_dump semanal<br/>y prueba de restauración")]
+  end
+  PC -- HTTPS --> WEB
+  CEL -- HTTPS --> WEB
+  REPO --> CI --> GHCR
+  CI -- "Deploy Hook<br/>imgURL=sha-&lt;commit&gt;" --> WEB
+  GHCR -. "Render descarga la imagen" .-> WEB
+  CI -- "healthcheck /api/v1/salud<br/>3 veces con la versión" --> WEB
+  WEB -- "DATABASE_URL interna" --> PG
+  WEB -- OTLP --> OBS
+  PG -. "export lógico / pg_dump" .-> DUMP
