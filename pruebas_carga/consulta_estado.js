@@ -6,6 +6,7 @@
 //
 //   k6 run pruebas_carga/consulta_estado.js                      # perfil qa01: 10 VUs, 10 minutos
 //   k6 run -e PERFIL=exploracion pruebas_carga/consulta_estado.js # hasta 50 VUs, para ver el margen
+//   k6 run -e PERFIL=nominal pruebas_carga/consulta_estado.js     # día corriente: 2 VUs, 3 minutos
 //
 // Regla de oro de la Guía 8: nunca contra producción. Solo se aceptan los hosts de HOSTS_PERMITIDOS;
 // cualquier otra BASE_URL aborta la prueba antes de la primera petición.
@@ -20,6 +21,13 @@ const SOCIOS = 2000; // los que siembra pruebas_carga/sembrar.py
 const PERFIL = __ENV.PERFIL || 'qa01';
 
 const PERFILES = {
+  // Software III, Guía 15: el día corriente del gimnasio. Una o dos recepcionistas que consultan
+  // cada segundo mientras hay fila; 2 usuarios durante 3 minutos.
+  nominal: [
+    { duration: '30s', target: 2 },
+    { duration: '2m', target: 2 },
+    { duration: '30s', target: 0 },
+  ],
   // QA-01 tal cual: 10 usuarios simultáneos durante 10 minutos. El gimnasio tiene 1 o 2
   // recepcionistas; 10 usuarios que consultan cada segundo ya son unas 20 veces la hora pico real.
   qa01: [

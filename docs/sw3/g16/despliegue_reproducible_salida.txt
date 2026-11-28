@@ -1,0 +1,40 @@
+# 2026-11-27T19:50:05-05:00 · versión 2bd5e628b0c8432a851cd2ac509a0749e937b6ad · Python 3.13.18 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+## 1. Artefacto fijo
+Directorio /tmp/fitmanage-2bd5e62 en el commit 2bd5e62, sin cambios locales: 0 archivos modificados
+## 2. Puesta en marcha en limpio
+NOTICE:  database "fm_g16" does not exist, skipping
+  Applying persistencia.0004_auditoria_sin_truncate... OK
+Administrador: se creó la cuenta de Admin Demo.
+Salud: {"estado": "ok", "hora": "2026-11-27T19:50:09-05:00", "version": "2bd5e62"} · puesta en marcha en 3.0 s
+## 3. Operación nominal (recorrido de línea base)
+R01 PASA  salud y versión: HTTP 200 (esperado 200) version=2bd5e62
+R02 PASA  el administrador crea a la recepcionista: HTTP 201 (esperado 201) 
+R03 PASA  consulta de un documento sin registrar: HTTP 404 (esperado 404) 
+R04 PASA  registrar socia (RF-01): HTTP 201 (esperado 201) 
+R05 PASA  consulta sin pagos (RF-04): HTTP 200 (esperado 200) estado=SIN_MEMBRESIA
+R06 PASA  vista previa del periodo (RN-03): HTTP 200 (esperado 200) 2026-11-27 → 2026-12-26
+R07 PASA  registrar pago Mensual por Nequi (RF-03): HTTP 201 (esperado 201) vence 2026-12-26
+R08 PASA  mismo comprobante otra vez (RN-06): HTTP 409 (esperado 409) 
+R09 PASA  consulta después del pago: HTTP 200 (esperado 200) estado=ACTIVO vence=2026-12-26
+R10 PASA  anular el último pago con motivo (RF-10): HTTP 200 (esperado 200) 
+R11 PASA  consulta después de anular: HTTP 200 (esperado 200) estado=SIN_MEMBRESIA
+R12 PASA  auditoría del administrador (ADR N.° 19): HTTP 200 (esperado 200) eventos=['PAGO_ANULADO', 'PAGO_REGISTRADO']
+Resumen: 12 de 12 pasos dan lo esperado.
+Pago de Ana antes del respaldo: HTTP 201, vence 2026-12-26
+## 4. Respaldo
+Respaldo fm_g16-respaldo.dump: 24K, 2026-11-27T19:50:10-05:00 · socios=1 pagos=2 auditoria=3
+Después del respaldo: socio Bruno HTTP 201, su pago HTTP 201, vence 2026-12-26
+Estado antes de la falla: socios=2 pagos=3 auditoria=4
+## 5. Falla simulada: se pierde la base
+Salud con la base perdida: HTTP 503
+## 6. Restauración
+  No migrations to apply.
+Salud: {"estado": "ok", "hora": "2026-11-27T19:50:18-05:00", "version": "2bd5e62"}
+## 7. Verificación del estado restaurado
+Conteos: socios=1 pagos=2 auditoria=3
+Ana: HTTP 200, estado=ACTIVO, vence=2026-12-26
+Bruno: HTTP 404 (no existe: se registró después del respaldo)
+Inicio de sesión del administrador: HTTP 200
+TRUNCATE de la auditoría tras restaurar: ERROR:  La auditoría no se puede vaciar: TRUNCATE no está permitido
+RTO observado (de la pérdida a la salud OK): 3.1 s
+RPO observado (trabajo hecho después del último respaldo): 5.3 s y lo que se registró en ellos

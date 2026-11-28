@@ -25,5 +25,6 @@ Un ADR aceptado no se edita. Si la decisión cambia, se escribe uno nuevo y el a
 | [19](ADR-019-auditoria-solo-insercion.md) | Rastro de auditoría de solo inserción, en la misma transacción y en la misma base | Aceptado | 09/11/2026 |
 | [20](ADR-020-truncate-auditoria.md) | Bloquear TRUNCATE sobre la auditoría con un disparador, con una excepción solo para las pruebas | Aceptado | 27/11/2026 |
 | [21](ADR-021-domain-model-para-pagos.md) | Las reglas de pagos y anulaciones se quedan en un Domain Model; los modelos de lectura siguen como scripts de consulta | Aceptado | 27/11/2026 |
+| [22](ADR-022-modelo-de-servicio-en-nube.md) | FitManage sigue en un PaaS público (Render), con la base en un plan pago y un respaldo propio fuera del proveedor | Aceptado | 27/11/2026 |
 
 Los ADR 01 y 02 se escribieron con la plantilla de 5 campos de la Guía 1. Desde el ADR 03 se usa la plantilla completa de 6 campos (`plantilla.md`), que agrega las alternativas consideradas. Los dos primeros no se reescriben para cumplirla, precisamente porque un ADR aceptado es inmutable.
